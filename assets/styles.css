@@ -1,3 +1,38 @@
+.header-toggles-row {
+  display: flex;
+  align-items: center;
+  gap: 1.2em;
+  margin-left: 2.2em;
+}
+.toggle-group-row {
+  flex-direction: row !important;
+  gap: 0.5em !important;
+}
+.toggle-sep {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 1.1em;
+  opacity: 0.5;
+  margin: 0 0.7em;
+  user-select: none;
+}
+.toggle-dot.small {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  font-size: 0.85em;
+  padding: 0;
+}
+.toggle-group#lang-toggle .toggle-dot.small {
+  min-width: 28px;
+  height: 18px;
+  font-size: 0.85em;
+  border-radius: 999px;
+}
+.toggle-group#style-toggle .toggle-dot.small {
+  min-width: 18px;
+  height: 18px;
+}
 /* Palette */
 
 
@@ -162,12 +197,6 @@ html, body {
 /* Style Rail */
 
 /* Header toggles (premium dots) */
-.header-toggles {
-  display: flex;
-  align-items: center;
-  gap: 2.2em;
-  margin-left: 2.2em;
-}
 .toggle-group {
   display: flex;
   flex-direction: column;

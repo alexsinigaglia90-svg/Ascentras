@@ -47,17 +47,18 @@ const langToggle = document.getElementById('lang-toggle');
 const styleToggle = document.getElementById('style-toggle');
 const root = document.documentElement;
 
+
 function setTheme(theme) {
   root.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
-  Array.from(themeToggle.querySelectorAll('.toggle-dot')).forEach(btn => {
+  Array.from(themeToggle.querySelectorAll('.toggle-dot.small')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.theme === theme);
   });
 }
 function setLang(lang) {
   root.setAttribute('data-lang', lang);
   localStorage.setItem('lang', lang);
-  Array.from(langToggle.querySelectorAll('.toggle-dot')).forEach(btn => {
+  Array.from(langToggle.querySelectorAll('.toggle-dot.small')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
   applyI18n(lang);
@@ -65,7 +66,7 @@ function setLang(lang) {
 function setStyle(style) {
   root.setAttribute('data-style', style);
   localStorage.setItem('style', style);
-  Array.from(styleToggle.querySelectorAll('.toggle-dot')).forEach(btn => {
+  Array.from(styleToggle.querySelectorAll('.toggle-dot.small')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.style === style);
   });
 }
