@@ -71,21 +71,28 @@
     <section class="operis-app" id="operis-app">
       <div class="operis-app-container">
         <div class="operis-header">
-          <div class="operis-logo">Operis</div>
-          <div class="operis-desc">Next-gen Operations Dashboard – Real-time warehouse, staff, and performance insights.</div>
-          <button class="btn pill operis-launch" id="operis-launch">Open Dashboard</button>
+          <div>
+            <div class="operis-logo" data-i18n="operis_title">Operis Dashboard</div>
+            <div class="operis-desc" data-i18n="operis_desc">Activated when consultants and operational leaders run site execution with your teams.</div>
+          </div>
+          <button class="btn pill operis-launch" id="operis-launch" type="button" data-i18n="operis_open_dashboard">Open Dashboard</button>
+        </div>
+        <div class="operis-runtime-strip" id="operis-runtime-strip">
+          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_mode">Mode</span><span class="runtime-value" id="operis-mode">Standby</span></div>
+          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_picks_hour">Picks/h</span><span class="runtime-value" id="operis-picks-hour">0</span></div>
+          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_repl_hour">Repl/h</span><span class="runtime-value" id="operis-repl-hour">0</span></div>
+          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_flow">Flow</span><span class="runtime-value" id="operis-flow-state">Nominal</span></div>
+          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_system_health">System Health</span><span class="runtime-value" id="operis-health">99.9%</span></div>
         </div>
         <div class="operis-dashboard">
-          <div class="operis-warehouse" id="operis-warehouse">
-            <!-- SCADA-like warehouse visualization will be rendered here -->
+          <div class="operis-warehouse" id="operis-warehouse" tabindex="0" aria-label="Operis SCADA warehouse view">
           </div>
           <div class="operis-sidepanel">
             <div class="operis-staff" id="operis-staff">
-              <!-- Staff assignments and performance -->
             </div>
             <div class="operis-charts" id="operis-charts">
-              <!-- Charts and widgets -->
             </div>
+            <div class="operis-systems" id="operis-systems"></div>
           </div>
         </div>
       </div>
