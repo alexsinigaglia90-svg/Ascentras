@@ -39,113 +39,140 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Theme & language toggles
+
+// Theme, language, and style toggles (rail)
 const themeToggle = document.getElementById('theme-toggle');
 const langToggle = document.getElementById('lang-toggle');
+const styleToggle = document.getElementById('style-toggle');
 const root = document.documentElement;
 
 function setTheme(theme) {
   root.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
-  Array.from(themeToggle.children).forEach(btn => {
+  Array.from(themeToggle.querySelectorAll('button')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.theme === theme);
   });
 }
 function setLang(lang) {
   root.setAttribute('data-lang', lang);
   localStorage.setItem('lang', lang);
-  Array.from(langToggle.children).forEach(btn => {
+  Array.from(langToggle.querySelectorAll('button')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
   applyI18n(lang);
 }
+function setStyle(style) {
+  root.setAttribute('data-style', style);
+  localStorage.setItem('style', style);
+  Array.from(styleToggle.querySelectorAll('button')).forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.style === style);
+  });
+}
 
-themeToggle.addEventListener('click', e => {
-  if (e.target.classList.contains('toggle-dot')) {
-    setTheme(e.target.dataset.theme);
-  }
+if (themeToggle) themeToggle.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-theme]');
+  if (btn) setTheme(btn.dataset.theme);
 });
-langToggle.addEventListener('click', e => {
-  if (e.target.classList.contains('toggle-dot')) {
-    setLang(e.target.dataset.lang);
-  }
+if (langToggle) langToggle.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-lang]');
+  if (btn) setLang(btn.dataset.lang);
+});
+if (styleToggle) styleToggle.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-style]');
+  if (btn) setStyle(btn.dataset.style);
+});
+
+// Init theme/lang/style from localStorage
+window.addEventListener('DOMContentLoaded', () => {
+  setTheme(localStorage.getItem('theme') || 'light');
+  setLang(localStorage.getItem('lang') || 'en');
+  setStyle(localStorage.getItem('style') || 'ivory');
 });
 
 // i18n
 const i18n = {
-  en: {
-    nav_platform: 'Platform',
-    nav_usecases: 'Use cases',
-    nav_contact: 'Contact',
-    nav_cta: 'Contact',
-    hero_eyebrow: 'OPERATIONAL EXCELLENCE',
-    hero_headline: 'Operational Excellence, engineered with intelligence.',
-    hero_subcopy: 'Empowering industry leaders with seamless, resilient, and beautiful solutions.',
-    hero_cta_explore: 'Explore platform',
-    hero_cta_meeting: 'Plan a meeting',
-    platform_title: 'Platform',
-    platform_ifs: 'IFS',
-    platform_ifs_desc: 'Intelligent Factory Suite: Orchestrate, monitor, and optimize manufacturing operations in real time.',
-    platform_ips: 'IPS',
-    platform_ips_desc: 'Industrial Process Suite: Automate and control complex process flows with precision.',
-    platform_ics: 'ICS',
-    platform_ics_desc: 'Industrial Control Suite: Secure, scalable, and resilient control for critical infrastructure.',
-    platform_hw: 'Hardware',
-    platform_hw_desc: 'Edge Hardware: Rugged, reliable, and high-performance devices for industrial environments.',
-    usecases_title: 'Use Cases',
-    usecases_smart: 'Smart Manufacturing',
-    usecases_smart_desc: 'Realtime insights & control for next-gen factories.',
-    usecases_energy: 'Energy Optimization',
-    usecases_energy_desc: 'Reduce waste, maximize uptime, sustainable operations.',
-    usecases_infra: 'Critical Infrastructure',
-    usecases_infra_desc: 'Secure, resilient, and scalable for mission-critical needs.'
-  },
-  nl: {
-    nav_platform: 'Platform',
-    nav_usecases: 'Toepassingen',
-    nav_contact: 'Contact',
-    nav_cta: 'Contact',
-    hero_eyebrow: 'OPERATIONELE EXCELLENTIE',
-    hero_headline: 'Operationele excellentie, ontworpen met intelligentie.',
-    hero_subcopy: 'Industrie leiders versterken met naadloze, veerkrachtige en elegante oplossingen.',
-    hero_cta_explore: 'Ontdek platform',
-    hero_cta_meeting: 'Plan een afspraak',
-    platform_title: 'Platform',
-    platform_ifs: 'IFS',
-    platform_ifs_desc: 'Intelligent Factory Suite: Orkestreer, monitor en optimaliseer productieprocessen realtime.',
-    platform_ips: 'IPS',
-    platform_ips_desc: 'Industrial Process Suite: Automatiseer en beheer complexe processtromen met precisie.',
-    platform_ics: 'ICS',
-    platform_ics_desc: 'Industrial Control Suite: Veilig, schaalbaar en veerkrachtig voor kritieke infrastructuur.',
-    platform_hw: 'Hardware',
-    platform_hw_desc: 'Edge Hardware: Robuuste, betrouwbare en krachtige apparaten voor industriële omgevingen.',
-    usecases_title: 'Toepassingen',
-    usecases_smart: 'Slimme productie',
-    usecases_smart_desc: 'Realtime inzicht & controle voor de fabriek van de toekomst.',
-    usecases_energy: 'Energie optimalisatie',
-    usecases_energy_desc: 'Verminder verspilling, maximaliseer uptime, duurzame operatie.',
-    usecases_infra: 'Kritieke infrastructuur',
-    usecases_infra_desc: 'Veilig, veerkrachtig en schaalbaar voor missiekritische behoeften.'
+
+  // Platform explorer nav logic (premium panel)
+  const explorerNav = document.getElementById('explorer-nav');
+  const explorerPanel = document.getElementById('explorer-panel');
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const platformData = {
+    IFS: {
+      title: 'IFS',
+      desc: 'Intelligent Factory Suite: Orchestrate, monitor, and optimize manufacturing operations in real time.',
+      kpis: [
+        { label: 'OEE', value: 98.2, unit: '%' },
+        { label: 'Downtime', value: 1.1, unit: 'h/mo' },
+        { label: 'Yield', value: 99.7, unit: '%' }
+      ],
+      chart: [82, 90, 95, 98, 97, 98, 98]
+    },
+    IPS: {
+      title: 'IPS',
+      desc: 'Industrial Process Suite: Automate and control complex process flows with precision.',
+      kpis: [
+        { label: 'Throughput', value: 1200, unit: 'units/h' },
+        { label: 'Energy Use', value: 0.82, unit: 'kWh/unit' },
+        { label: 'Defects', value: 0.2, unit: '%' }
+      ],
+      chart: [1100, 1150, 1200, 1190, 1200, 1205, 1200]
+    },
+    ICS: {
+      title: 'ICS',
+      desc: 'Industrial Control Suite: Secure, scalable, and resilient control for critical infrastructure.',
+      kpis: [
+        { label: 'Uptime', value: 99.999, unit: '%' },
+        { label: 'Latency', value: 2, unit: 'ms' },
+        { label: 'Incidents', value: 0, unit: 'this year' }
+      ],
+      chart: [99.99, 99.995, 99.999, 99.999, 99.999, 99.999, 99.999]
+    },
+    Hardware: {
+      title: 'Hardware',
+      desc: 'Edge Hardware: Rugged, reliable, and high-performance devices for industrial environments.',
+      kpis: [
+        { label: 'MTBF', value: 120000, unit: 'h' },
+        { label: 'Temp Range', value: '-40~85', unit: '°C' },
+        { label: 'Power', value: 8, unit: 'W avg' }
+      ],
+      chart: [7, 8, 8, 8, 8, 8, 8]
+    }
+  };
+
+  if (explorerNav && explorerPanel) {
+    explorerNav.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-platform]');
+      if (!btn) return;
+      Array.from(explorerNav.querySelectorAll('button')).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const key = btn.dataset.platform;
+      const data = platformData[key];
+      if (!data) return;
+      // Update panel
+      explorerPanel.querySelector('.explorer-title').textContent = data.title;
+      explorerPanel.querySelector('.explorer-desc').textContent = data.desc;
+      // KPIs
+      const kpiWrap = explorerPanel.querySelector('.explorer-kpis');
+      kpiWrap.innerHTML = '';
+      data.kpis.forEach(kpi => {
+        const div = document.createElement('div');
+        div.className = 'kpi-chip';
+        div.innerHTML = `<span class="kpi-label">${kpi.label}</span> <span class="kpi-value">${kpi.value}${kpi.unit}</span>`;
+        kpiWrap.appendChild(div);
+      });
+      // Chart (simple SVG polyline)
+      const chartWrap = explorerPanel.querySelector('.explorer-chart');
+      if (chartWrap && data.chart) {
+        // Generate SVG polyline points
+        const points = data.chart.map((v, i) => `${i*20},${40-(v/100)*34}`).join(' ');
+        chartWrap.innerHTML = `<svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="${points}" stroke="var(--accent)" stroke-width="3" fill="none"/>
+          <circle cx="120" cy="${40-(data.chart[data.chart.length-1]/100)*34}" r="4" fill="var(--accent)"/>
+        </svg>`;
+      }
+    });
   }
-};
-
-function applyI18n(lang) {
-  const dict = i18n[lang] || i18n.en;
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (dict[key]) el.textContent = dict[key];
-  });
-}
-
-// Init theme/lang from localStorage
-window.addEventListener('DOMContentLoaded', () => {
-  setTheme(localStorage.getItem('theme') || 'light');
-  setLang(localStorage.getItem('lang') || 'en');
-});
-
-
-// Platform explorer state
-const explorerNav = document.getElementById('explorer-nav');
 const explorerPanel = document.getElementById('explorer-panel');
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
