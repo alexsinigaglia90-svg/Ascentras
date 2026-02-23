@@ -28,7 +28,8 @@
   mix-blend-mode: multiply;
 }
 
-.platform-journey-stage {
+.platform-journey-stage,
+.pj-stage {
   position: relative;
   width: min(1240px, 94vw);
   height: 100vh;
