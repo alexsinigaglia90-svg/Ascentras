@@ -63,6 +63,28 @@
   height: 100%;
 }
 
+.pj-build-indicator {
+  position: absolute;
+  right: 0.95rem;
+  bottom: 0.95rem;
+  z-index: 7;
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--blue);
+  opacity: 0.6;
+  padding: 0.28rem 0.46rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--blue) 24%, transparent);
+  background: color-mix(in srgb, var(--cream) 84%, #fff 16%);
+  transition: opacity 700ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 700ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.pj-build-indicator:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
 .pj-world {
   position: absolute;
   inset: 0;
