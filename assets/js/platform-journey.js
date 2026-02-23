@@ -1,11 +1,18 @@
 (function initPlatformJourney() {
   let hasLoggedInit = false;
 
-  function fallbackStack(root, reason) {
-    if (reason) {
-      console.error('[PlatformJourney] fallback:', reason);
+  function setDebug(root, message, world) {
+    const badge = root.querySelector('.pj-build-indicator');
+    if (!badge) return;
+    badge.textContent = world ? `${message} | world: ${world}` : message;
+  }
+
+  function fallbackStack(root, reasonKey, reasonError) {
+    if (reasonError) {
+      console.error('[PlatformJourney] fallback:', reasonError);
     }
 
+    setDebug(root, `PJ: fallback (${reasonKey})`);
     root.classList.add('pj-fallback');
     root.setAttribute('data-world', 'ascentra');
 
@@ -32,6 +39,7 @@
 
   function setWorld(root, worlds, key) {
     root.setAttribute('data-world', key);
+    setDebug(root, 'PJ: animated', key);
     worlds.forEach((world) => {
       world.classList.toggle('is-active', world.dataset.world === key);
     });
@@ -42,32 +50,35 @@
   }
 
   function init() {
-    const root = document.getElementById('platform-journey');
+    const root = document.querySelector('#platform-journey');
     if (!root) return;
 
     const stage = root.querySelector('#platform-journey-stage');
     const worldsWrap = root.querySelector('#pj-worlds');
     const worlds = Array.from(root.querySelectorAll('.pj-world'));
 
-    const elements = { stage, worldsWrap };
-    if (!validateElements(elements) || worlds.length < 3) {
-      fallbackStack(root, new Error('Missing required Platform Journey elements'));
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches === true;
+    if (reduce) {
+      fallbackStack(root, 'reduced motion');
       return;
     }
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      fallbackStack(root);
+    if (!window.gsap || !window.ScrollTrigger) {
+      fallbackStack(root, 'gsap missing');
+      return;
+    }
+
+    const elements = { stage, worldsWrap };
+    if (!validateElements(elements) || worlds.length !== 3) {
+      fallbackStack(root, 'missing worlds');
       return;
     }
 
     try {
-      if (!window.gsap || !window.ScrollTrigger) {
-        throw new Error('GSAP/ScrollTrigger missing');
-      }
-
       const gsap = window.gsap;
       const ScrollTrigger = window.ScrollTrigger;
 
+      root.classList.remove('pj-fallback');
       gsap.registerPlugin(ScrollTrigger);
 
       const ascentra = worlds.find((world) => world.dataset.world === 'ascentra');
@@ -75,7 +86,8 @@
       const astra = worlds.find((world) => world.dataset.world === 'astra');
 
       if (!ascentra || !operis || !astra) {
-        throw new Error('Expected worlds not found');
+        fallbackStack(root, 'missing worlds');
+        return;
       }
 
       const worldNodes = {
@@ -97,7 +109,8 @@
       };
 
       if (!worldNodes.ascentra.copy || !worldNodes.ascentra.preview || !worldNodes.operis.copy || !worldNodes.operis.preview || !worldNodes.astra.copy || !worldNodes.astra.preview) {
-        throw new Error('Missing copy/preview nodes in one or more worlds');
+        fallbackStack(root, 'init error', new Error('Missing copy/preview nodes in one or more worlds'));
+        return;
       }
 
       setWorld(root, worlds, 'ascentra');
@@ -118,27 +131,7 @@
       const lines = gsap.utils.toArray('.platform-lines .line', root);
       gsap.set(lines, { scaleX: 0.85, opacity: 0.2 });
 
-      const timeline = gsap.timeline({
-        defaults: { ease: 'power2.inOut' },
-        scrollTrigger: {
-          id: 'platformJourneyPin',
-          trigger: root,
-          start: 'top top',
-          end: '+=300%',
-          scrub: 1,
-          pin: true,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            const progress = self.progress;
-            root.style.setProperty('--pj-progress', progress.toFixed(4));
-
-            if (progress < 0.33) setWorld(root, worlds, 'ascentra');
-            else if (progress < 0.66) setWorld(root, worlds, 'operis');
-            else setWorld(root, worlds, 'astra');
-          }
-        }
-      });
+      const timeline = gsap.timeline({ defaults: { ease: 'power2.inOut' } });
 
       timeline
         .fromTo(worldNodes.ascentra.copy, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.12 }, 0)
@@ -163,12 +156,25 @@
         .fromTo(worldNodes.astra.preview, { opacity: 0, x: 24, scale: 0.98 }, { opacity: 1, x: 0, scale: 1, duration: 0.14 }, 0.74)
         .to(lines, { scaleX: 1.25, opacity: 0.28, duration: 0.14 }, 0.86);
 
-      window.setTimeout(() => {
-        const trigger = ScrollTrigger.getById('platformJourneyPin');
-        if (!trigger || !trigger.pin) {
-          fallbackStack(root, new Error('ScrollTrigger pin not active'));
+      ScrollTrigger.create({
+        id: 'platformJourneyPin',
+        trigger: root,
+        start: 'top top',
+        end: '+=300%',
+        scrub: 1,
+        pin: stage,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        markers: true,
+        animation: timeline,
+        onUpdate: (self) => {
+          const progress = self.progress;
+          root.style.setProperty('--pj-progress', progress.toFixed(4));
+          if (progress < 0.33) setWorld(root, worlds, 'ascentra');
+          else if (progress < 0.66) setWorld(root, worlds, 'operis');
+          else setWorld(root, worlds, 'astra');
         }
-      }, 1000);
+      });
 
       root.addEventListener('mousemove', (event) => {
         const active = root.querySelector('.pj-world.is-active .pj-preview');
@@ -186,11 +192,12 @@
       });
 
       if (!hasLoggedInit) {
-        console.log('[PlatformJourney] timeline attached');
+        console.log('[PlatformJourney] ScrollTrigger attached', ScrollTrigger.getAll().length);
         hasLoggedInit = true;
       }
+      setDebug(root, 'PJ: animated', 'ascentra');
     } catch (error) {
-      fallbackStack(root, error);
+      fallbackStack(root, 'init error', error);
     }
   }
 
