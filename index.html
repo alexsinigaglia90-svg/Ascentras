@@ -25,7 +25,9 @@
       <span class="logo">Ascentra</span>
       <nav>
         <a href="#platform" class="nav-link">Platform</a>
-        <a href="#usecases" class="nav-link">Use Cases</a>
+        <a href="#usecases" class="nav-link">Use cases</a>
+        <a href="#contact" class="nav-link">Contact</a>
+        <button class="btn mini-cta" id="topbar-cta">Get in touch</button>
       </nav>
     </div>
   </header>
@@ -34,22 +36,30 @@
     <div class="hero-fallback" id="hero-fallback">
       <div class="hero-gradient"></div>
     </div>
+    <div class="hero-vignette"></div>
+    <div class="hero-grain"></div>
     <div class="hero-overlay glass">
-      <h1>Ascentra</h1>
-      <p class="tagline">Operational excellence, engineered with elegance.</p>
-      <button class="btn primary" id="cta-explore">Explore platform</button>
+      <h1 class="hero-headline">Ascentra</h1>
+      <p class="hero-subheadline">Operational excellence, engineered with elegance.</p>
+      <div class="hero-ctas">
+        <button class="btn primary" id="cta-explore">Explore platform</button>
+        <button class="btn secondary" id="cta-capabilities">View capabilities</button>
+      </div>
+    </div>
+    <div class="scroll-cue" id="scroll-cue" aria-hidden="true">
+      <span class="scroll-arrow"></span>
     </div>
   </section>
   <main>
     <section class="platform" id="platform">
       <div class="container platform-explorer">
-        <nav class="explorer-nav" id="explorer-nav">
-          <button class="nav-item active" data-tab="IFS">IFS</button>
-          <button class="nav-item" data-tab="IPS">IPS</button>
-          <button class="nav-item" data-tab="ICS">ICS</button>
-          <button class="nav-item" data-tab="Hardware">Hardware</button>
+        <nav class="explorer-nav segmented" id="explorer-nav" role="tablist" aria-label="Platform explorer">
+          <button class="nav-item active" data-tab="IFS" role="tab" aria-selected="true">IFS</button>
+          <button class="nav-item" data-tab="IPS" role="tab" aria-selected="false">IPS</button>
+          <button class="nav-item" data-tab="ICS" role="tab" aria-selected="false">ICS</button>
+          <button class="nav-item" data-tab="Hardware" role="tab" aria-selected="false">Hardware</button>
         </nav>
-        <div class="explorer-panel glass" id="explorer-panel">
+        <div class="explorer-panel glass" id="explorer-panel" tabindex="0">
           <!-- Dynamic content via JS -->
         </div>
       </div>
@@ -58,17 +68,26 @@
       <div class="container">
         <h2>Use Cases</h2>
         <div class="usecase-cards">
-          <div class="card glass">
-            <h3>Smart Manufacturing</h3>
-            <p>Realtime insights &amp; control for next-gen factories.</p>
+          <div class="card usecase-card">
+            <div class="usecase-icon icon-factory"></div>
+            <div class="usecase-content">
+              <h3>Smart Manufacturing</h3>
+              <p>Realtime insights &amp; control for next-gen factories.</p>
+            </div>
           </div>
-          <div class="card glass">
-            <h3>Energy Optimization</h3>
-            <p>Reduce waste, maximize uptime, sustainable operations.</p>
+          <div class="card usecase-card">
+            <div class="usecase-icon icon-energy"></div>
+            <div class="usecase-content">
+              <h3>Energy Optimization</h3>
+              <p>Reduce waste, maximize uptime, sustainable operations.</p>
+            </div>
           </div>
-          <div class="card glass">
-            <h3>Critical Infrastructure</h3>
-            <p>Secure, resilient, and scalable for mission-critical needs.</p>
+          <div class="card usecase-card">
+            <div class="usecase-icon icon-infra"></div>
+            <div class="usecase-content">
+              <h3>Critical Infrastructure</h3>
+              <p>Secure, resilient, and scalable for mission-critical needs.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -79,5 +98,6 @@
       <span>&copy; 2026 Ascentra. All rights reserved.</span>
     </div>
   </footer>
+  <div class="ambient-bg"></div>
 </body>
 </html>
