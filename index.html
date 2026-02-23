@@ -23,22 +23,34 @@
   <header class="topnav" id="topnav">
     <div class="container nav-inner">
       <span class="logo">Ascentra</span>
-      <div class="header-toggles-row">
-        <div class="toggle-group toggle-group-row" id="theme-toggle" aria-label="Theme toggle">
-          <button class="toggle-dot small" data-theme="light" aria-label="Light"></button>
-          <button class="toggle-dot small" data-theme="dark" aria-label="Dark"></button>
+      <!-- Left premium style rail -->
+      <aside class="style-rail-premium" id="style-rail-premium">
+        <div class="rail-capsule-premium">
+          <div class="rail-group-premium">
+            <div class="rail-label-premium">Theme</div>
+            <div class="rail-toggle-group-premium" id="theme-toggle">
+              <button class="rail-dot-premium" data-theme="light" aria-label="Light"></button>
+              <button class="rail-dot-premium" data-theme="dark" aria-label="Dark"></button>
+            </div>
+          </div>
+          <div class="rail-group-premium">
+            <div class="rail-label-premium">Lang</div>
+            <div class="rail-toggle-group-premium" id="lang-toggle">
+              <button class="rail-dot-premium" data-lang="en" aria-label="English"><span class="dot-label-premium">EN</span></button>
+              <button class="rail-dot-premium" data-lang="nl" aria-label="Nederlands"><span class="dot-label-premium">NL</span></button>
+            </div>
+          </div>
+          <div class="rail-group-premium">
+            <div class="rail-label-premium">Style</div>
+            <div class="rail-toggle-group-premium" id="style-toggle">
+              <button class="rail-dot-premium" data-style="ivory" aria-label="Ivory"><span class="dot-label-premium">Ivory</span></button>
+              <button class="rail-dot-premium" data-style="porcelain" aria-label="Porcelain"><span class="dot-label-premium">Porcelain</span></button>
+              <button class="rail-dot-premium" data-style="midnight" aria-label="Midnight"><span class="dot-label-premium">Midnight</span></button>
+              <button class="rail-dot-premium" data-style="heritage" aria-label="Heritage"><span class="dot-label-premium">Heritage</span></button>
+            </div>
+          </div>
         </div>
-        <div class="toggle-group toggle-group-row" id="lang-toggle" aria-label="Language toggle">
-          <button class="toggle-dot small" data-lang="en" aria-label="English">EN</button>
-          <button class="toggle-dot small" data-lang="nl" aria-label="Nederlands">NL</button>
-        </div>
-        <span class="toggle-sep">|</span>
-        <div class="toggle-group toggle-group-row" id="style-toggle" aria-label="Style variant toggle">
-          <button class="toggle-dot small" data-style="ivory" aria-label="Ivory"></button>
-          <button class="toggle-dot small" data-style="midnight" aria-label="Midnight"></button>
-          <button class="toggle-dot small" data-style="heritage" aria-label="Heritage"></button>
-        </div>
-      </div>
+      </aside>
       <nav>
         <a href="#platform" class="nav-link" data-i18n="nav_platform">Platform</a>
         <a href="#usecases" class="nav-link" data-i18n="nav_usecases">Use cases</a>
