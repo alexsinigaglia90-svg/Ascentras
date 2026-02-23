@@ -47,6 +47,34 @@
       </nav>
     </div>
   </header>
+
+  <!-- Style Rail -->
+  <aside class="style-rail" id="style-rail">
+    <div class="rail-capsule">
+      <div class="rail-group">
+        <div class="rail-label">Theme</div>
+        <div class="rail-toggle-group" id="theme-toggle">
+          <button class="rail-dot" data-theme="light" aria-label="Light"></button>
+          <button class="rail-dot" data-theme="dark" aria-label="Dark"></button>
+        </div>
+      </div>
+      <div class="rail-group">
+        <div class="rail-label">Lang</div>
+        <div class="rail-toggle-group" id="lang-toggle">
+          <button class="rail-dot" data-lang="en" aria-label="English">EN</button>
+          <button class="rail-dot" data-lang="nl" aria-label="Nederlands">NL</button>
+        </div>
+      </div>
+      <div class="rail-group">
+        <div class="rail-label">Style</div>
+        <div class="rail-toggle-group" id="style-toggle">
+          <button class="rail-dot" data-style="ivory" aria-label="Ivory"><span class="dot-label">Ivory</span></button>
+          <button class="rail-dot" data-style="midnight" aria-label="Midnight"><span class="dot-label">Midnight</span></button>
+          <button class="rail-dot" data-style="heritage" aria-label="Heritage"><span class="dot-label">Heritage</span></button>
+        </div>
+      </div>
+    </div>
+  </aside>
   <section class="hero" id="hero">
     <video class="hero-video" src="/assets/hero.mp4" autoplay muted loop playsinline poster="" id="hero-video" onerror="this.style.display='none';document.getElementById('hero-fallback').style.display='flex';"></video>
     <div class="hero-fallback" id="hero-fallback">
@@ -65,7 +93,28 @@
     </div>
   </section>
   <main>
-    <section class="platform" id="platform">
+    <section class="operis-app" id="operis-app">
+      <div class="operis-app-container">
+        <div class="operis-header">
+          <div class="operis-logo">Operis</div>
+          <div class="operis-desc">Next-gen Operations Dashboard – Real-time warehouse, staff, and performance insights.</div>
+          <button class="btn pill operis-launch" id="operis-launch">Open Dashboard</button>
+        </div>
+        <div class="operis-dashboard">
+          <div class="operis-warehouse" id="operis-warehouse">
+            <!-- SCADA-like warehouse visualization will be rendered here -->
+          </div>
+          <div class="operis-sidepanel">
+            <div class="operis-staff" id="operis-staff">
+              <!-- Staff assignments and performance -->
+            </div>
+            <div class="operis-charts" id="operis-charts">
+              <!-- Charts and widgets -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
       <div class="container platform-explorer">
         <h2 class="section-title" data-i18n="platform_title">Platform</h2>
         <div class="explorer-grid">

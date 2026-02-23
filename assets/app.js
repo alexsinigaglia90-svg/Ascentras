@@ -1,3 +1,95 @@
+// --- Operis Dashboard Web-App Logic ---
+window.addEventListener('DOMContentLoaded', () => {
+  // Only run if Operis section exists
+  const warehouse = document.getElementById('operis-warehouse');
+  const staff = document.getElementById('operis-staff');
+  const charts = document.getElementById('operis-charts');
+  const launchBtn = document.getElementById('operis-launch');
+  if (!warehouse || !staff || !charts) return;
+
+  // Render warehouse SVG (SCADA-like)
+  warehouse.innerHTML = `
+    <svg id="operis-svg" width="100%" height="340" viewBox="0 0 800 340" style="display:block;max-width:100%;height:340px;">
+      <!-- Warehouse zones, conveyors, pick/replenish areas, AGVs, etc. -->
+      <rect x="40" y="40" width="720" height="260" rx="32" fill="#eaf0f8" stroke="#bfc9d9" stroke-width="3"/>
+      <g id="operis-conveyors">
+        <rect x="80" y="120" width="640" height="24" rx="12" fill="#bfc9d9"/>
+        <rect x="80" y="200" width="640" height="24" rx="12" fill="#bfc9d9"/>
+      </g>
+      <g id="operis-pick">
+        <rect x="80" y="80" width="80" height="32" rx="8" fill="#b3e5fc"/>
+        <rect x="640" y="80" width="80" height="32" rx="8" fill="#b3e5fc"/>
+      </g>
+      <g id="operis-replenish">
+        <rect x="80" y="240" width="80" height="32" rx="8" fill="#ffe082"/>
+        <rect x="640" y="240" width="80" height="32" rx="8" fill="#ffe082"/>
+      </g>
+      <g id="operis-agvs">
+        <circle id="agv1" cx="120" cy="132" r="14" fill="#1976d2"/>
+        <circle id="agv2" cx="680" cy="212" r="14" fill="#1976d2"/>
+      </g>
+      <g id="operis-orders">
+        <rect id="order1" x="200" y="120" width="32" height="24" rx="6" fill="#81c784"/>
+        <rect id="order2" x="400" y="200" width="32" height="24" rx="6" fill="#81c784"/>
+      </g>
+      <g id="operis-staff-icons">
+        <circle cx="100" cy="100" r="10" fill="#ff7043"/>
+        <circle cx="700" cy="100" r="10" fill="#ff7043"/>
+        <circle cx="100" cy="260" r="10" fill="#ff7043"/>
+        <circle cx="700" cy="260" r="10" fill="#ff7043"/>
+      </g>
+    </svg>
+  `;
+
+  // Staff assignments
+  staff.innerHTML = `
+    <div class="staff-title">Staff Assignments</div>
+    <ul class="staff-list">
+      <li><span class="staff-dot" style="background:#ff7043"></span> J. Smith – Pick Area 1 <span class="staff-status ok">OK</span></li>
+      <li><span class="staff-dot" style="background:#ff7043"></span> A. Lee – Pick Area 2 <span class="staff-status warn">Slow</span></li>
+      <li><span class="staff-dot" style="background:#ff7043"></span> M. Chen – Replenishment <span class="staff-status ok">OK</span></li>
+      <li><span class="staff-dot" style="background:#ff7043"></span> S. Patel – Replenishment <span class="staff-status alert">Absent</span></li>
+    </ul>
+  `;
+
+  // Charts (animated)
+  charts.innerHTML = `
+    <div class="chart-title">Performance</div>
+    <svg width="220" height="60" viewBox="0 0 220 60">
+      <polyline id="perf-line" points="0,40 40,30 80,20 120,25 160,18 200,12 220,10" stroke="#1976d2" stroke-width="4" fill="none"/>
+      <circle id="perf-dot" cx="220" cy="10" r="6" fill="#1976d2"/>
+    </svg>
+    <div class="kpi-row">
+      <div class="kpi-chip">Picks: <span id="kpi-picks">0</span></div>
+      <div class="kpi-chip">Replenishments: <span id="kpi-repl">0</span></div>
+      <div class="kpi-chip">AGVs Active: <span id="kpi-agv">2</span></div>
+    </div>
+  `;
+
+  // Animate picks/replenishments
+  let picks = 0, repl = 0, t = 0;
+  setInterval(() => {
+    picks += Math.floor(Math.random()*3);
+    repl += Math.floor(Math.random()*2);
+    document.getElementById('kpi-picks').textContent = picks;
+    document.getElementById('kpi-repl').textContent = repl;
+    // Animate AGVs
+    const agv1 = document.getElementById('agv1');
+    const agv2 = document.getElementById('agv2');
+    if (agv1 && agv2) {
+      agv1.setAttribute('cx', 120 + 200*Math.sin(t/10));
+      agv2.setAttribute('cx', 680 - 200*Math.sin(t/10));
+    }
+    t++;
+  }, 1200);
+
+  // Dashboard open interaction
+  if (launchBtn) {
+    launchBtn.addEventListener('click', () => {
+      alert('Operis Dashboard wordt geopend (demo).');
+    });
+  }
+});
 
 
 // Smooth scroll for hero CTA
@@ -40,10 +132,13 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 
+// Theme, language, and style toggles (rail)
+
 
 // Theme, language, and style toggles (header)
 const themeToggle = document.getElementById('theme-toggle');
 const langToggle = document.getElementById('lang-toggle');
+const styleToggle = document.getElementById('style-toggle');
 const styleToggle = document.getElementById('style-toggle');
 const root = document.documentElement;
 
@@ -51,14 +146,14 @@ const root = document.documentElement;
 function setTheme(theme) {
   root.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
-  Array.from(themeToggle.querySelectorAll('.toggle-dot.small')).forEach(btn => {
+  Array.from(themeToggle.querySelectorAll('button')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.theme === theme);
   });
 }
 function setLang(lang) {
   root.setAttribute('data-lang', lang);
   localStorage.setItem('lang', lang);
-  Array.from(langToggle.querySelectorAll('.toggle-dot.small')).forEach(btn => {
+  Array.from(langToggle.children).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
   applyI18n(lang);
@@ -66,21 +161,21 @@ function setLang(lang) {
 function setStyle(style) {
   root.setAttribute('data-style', style);
   localStorage.setItem('style', style);
-  Array.from(styleToggle.querySelectorAll('.toggle-dot.small')).forEach(btn => {
+  Array.from(styleToggle.querySelectorAll('button')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.style === style);
   });
 }
 
 if (themeToggle) themeToggle.addEventListener('click', e => {
-  const btn = e.target.closest('.toggle-dot[data-theme]');
+  const btn = e.target.closest('button[data-theme]');
   if (btn) setTheme(btn.dataset.theme);
 });
 if (langToggle) langToggle.addEventListener('click', e => {
-  const btn = e.target.closest('.toggle-dot[data-lang]');
+  const btn = e.target.closest('button[data-lang]');
   if (btn) setLang(btn.dataset.lang);
 });
 if (styleToggle) styleToggle.addEventListener('click', e => {
-  const btn = e.target.closest('.toggle-dot[data-style]');
+  const btn = e.target.closest('button[data-style]');
   if (btn) setStyle(btn.dataset.style);
 });
 
@@ -89,8 +184,11 @@ window.addEventListener('DOMContentLoaded', () => {
   setTheme(localStorage.getItem('theme') || 'light');
   setLang(localStorage.getItem('lang') || 'en');
   setStyle(localStorage.getItem('style') || 'ivory');
+  setStyle(localStorage.getItem('style') || 'ivory');
 });
 
+// i18n
+const i18n = {
 // i18n
 const i18n = {
 
