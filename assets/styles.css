@@ -37,393 +37,331 @@
   font-weight: 700;
   color: #f3f6fb;
   outline: none;
-  position: relative;
-  margin: 0;
+    padding: 1.6rem 0 3.8rem 0;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--card-border) 88%, transparent);
   min-width: 28px;
   letter-spacing: 0.06em;
 }
 .header-dot.active {
-  background: rgba(247, 240, 223, 0.95);
+    max-width: 1240px;
   color: #0b1f3a;
-  border-color: rgba(255, 255, 255, 0.75);
+    padding: 0 1.25rem;
   box-shadow: 0 0 0 2px rgba(214, 226, 239, 0.35), 0 0 0 4px rgba(61, 102, 147, 0.22);
 }
-.header-dot:focus {
+    gap: 0.85rem;
   outline: 2px solid rgba(198, 216, 237, 0.85);
   outline-offset: 2px;
 }
 .header-dot:hover {
   border-color: rgba(212, 226, 242, 0.85);
-  transform: translateY(-1px);
-}
+    gap: 1rem;
+    margin-bottom: 0.2rem;
 .header-toggle-group#lang-toggle .header-dot {
   min-width: 34px;
-  height: 28px;
-  font-size: 0.68rem;
-  border-radius: 999px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
   padding: 0 6px;
+    text-transform: uppercase;
 }
 .header-toggle-theme .header-dot:first-child {
-  background: #efe6d3;
+    font-size: 0.86rem;
   border-color: rgba(255,255,255,0.58);
 }
-.header-toggle-theme .header-dot:last-child {
+    opacity: 0.75;
   background: #0f2e55;
   border-color: rgba(151,180,214,0.65);
 }
-.header-toggle-style .header-dot[data-style="ivory"] {
-  background: #f2ead8;
-}
-.header-toggle-style .header-dot[data-style="porcelain"] {
+    font-size: 0.82rem;
+    padding: 0.54em 1.2em;
+    background: color-mix(in srgb, var(--button-secondary-bg) 80%, var(--neutral-100) 20%);
+    border: 1px solid color-mix(in srgb, var(--card-border) 84%, transparent);
   background: #e5ebf3;
 }
-.header-toggle-style .header-dot[data-style="midnight"] {
-  background: #233f64;
-}
+    box-shadow: 0 2px 10px 0 #0B1F3A14;
+    font-weight: 680;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 .header-toggle-style .header-dot[data-style="heritage"] {
   background: #7e6140;
 }
 /* Operis Web-App Section */
 .operis-app {
   background: var(--neutral-100);
-  padding: 2.2rem 0 4rem 0;
+    outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
   box-shadow: inset 0 1px 0 var(--card-border);
   position: relative;
   z-index: 3;
 }
 .operis-app-container {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 0 2rem;
+    grid-template-columns: repeat(5, minmax(108px, 1fr));
+    gap: 0.45rem;
+    margin-bottom: 0.12rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-.operis-header {
-  display: flex;
-  align-items: center;
+    background: color-mix(in srgb, var(--card-bg) 92%, var(--neutral-100) 8%);
+    border: 1px solid color-mix(in srgb, var(--card-border) 88%, transparent);
+    border-radius: 10px;
+    box-shadow: 0 1px 8px 0 #0B1F3A0A;
+    padding: 0.45rem 0.54rem;
   justify-content: space-between;
   gap: 1.5rem;
   margin-bottom: 0.35rem;
 }
 .operis-logo {
-  font-size: 1.9rem;
-  font-weight: 760;
+    font-size: 0.58rem;
+    letter-spacing: 0.11em;
   letter-spacing: 0.03em;
   color: var(--blue);
 }
 .operis-desc {
-  font-size: 0.98rem;
-  color: var(--ink);
+    font-size: 0.88rem;
+    font-weight: 760;
   font-weight: 500;
   opacity: 0.78;
   margin-top: 0.2rem;
 }
-.operis-launch {
-  font-size: 0.92rem;
-  padding: 0.58em 1.45em;
-  background: var(--button-secondary-bg);
-  border: 1px solid var(--card-border);
+    display: block;
   color: var(--button-text);
   border-radius: 999px;
-  box-shadow: 0 4px 14px 0 #0B1F3A14;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  transition: background var(--transition), color var(--transition), box-shadow var(--transition);
-  cursor: pointer;
+    min-height: 620px;
+    background: color-mix(in srgb, var(--card-bg) 94%, var(--neutral-100) 6%);
+    border-radius: 18px;
+    box-shadow: 0 12px 28px 0 #0B1F3A14;
+    border: 1px solid color-mix(in srgb, var(--card-border) 92%, transparent);
 }
 .operis-launch:hover, .operis-launch:focus {
-  background: var(--button-bg);
+    padding: 0.75rem;
   color: var(--button-text);
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
+    box-shadow: 0 12px 28px 0 #0B1F3A14, 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
 
-.operis-runtime-strip {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
-  gap: 0.65rem;
-  margin-bottom: 0.25rem;
-}
+  .operis-console {
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--blue) 90%, #0f4366 10%);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    color: #eef4fb;
+    padding: 0.9rem;
+    min-height: 592px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 0.65rem;
 .runtime-chip {
-  background: color-mix(in srgb, var(--card-bg) 84%, var(--neutral-100) 16%);
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
+  .operis-console-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
   box-shadow: 0 1px 10px 0 #0B1F3A0D;
-  padding: 0.52rem 0.66rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
+  .console-title {
+    font-size: 1.9rem;
+    line-height: 1.1;
+    font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    color: #f7f3ea;
 .runtime-label {
-  font-size: 0.67rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--ink) 65%, transparent);
+  .console-subtitle {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: rgba(228, 236, 247, 0.8);
 }
-.runtime-value {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--blue);
+  .console-period {
+    font-size: 0.74rem;
+    letter-spacing: 0.07em;
+    color: rgba(228, 236, 247, 0.88);
+    text-transform: uppercase;
+
+
+  .operis-grid-board {
+    display: grid;
+    grid-template-columns: 228px 1fr 1fr;
+    grid-template-rows: 170px 170px 170px;
+    gap: 0.62rem;
 }
 
-.operis-dashboard {
-  display: grid;
-  grid-template-columns: minmax(650px, 1.75fr) minmax(310px, 1fr);
-  gap: 1rem;
-  align-items: flex-start;
-  min-height: 560px;
-}
-.operis-warehouse {
-  min-height: 560px;
-  background: color-mix(in srgb, var(--card-bg) 92%, var(--neutral-100) 8%);
-  border-radius: 20px;
-  box-shadow: 0 6px 22px 0 #0B1F3A10;
-  border: 1px solid var(--card-border);
-  position: relative;
-  overflow: hidden;
-  padding: 0.9rem;
-  outline: none;
-}
-.operis-warehouse:focus {
-  box-shadow: 0 6px 22px 0 #0B1F3A10, 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
-}
-.operis-scada {
-  width: 100%;
-  height: 100%;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--neutral-200) 66%, var(--card-bg) 34%);
-  border: 1px solid color-mix(in srgb, var(--card-border) 84%, transparent);
-}
-.scada-grid-line {
-  stroke: color-mix(in srgb, var(--ink) 10%, transparent);
-  stroke-width: 1;
-}
-.scada-zone {
-  fill: color-mix(in srgb, var(--card-bg) 90%, var(--neutral-200) 10%);
-  stroke: color-mix(in srgb, var(--card-border) 90%, var(--accent) 10%);
-  stroke-width: 1.25;
-  transition: fill var(--transition-fast), stroke var(--transition-fast), transform var(--transition-fast);
-}
-.scada-zone:hover,
-.scada-zone.is-focus {
-  fill: color-mix(in srgb, var(--card-bg) 84%, var(--accent) 16%);
-  stroke: var(--accent);
-}
-.scada-zone-label {
-  fill: color-mix(in srgb, var(--ink) 82%, transparent);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  font-weight: 650;
-}
-.scada-conveyor {
-  stroke: color-mix(in srgb, var(--accent) 42%, var(--card-border) 58%);
-  stroke-width: 10;
-  stroke-linecap: round;
-  fill: none;
-  opacity: 0.9;
-}
-.scada-conveyor-core {
-  stroke: color-mix(in srgb, var(--accent) 72%, transparent);
-  stroke-width: 3;
-  fill: none;
-  stroke-linecap: round;
-}
-.scada-tote {
-  fill: color-mix(in srgb, var(--button-bg) 68%, var(--accent) 32%);
-  stroke: color-mix(in srgb, var(--card-bg) 80%, transparent);
-  stroke-width: 2;
-}
-.scada-worker {
-  fill: color-mix(in srgb, var(--button-bg-hover) 55%, var(--accent) 45%);
-  stroke: color-mix(in srgb, var(--card-bg) 90%, transparent);
-  stroke-width: 2;
-}
-.scada-pulse {
-  fill: none;
-  stroke: color-mix(in srgb, var(--accent) 70%, transparent);
-  stroke-width: 2;
-  opacity: 0.55;
-}
-.scada-status-pill {
-  fill: color-mix(in srgb, var(--card-bg) 94%, var(--neutral-100) 6%);
-  stroke: color-mix(in srgb, var(--card-border) 84%, transparent);
-  stroke-width: 1;
-}
-.scada-status-text {
-  fill: color-mix(in srgb, var(--ink) 76%, transparent);
-  font-size: 11px;
-  font-weight: 650;
-}
+  .op-card {
+    appearance: none;
+    width: 100%;
+    border: 1px solid rgba(151, 182, 211, 0.44);
+    background: rgba(20, 75, 105, 0.58);
+    border-radius: 12px;
+    color: #eff4fb;
+    text-align: left;
+    padding: 0.66rem 0.72rem;
+    cursor: pointer;
+    transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: inset 0 1px 0 rgba(238, 244, 252, 0.06);
+  }
+  .op-card:hover,
+  .op-card:focus-visible,
+  .op-card.active {
+    transform: translateY(-1px);
+    border-color: rgba(214, 185, 133, 0.82);
+    background: rgba(30, 89, 121, 0.7);
+    box-shadow: 0 6px 18px rgba(4, 27, 48, 0.42);
+    outline: none;
+  }
 
-.operis-tooltip {
-  position: absolute;
-  pointer-events: none;
-  right: 1rem;
-  top: 1rem;
-  max-width: 280px;
-  border-radius: 12px;
+  .op-stack {
+    display: grid;
+    gap: 0.58rem;
+    grid-row: span 3;
+  }
+  .op-card-minititle {
+    font-size: 0.73rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #d4d3c8;
+  }
+  .op-card-value {
+    margin-top: 0.35rem;
+    font-size: 1.55rem;
+    font-weight: 760;
+    color: #f5f8fc;
+  }
+  .op-card-delta {
+    margin-top: 0.28rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+  }
+  .delta-up {
+    color: #9cd6a4;
+  }
+  .delta-down {
+    color: #ef9ca2;
+  }
+
+  .op-card-title {
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(235, 242, 252, 0.88);
+    margin-bottom: 0.45rem;
+  }
+  .op-card-large {
+    display: grid;
+    align-content: space-between;
+  }
+  .op-donut-wrap {
+    display: grid;
+    grid-template-columns: 128px 1fr;
+    gap: 0.6rem;
+    align-items: center;
+  }
+  .op-ring {
+    width: 128px;
+    height: 128px;
+  }
+  .op-ring-bg {
+    fill: none;
+    stroke: rgba(242, 246, 250, 0.15);
+    stroke-width: 12;
+  }
+  .op-ring-val {
+    fill: none;
+    stroke: #d4a531;
+    stroke-width: 12;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+  .op-ring-label {
+    fill: #f0f4fa;
+    font-size: 9px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+  .op-ring-value {
+    fill: #f6f8fc;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .op-list {
+    display: grid;
+    gap: 0.4rem;
+  }
+  .op-list-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.83rem;
+    color: rgba(237, 244, 252, 0.9);
+  }
+
+  .op-country-chart {
+    width: 100%;
+    height: 106px;
+  }
+  .op-country-legends {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.3rem 0.5rem;
+    margin-top: 0.4rem;
+  }
+  .op-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    color: rgba(237, 244, 252, 0.9);
+  }
+  .op-legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+
+  .op-gauge {
+    width: 100%;
+    height: 72px;
+  }
+  .op-gauge-track {
+    fill: none;
+    stroke: rgba(242,246,251,0.2);
+    stroke-width: 8;
+  }
+  .op-gauge-value {
+    fill: none;
+    stroke: #d4a531;
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+  .op-gauge-text {
+    fill: #f4f8fc;
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .op-mix-chart,
+  .op-profit-chart {
+    width: 100%;
+    height: 110px;
+  }
+
+  .op-bottom-note {
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: rgba(232, 239, 248, 0.7);
+  }
+
+  .operis-sidepanel {
+    display: none;
   border: 1px solid var(--card-border);
-  background: color-mix(in srgb, var(--card-bg) 93%, var(--neutral-100) 7%);
-  box-shadow: 0 8px 16px #0B1F3A14;
-  padding: 0.6rem 0.7rem;
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
-}
-.operis-tooltip.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-.operis-tooltip-title {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--ink) 70%, transparent);
-}
-.operis-tooltip-value {
-  margin-top: 0.2rem;
-  font-size: 0.95rem;
-  color: var(--blue);
-  font-weight: 680;
-}
-.operis-sidepanel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-.operis-staff {
-  background: color-mix(in srgb, var(--card-bg) 93%, var(--neutral-100) 7%);
-  border-radius: 16px;
-  box-shadow: 0 2px 12px 0 #0B1F3A0C;
-  border: 1px solid var(--card-border);
-  padding: 0.86rem;
-  min-height: 205px;
-}
-.operis-charts {
-  background: color-mix(in srgb, var(--card-bg) 93%, var(--neutral-100) 7%);
-  border-radius: 16px;
-  box-shadow: 0 2px 12px 0 #0B1F3A0C;
-  border: 1px solid var(--card-border);
-  padding: 0.86rem;
-  min-height: 180px;
-}
-.operis-systems {
-  background: color-mix(in srgb, var(--card-bg) 93%, var(--neutral-100) 7%);
-  border-radius: 16px;
-  box-shadow: 0 2px 12px 0 #0B1F3A0C;
-  border: 1px solid var(--card-border);
-  padding: 0.86rem;
-  min-height: 132px;
-}
-.operis-panel-title {
-  margin: 0 0 0.65rem 0;
-  color: var(--blue);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-.operis-staff-list {
-  display: grid;
-  gap: 0.5rem;
-}
-.staff-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.35rem;
-  padding: 0.52rem;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--card-border) 80%, transparent);
-  background: color-mix(in srgb, var(--card-bg) 88%, var(--neutral-100) 12%);
-  transition: transform var(--transition-fast), border var(--transition-fast), box-shadow var(--transition-fast);
-}
-.staff-row:hover,
-.staff-row:focus-within {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--card-border) 58%);
-  box-shadow: 0 6px 14px #0B1F3A12;
-}
-.staff-main {
-  display: grid;
-  gap: 0.12rem;
-}
-.staff-name {
-  color: var(--ink);
-  font-size: 0.88rem;
-  font-weight: 650;
-}
-.staff-zone {
-  color: color-mix(in srgb, var(--ink) 70%, transparent);
-  font-size: 0.75rem;
-  letter-spacing: 0.03em;
-}
-.staff-metric {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-.staff-status {
-  border-radius: 999px;
-  font-size: 0.66rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.45rem;
-  font-weight: 700;
-}
-.staff-status.healthy {
-  color: #0f4f2f;
-  background: #d9f1e4;
-}
-.staff-status.warning {
-  color: #705000;
-  background: #fff3cf;
-}
-.staff-status.critical {
-  color: #7a1b21;
-  background: #ffdfe2;
-}
-.operis-chart-wrap {
-  display: grid;
-  gap: 0.6rem;
-}
-.operis-mini-chart {
-  width: 100%;
-  height: 78px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--card-border) 75%, transparent);
-  background: color-mix(in srgb, var(--card-bg) 89%, var(--neutral-100) 11%);
-}
-.operis-bars {
-  display: grid;
-  gap: 0.4rem;
-}
-.operis-bar-row {
-  display: grid;
-  grid-template-columns: 72px 1fr 42px;
-  gap: 0.35rem;
-  align-items: center;
-}
-.operis-bar-label {
-  font-size: 0.69rem;
-  letter-spacing: 0.04em;
-  color: color-mix(in srgb, var(--ink) 72%, transparent);
-}
-.operis-bar-track {
-  height: 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--card-border) 66%, transparent);
-  overflow: hidden;
-}
-.operis-bar-fill {
   height: 100%;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 75%, var(--button-bg) 25%);
-  transition: width var(--transition);
-}
 .operis-bar-val {
-  text-align: right;
+      grid-template-columns: repeat(3, minmax(100px, 1fr));
+    }
+    .operis-grid-board {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(5, minmax(130px, auto));
+    }
+    .op-stack {
+      grid-column: span 2;
+      grid-row: auto;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .op-stack .op-card {
+      min-height: 110px;
   font-size: 0.73rem;
   color: var(--blue);
   font-weight: 700;
@@ -433,8 +371,22 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.45rem;
 }
+    .operis-grid-board {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+    }
+    .op-stack {
+      grid-column: span 1;
+      grid-template-columns: 1fr;
+    }
+    .op-donut-wrap {
+      grid-template-columns: 1fr;
+    }
+    .op-ring {
+      margin: 0 auto;
+    }
 .system-tile {
-  border: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
+      min-height: 520px;
   border-radius: 10px;
   background: color-mix(in srgb, var(--card-bg) 89%, var(--neutral-100) 11%);
   padding: 0.5rem;
