@@ -1,4 +1,8 @@
 :root {
+  --cream: #F5F1E8;
+  --ink: #121212;
+  --brown: #6A4E42;
+  --glass: rgba(28,42,57,0.08);
   --bg: #f6f2ea;
   --surface: #ffffff;
   --text: #0d1b2c;
@@ -15,6 +19,7 @@
 }
 
 :root[data-theme='dark'] {
+  --glass: rgba(137,168,203,0.12);
   --bg: #0c1727;
   --surface: #13253a;
   --text: #ecf2fb;
