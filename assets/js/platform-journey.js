@@ -69,6 +69,7 @@
       const ScrollTrigger = window.ScrollTrigger;
 
       gsap.registerPlugin(ScrollTrigger);
+      console.log('[PlatformJourney] GSAP+ScrollTrigger loaded');
 
       const ascentra = worlds.find((world) => world.dataset.world === 'ascentra');
       const operis = worlds.find((world) => world.dataset.world === 'operis');
