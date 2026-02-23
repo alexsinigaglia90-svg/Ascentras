@@ -262,9 +262,9 @@ html, body {
 .nav-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   height: 64px;
-  gap: var(--space-md);
+  gap: 2.5em;
 }
 
 /* Style Rail */
@@ -324,6 +324,7 @@ html, body {
   justify-content: center;
   font-size: 0.9em;
   font-weight: 700;
+  color: var(--accent);
   color: var(--accent);
   outline: none;
   position: relative;

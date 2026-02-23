@@ -23,6 +23,22 @@
   <header class="topnav" id="topnav">
     <div class="container nav-inner">
       <span class="logo">Ascentra</span>
+      <div class="header-toggles-row">
+        <div class="toggle-group toggle-group-row" id="theme-toggle" aria-label="Theme toggle">
+          <button class="toggle-dot small" data-theme="light" aria-label="Light"></button>
+          <button class="toggle-dot small" data-theme="dark" aria-label="Dark"></button>
+        </div>
+        <div class="toggle-group toggle-group-row" id="lang-toggle" aria-label="Language toggle">
+          <button class="toggle-dot small" data-lang="en" aria-label="English">EN</button>
+          <button class="toggle-dot small" data-lang="nl" aria-label="Nederlands">NL</button>
+        </div>
+        <span class="toggle-sep">|</span>
+        <div class="toggle-group toggle-group-row" id="style-toggle" aria-label="Style variant toggle">
+          <button class="toggle-dot small" data-style="ivory" aria-label="Ivory"></button>
+          <button class="toggle-dot small" data-style="midnight" aria-label="Midnight"></button>
+          <button class="toggle-dot small" data-style="heritage" aria-label="Heritage"></button>
+        </div>
+      </div>
       <nav>
         <a href="#platform" class="nav-link" data-i18n="nav_platform">Platform</a>
         <a href="#usecases" class="nav-link" data-i18n="nav_usecases">Use cases</a>
@@ -67,7 +83,7 @@
     <div class="hero-overlay-gradient"></div>
     <div class="hero-vignette"></div>
     <div class="hero-content">
-      <div class="hero-eyebrow" data-i18n="hero_eyebrow">OPERATIONAL EXCELLENCE</div>
+      <!-- Eyebrow removed as requested -->
       <h1 class="hero-headline" data-i18n="hero_headline">Operational Excellence, engineered with intelligence.</h1>
       <p class="hero-subcopy" data-i18n="hero_subcopy">Empowering industry leaders with seamless, resilient, and beautiful solutions.</p>
       <div class="hero-ctas">

@@ -133,10 +133,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 // Theme, language, and style toggles (rail)
+
+
+// Theme, language, and style toggles (header)
 const themeToggle = document.getElementById('theme-toggle');
 const langToggle = document.getElementById('lang-toggle');
 const styleToggle = document.getElementById('style-toggle');
+const styleToggle = document.getElementById('style-toggle');
 const root = document.documentElement;
+
 
 function setTheme(theme) {
   root.setAttribute('data-theme', theme);
@@ -148,7 +153,7 @@ function setTheme(theme) {
 function setLang(lang) {
   root.setAttribute('data-lang', lang);
   localStorage.setItem('lang', lang);
-  Array.from(langToggle.querySelectorAll('button')).forEach(btn => {
+  Array.from(langToggle.children).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
   applyI18n(lang);
@@ -179,8 +184,11 @@ window.addEventListener('DOMContentLoaded', () => {
   setTheme(localStorage.getItem('theme') || 'light');
   setLang(localStorage.getItem('lang') || 'en');
   setStyle(localStorage.getItem('style') || 'ivory');
+  setStyle(localStorage.getItem('style') || 'ivory');
 });
 
+// i18n
+const i18n = {
 // i18n
 const i18n = {
 
