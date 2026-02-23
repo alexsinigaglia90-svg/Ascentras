@@ -282,6 +282,39 @@ body {
   background: color-mix(in srgb, var(--blue) 58%, var(--brown) 42%);
 }
 
+.platform-journey.journey-fallback {
+  min-height: auto;
+  padding: 2rem 0;
+}
+
+.platform-journey.journey-fallback .platform-journey-stage {
+  position: static;
+  height: auto;
+  min-height: 0;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.platform-journey.journey-fallback .platform-lines {
+  display: none;
+}
+
+.platform-journey.journey-fallback .journey-previews {
+  display: block;
+  min-height: 0;
+}
+
+.platform-journey.journey-fallback .journey-world,
+.platform-journey.journey-fallback .journey-world.is-active,
+.platform-journey.journey-fallback[data-state='entry'] .journey-world,
+.platform-journey.journey-fallback[data-state='entry'] .journey-world.is-active {
+  position: static !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  margin-bottom: 0.8rem;
+}
+
 @media (max-width: 1024px) {
   .platform-journey-stage {
     grid-template-columns: 1fr;
