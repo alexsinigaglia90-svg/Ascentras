@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ascentra – Operational Excellence</title>
+  <meta name="description" content="Ascentra: Operational excellence, engineered with elegance.">
+  <meta property="og:title" content="Ascentra – Operational Excellence">
+  <meta property="og:description" content="Operational excellence, engineered with elegance.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ascentra.com/">
+  <meta property="og:image" content="/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ascentra – Operational Excellence">
+  <meta name="twitter:description" content="Operational excellence, engineered with elegance.">
+  <meta name="twitter:image" content="/assets/og-image.png">
+  <link rel="preload" href="/assets/styles.css" as="style">
+  <link rel="preload" href="/assets/app.js" as="script">
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script defer src="/assets/app.js"></script>
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <div class="container">
+      <span class="logo">Ascentra</span>
+      <nav>
+        <a href="#platform" class="nav-link">Platform</a>
+        <a href="#usecases" class="nav-link">Use Cases</a>
+      </nav>
+    </div>
+  </header>
+  <section class="hero" id="hero">
+    <video class="hero-video" src="/assets/hero.mp4" autoplay muted loop playsinline poster="" onerror="this.style.display='none';document.getElementById('hero-fallback').style.display='flex';"></video>
+    <div class="hero-fallback" id="hero-fallback">
+      <div class="hero-gradient"></div>
+    </div>
+    <div class="hero-overlay glass">
+      <h1>Ascentra</h1>
+      <p class="tagline">Operational excellence, engineered with elegance.</p>
+      <button class="btn primary" id="cta-explore">Explore platform</button>
+    </div>
+  </section>
+  <main>
+    <section class="platform" id="platform">
+      <div class="container platform-explorer">
+        <nav class="explorer-nav" id="explorer-nav">
+          <button class="nav-item active" data-tab="IFS">IFS</button>
+          <button class="nav-item" data-tab="IPS">IPS</button>
+          <button class="nav-item" data-tab="ICS">ICS</button>
+          <button class="nav-item" data-tab="Hardware">Hardware</button>
+        </nav>
+        <div class="explorer-panel glass" id="explorer-panel">
+          <!-- Dynamic content via JS -->
+        </div>
+      </div>
+    </section>
+    <section class="usecases" id="usecases">
+      <div class="container">
+        <h2>Use Cases</h2>
+        <div class="usecase-cards">
+          <div class="card glass">
+            <h3>Smart Manufacturing</h3>
+            <p>Realtime insights &amp; control for next-gen factories.</p>
+          </div>
+          <div class="card glass">
+            <h3>Energy Optimization</h3>
+            <p>Reduce waste, maximize uptime, sustainable operations.</p>
+          </div>
+          <div class="card glass">
+            <h3>Critical Infrastructure</h3>
+            <p>Secure, resilient, and scalable for mission-critical needs.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="container">
+      <span>&copy; 2026 Ascentra. All rights reserved.</span>
+    </div>
+  </footer>
+</body>
+</html>
