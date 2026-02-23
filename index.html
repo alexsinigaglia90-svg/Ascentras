@@ -29,18 +29,36 @@
         <a href="#contact" class="nav-link" data-i18n="nav_contact">Contact</a>
         <button class="btn nav-cta" id="nav-cta" data-i18n="nav_cta">Contact</button>
       </nav>
-      <div class="nav-toggles">
-        <div class="toggle-group theme-toggle" id="theme-toggle" aria-label="Theme toggle">
-          <button class="toggle-dot" data-theme="light" aria-label="Light"></button>
-          <button class="toggle-dot" data-theme="dark" aria-label="Dark"></button>
+    </div>
+  </header>
+
+  <!-- Style Rail -->
+  <aside class="style-rail" id="style-rail">
+    <div class="rail-capsule">
+      <div class="rail-group">
+        <div class="rail-label">Theme</div>
+        <div class="rail-toggle-group" id="theme-toggle">
+          <button class="rail-dot" data-theme="light" aria-label="Light"></button>
+          <button class="rail-dot" data-theme="dark" aria-label="Dark"></button>
         </div>
-        <div class="toggle-group lang-toggle" id="lang-toggle" aria-label="Language toggle">
-          <button class="toggle-dot" data-lang="nl" aria-label="Nederlands">NL</button>
-          <button class="toggle-dot" data-lang="en" aria-label="English">EN</button>
+      </div>
+      <div class="rail-group">
+        <div class="rail-label">Lang</div>
+        <div class="rail-toggle-group" id="lang-toggle">
+          <button class="rail-dot" data-lang="en" aria-label="English">EN</button>
+          <button class="rail-dot" data-lang="nl" aria-label="Nederlands">NL</button>
+        </div>
+      </div>
+      <div class="rail-group">
+        <div class="rail-label">Style</div>
+        <div class="rail-toggle-group" id="style-toggle">
+          <button class="rail-dot" data-style="ivory" aria-label="Ivory"><span class="dot-label">Ivory</span></button>
+          <button class="rail-dot" data-style="midnight" aria-label="Midnight"><span class="dot-label">Midnight</span></button>
+          <button class="rail-dot" data-style="heritage" aria-label="Heritage"><span class="dot-label">Heritage</span></button>
         </div>
       </div>
     </div>
-  </header>
+  </aside>
   <section class="hero" id="hero">
     <video class="hero-video" src="/assets/hero.mp4" autoplay muted loop playsinline poster="" id="hero-video" onerror="this.style.display='none';document.getElementById('hero-fallback').style.display='flex';"></video>
     <div class="hero-fallback" id="hero-fallback">
@@ -60,24 +78,29 @@
   </section>
   <main>
     <section class="platform" id="platform">
-      <div class="container platform-cards">
+      <div class="container platform-explorer">
         <h2 class="section-title" data-i18n="platform_title">Platform</h2>
-        <div class="platform-card-row">
-          <div class="platform-card">
-            <div class="platform-card-title" data-i18n="platform_ifs">IFS</div>
-            <div class="platform-card-desc" data-i18n="platform_ifs_desc">Intelligent Factory Suite: Orchestrate, monitor, and optimize manufacturing operations in real time.</div>
-          </div>
-          <div class="platform-card">
-            <div class="platform-card-title" data-i18n="platform_ips">IPS</div>
-            <div class="platform-card-desc" data-i18n="platform_ips_desc">Industrial Process Suite: Automate and control complex process flows with precision.</div>
-          </div>
-          <div class="platform-card">
-            <div class="platform-card-title" data-i18n="platform_ics">ICS</div>
-            <div class="platform-card-desc" data-i18n="platform_ics_desc">Industrial Control Suite: Secure, scalable, and resilient control for critical infrastructure.</div>
-          </div>
-          <div class="platform-card">
-            <div class="platform-card-title" data-i18n="platform_hw">Hardware</div>
-            <div class="platform-card-desc" data-i18n="platform_hw_desc">Edge Hardware: Rugged, reliable, and high-performance devices for industrial environments.</div>
+        <div class="explorer-grid">
+          <nav class="explorer-nav" id="explorer-nav">
+            <button class="explorer-nav-btn active" data-platform="IFS" data-i18n="platform_ifs">IFS</button>
+            <button class="explorer-nav-btn" data-platform="IPS" data-i18n="platform_ips">IPS</button>
+            <button class="explorer-nav-btn" data-platform="ICS" data-i18n="platform_ics">ICS</button>
+            <button class="explorer-nav-btn" data-platform="Hardware" data-i18n="platform_hw">Hardware</button>
+          </nav>
+          <div class="explorer-panel" id="explorer-panel">
+            <div class="explorer-title" data-i18n="platform_ifs">IFS</div>
+            <div class="explorer-desc" data-i18n="platform_ifs_desc">Intelligent Factory Suite: Orchestrate, monitor, and optimize manufacturing operations in real time.</div>
+            <div class="explorer-kpis">
+              <div class="kpi-chip"><span class="kpi-label">OEE</span> <span class="kpi-value">98.2%</span></div>
+              <div class="kpi-chip"><span class="kpi-label">Downtime</span> <span class="kpi-value">1.1h/mo</span></div>
+              <div class="kpi-chip"><span class="kpi-label">Yield</span> <span class="kpi-value">99.7%</span></div>
+            </div>
+            <div class="explorer-chart">
+              <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polyline points="0,38 20,30 40,20 60,10 80,12 100,8 120,6" stroke="#0B1F3A" stroke-width="3" fill="none"/>
+                <circle cx="120" cy="6" r="4" fill="#0B1F3A"/>
+              </svg>
+            </div>
           </div>
         </div>
       </div>
