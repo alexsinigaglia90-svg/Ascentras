@@ -1,17 +1,20 @@
 
+
 // Smooth scroll for hero CTA
 function smoothScrollTo(selector) {
   const el = document.querySelector(selector);
   if (!el) return;
   el.scrollIntoView({ behavior: 'smooth' });
 }
-const cta = document.getElementById('cta-explore');
-if (cta) {
-  cta.addEventListener('click', function(e) {
-    e.preventDefault();
-    smoothScrollTo('#platform');
-  });
-}
+['cta-explore', 'cta-meeting'].forEach(id => {
+  const btn = document.getElementById(id);
+  if (btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      smoothScrollTo('#platform');
+    });
+  }
+});
 
 // Sticky nav on scroll
 const nav = document.getElementById('topnav');
@@ -26,15 +29,118 @@ window.addEventListener('scroll', () => {
   }
 });
 
-// Hero image fallback if not found
+// Hero video fallback
 window.addEventListener('DOMContentLoaded', () => {
-  const heroBg = document.getElementById('hero-bg');
-  if (heroBg) {
-    const img = new window.Image();
-    img.src = '/assets/hero.jpg';
-    img.onload = () => { heroBg.classList.remove('noimg'); };
-    img.onerror = () => { heroBg.classList.add('noimg'); };
+  const heroVideo = document.getElementById('hero-video');
+  if (heroVideo) {
+    heroVideo.addEventListener('loadeddata', function() {
+      document.getElementById('hero-fallback').style.display = 'none';
+    });
   }
+});
+
+// Theme & language toggles
+const themeToggle = document.getElementById('theme-toggle');
+const langToggle = document.getElementById('lang-toggle');
+const root = document.documentElement;
+
+function setTheme(theme) {
+  root.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  Array.from(themeToggle.children).forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === theme);
+  });
+}
+function setLang(lang) {
+  root.setAttribute('data-lang', lang);
+  localStorage.setItem('lang', lang);
+  Array.from(langToggle.children).forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  applyI18n(lang);
+}
+
+themeToggle.addEventListener('click', e => {
+  if (e.target.classList.contains('toggle-dot')) {
+    setTheme(e.target.dataset.theme);
+  }
+});
+langToggle.addEventListener('click', e => {
+  if (e.target.classList.contains('toggle-dot')) {
+    setLang(e.target.dataset.lang);
+  }
+});
+
+// i18n
+const i18n = {
+  en: {
+    nav_platform: 'Platform',
+    nav_usecases: 'Use cases',
+    nav_contact: 'Contact',
+    nav_cta: 'Contact',
+    hero_eyebrow: 'OPERATIONAL EXCELLENCE',
+    hero_headline: 'Operational Excellence, engineered with intelligence.',
+    hero_subcopy: 'Empowering industry leaders with seamless, resilient, and beautiful solutions.',
+    hero_cta_explore: 'Explore platform',
+    hero_cta_meeting: 'Plan a meeting',
+    platform_title: 'Platform',
+    platform_ifs: 'IFS',
+    platform_ifs_desc: 'Intelligent Factory Suite: Orchestrate, monitor, and optimize manufacturing operations in real time.',
+    platform_ips: 'IPS',
+    platform_ips_desc: 'Industrial Process Suite: Automate and control complex process flows with precision.',
+    platform_ics: 'ICS',
+    platform_ics_desc: 'Industrial Control Suite: Secure, scalable, and resilient control for critical infrastructure.',
+    platform_hw: 'Hardware',
+    platform_hw_desc: 'Edge Hardware: Rugged, reliable, and high-performance devices for industrial environments.',
+    usecases_title: 'Use Cases',
+    usecases_smart: 'Smart Manufacturing',
+    usecases_smart_desc: 'Realtime insights & control for next-gen factories.',
+    usecases_energy: 'Energy Optimization',
+    usecases_energy_desc: 'Reduce waste, maximize uptime, sustainable operations.',
+    usecases_infra: 'Critical Infrastructure',
+    usecases_infra_desc: 'Secure, resilient, and scalable for mission-critical needs.'
+  },
+  nl: {
+    nav_platform: 'Platform',
+    nav_usecases: 'Toepassingen',
+    nav_contact: 'Contact',
+    nav_cta: 'Contact',
+    hero_eyebrow: 'OPERATIONELE EXCELLENTIE',
+    hero_headline: 'Operationele excellentie, ontworpen met intelligentie.',
+    hero_subcopy: 'Industrie leiders versterken met naadloze, veerkrachtige en elegante oplossingen.',
+    hero_cta_explore: 'Ontdek platform',
+    hero_cta_meeting: 'Plan een afspraak',
+    platform_title: 'Platform',
+    platform_ifs: 'IFS',
+    platform_ifs_desc: 'Intelligent Factory Suite: Orkestreer, monitor en optimaliseer productieprocessen realtime.',
+    platform_ips: 'IPS',
+    platform_ips_desc: 'Industrial Process Suite: Automatiseer en beheer complexe processtromen met precisie.',
+    platform_ics: 'ICS',
+    platform_ics_desc: 'Industrial Control Suite: Veilig, schaalbaar en veerkrachtig voor kritieke infrastructuur.',
+    platform_hw: 'Hardware',
+    platform_hw_desc: 'Edge Hardware: Robuuste, betrouwbare en krachtige apparaten voor industriële omgevingen.',
+    usecases_title: 'Toepassingen',
+    usecases_smart: 'Slimme productie',
+    usecases_smart_desc: 'Realtime inzicht & controle voor de fabriek van de toekomst.',
+    usecases_energy: 'Energie optimalisatie',
+    usecases_energy_desc: 'Verminder verspilling, maximaliseer uptime, duurzame operatie.',
+    usecases_infra: 'Kritieke infrastructuur',
+    usecases_infra_desc: 'Veilig, veerkrachtig en schaalbaar voor missiekritische behoeften.'
+  }
+};
+
+function applyI18n(lang) {
+  const dict = i18n[lang] || i18n.en;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) el.textContent = dict[key];
+  });
+}
+
+// Init theme/lang from localStorage
+window.addEventListener('DOMContentLoaded', () => {
+  setTheme(localStorage.getItem('theme') || 'light');
+  setLang(localStorage.getItem('lang') || 'en');
 });
 
 
