@@ -135,7 +135,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // Theme, language, and style toggles (rail)
 
 
-// Theme, language, and style toggles (premium left rail)
+// Theme, language, and style toggles (header controls cluster)
 const themeToggle = document.getElementById('theme-toggle');
 const langToggle = document.getElementById('lang-toggle');
 const styleToggle = document.getElementById('style-toggle');
@@ -144,14 +144,14 @@ const root = document.documentElement;
 function setTheme(theme) {
   root.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
-  Array.from(themeToggle.querySelectorAll('.rail-dot-premium')).forEach(btn => {
+  Array.from(themeToggle.querySelectorAll('.header-dot')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.theme === theme);
   });
 }
 function setLang(lang) {
   root.setAttribute('data-lang', lang);
   localStorage.setItem('lang', lang);
-  Array.from(langToggle.querySelectorAll('.rail-dot-premium')).forEach(btn => {
+  Array.from(langToggle.querySelectorAll('.header-dot')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
   applyI18n(lang);
@@ -159,21 +159,21 @@ function setLang(lang) {
 function setStyle(style) {
   root.setAttribute('data-style', style);
   localStorage.setItem('style', style);
-  Array.from(styleToggle.querySelectorAll('.rail-dot-premium')).forEach(btn => {
+  Array.from(styleToggle.querySelectorAll('.header-dot')).forEach(btn => {
     btn.classList.toggle('active', btn.dataset.style === style);
   });
 }
 
 if (themeToggle) themeToggle.addEventListener('click', e => {
-  const btn = e.target.closest('.rail-dot-premium[data-theme]');
+  const btn = e.target.closest('.header-dot[data-theme]');
   if (btn) setTheme(btn.dataset.theme);
 });
 if (langToggle) langToggle.addEventListener('click', e => {
-  const btn = e.target.closest('.rail-dot-premium[data-lang]');
+  const btn = e.target.closest('.header-dot[data-lang]');
   if (btn) setLang(btn.dataset.lang);
 });
 if (styleToggle) styleToggle.addEventListener('click', e => {
-  const btn = e.target.closest('.rail-dot-premium[data-style]');
+  const btn = e.target.closest('.header-dot[data-style]');
   if (btn) setStyle(btn.dataset.style);
 });
 
