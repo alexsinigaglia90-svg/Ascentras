@@ -85,110 +85,404 @@
 }
 /* Operis Web-App Section */
 .operis-app {
-  background: linear-gradient(120deg, var(--ivory) 0%, var(--porcelain) 100%);
-  padding: 0 0 4rem 0;
-  box-shadow: 0 8px 32px 0 #0B1F3A08;
+  background: var(--neutral-100);
+  padding: 2.2rem 0 4rem 0;
+  box-shadow: inset 0 1px 0 var(--card-border);
   position: relative;
   z-index: 3;
 }
 .operis-app-container {
-  max-width: 1400px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 3.5rem 2.5rem 0 2.5rem;
+  padding: 0 2rem;
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 1rem;
 }
 .operis-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2.5rem;
-  margin-bottom: 1.5rem;
+  gap: 1.5rem;
+  margin-bottom: 0.35rem;
 }
 .operis-logo {
-  font-size: 2.2rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-size: 1.9rem;
+  font-weight: 760;
+  letter-spacing: 0.03em;
   color: var(--blue);
-  text-shadow: 0 2px 12px #0B1F3A11;
 }
 .operis-desc {
-  font-size: 1.18rem;
-  color: var(--accent);
+  font-size: 0.98rem;
+  color: var(--ink);
   font-weight: 500;
-  flex: 1 1 auto;
-  opacity: 0.85;
+  opacity: 0.78;
+  margin-top: 0.2rem;
 }
 .operis-launch {
-  font-size: 1.1rem;
-  padding: 0.7em 2.2em;
-  background: var(--button-bg);
+  font-size: 0.92rem;
+  padding: 0.58em 1.45em;
+  background: var(--button-secondary-bg);
+  border: 1px solid var(--card-border);
   color: var(--button-text);
   border-radius: 999px;
-  border: none;
-  box-shadow: 0 2px 12px 0 #0B1F3A11;
-  font-weight: 700;
+  box-shadow: 0 4px 14px 0 #0B1F3A14;
+  font-weight: 650;
+  letter-spacing: 0.02em;
   transition: background var(--transition), color var(--transition), box-shadow var(--transition);
   cursor: pointer;
 }
 .operis-launch:hover, .operis-launch:focus {
-  background: var(--button-bg-hover);
+  background: var(--button-bg);
   color: var(--button-text);
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
-.operis-dashboard {
-  display: flex;
-  gap: 2.5rem;
-  align-items: flex-start;
-  min-height: 480px;
+
+.operis-runtime-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.25rem;
 }
-.operis-warehouse {
-  flex: 2 1 0;
-  min-width: 480px;
-  min-height: 420px;
-  background: linear-gradient(120deg, #eaf0f8 0%, #f8f6f1 100%);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 4px 32px 0 #0B1F3A11;
-  border: 1.5px solid var(--card-border);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-}
-.operis-sidepanel {
-  flex: 1 1 320px;
-  min-width: 320px;
+.runtime-chip {
+  background: color-mix(in srgb, var(--card-bg) 84%, var(--neutral-100) 16%);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 10px 0 #0B1F3A0D;
+  padding: 0.52rem 0.66rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 0.1rem;
+}
+.runtime-label {
+  font-size: 0.67rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 65%, transparent);
+}
+.runtime-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.operis-dashboard {
+  display: grid;
+  grid-template-columns: minmax(650px, 1.75fr) minmax(310px, 1fr);
+  gap: 1rem;
+  align-items: flex-start;
+  min-height: 560px;
+}
+.operis-warehouse {
+  min-height: 560px;
+  background: color-mix(in srgb, var(--card-bg) 92%, var(--neutral-100) 8%);
+  border-radius: 20px;
+  box-shadow: 0 6px 22px 0 #0B1F3A10;
+  border: 1px solid var(--card-border);
+  position: relative;
+  overflow: hidden;
+  padding: 0.9rem;
+  outline: none;
+}
+.operis-warehouse:focus {
+  box-shadow: 0 6px 22px 0 #0B1F3A10, 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.operis-scada {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--neutral-200) 66%, var(--card-bg) 34%);
+  border: 1px solid color-mix(in srgb, var(--card-border) 84%, transparent);
+}
+.scada-grid-line {
+  stroke: color-mix(in srgb, var(--ink) 10%, transparent);
+  stroke-width: 1;
+}
+.scada-zone {
+  fill: color-mix(in srgb, var(--card-bg) 90%, var(--neutral-200) 10%);
+  stroke: color-mix(in srgb, var(--card-border) 90%, var(--accent) 10%);
+  stroke-width: 1.25;
+  transition: fill var(--transition-fast), stroke var(--transition-fast), transform var(--transition-fast);
+}
+.scada-zone:hover,
+.scada-zone.is-focus {
+  fill: color-mix(in srgb, var(--card-bg) 84%, var(--accent) 16%);
+  stroke: var(--accent);
+}
+.scada-zone-label {
+  fill: color-mix(in srgb, var(--ink) 82%, transparent);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  font-weight: 650;
+}
+.scada-conveyor {
+  stroke: color-mix(in srgb, var(--accent) 42%, var(--card-border) 58%);
+  stroke-width: 10;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.9;
+}
+.scada-conveyor-core {
+  stroke: color-mix(in srgb, var(--accent) 72%, transparent);
+  stroke-width: 3;
+  fill: none;
+  stroke-linecap: round;
+}
+.scada-tote {
+  fill: color-mix(in srgb, var(--button-bg) 68%, var(--accent) 32%);
+  stroke: color-mix(in srgb, var(--card-bg) 80%, transparent);
+  stroke-width: 2;
+}
+.scada-worker {
+  fill: color-mix(in srgb, var(--button-bg-hover) 55%, var(--accent) 45%);
+  stroke: color-mix(in srgb, var(--card-bg) 90%, transparent);
+  stroke-width: 2;
+}
+.scada-pulse {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 70%, transparent);
+  stroke-width: 2;
+  opacity: 0.55;
+}
+.scada-status-pill {
+  fill: color-mix(in srgb, var(--card-bg) 94%, var(--neutral-100) 6%);
+  stroke: color-mix(in srgb, var(--card-border) 84%, transparent);
+  stroke-width: 1;
+}
+.scada-status-text {
+  fill: color-mix(in srgb, var(--ink) 76%, transparent);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.operis-tooltip {
+  position: absolute;
+  pointer-events: none;
+  right: 1rem;
+  top: 1rem;
+  max-width: 280px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: color-mix(in srgb, var(--card-bg) 93%, var(--neutral-100) 7%);
+  box-shadow: 0 8px 16px #0B1F3A14;
+  padding: 0.6rem 0.7rem;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+.operis-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.operis-tooltip-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+.operis-tooltip-value {
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  color: var(--blue);
+  font-weight: 680;
+}
+.operis-sidepanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 .operis-staff {
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow: 0 2px 12px 0 #0B1F3A08;
-  border: 1.5px solid var(--card-border);
-  padding: 1.2rem 1.5rem;
-  min-height: 120px;
-  margin-bottom: 1.2rem;
+  background: color-mix(in srgb, var(--card-bg) 93%, var(--neutral-100) 7%);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 #0B1F3A0C;
+  border: 1px solid var(--card-border);
+  padding: 0.86rem;
+  min-height: 205px;
 }
 .operis-charts {
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow: 0 2px 12px 0 #0B1F3A08;
-  border: 1.5px solid var(--card-border);
-  padding: 1.2rem 1.5rem;
+  background: color-mix(in srgb, var(--card-bg) 93%, var(--neutral-100) 7%);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 #0B1F3A0C;
+  border: 1px solid var(--card-border);
+  padding: 0.86rem;
   min-height: 180px;
+}
+.operis-systems {
+  background: color-mix(in srgb, var(--card-bg) 93%, var(--neutral-100) 7%);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 #0B1F3A0C;
+  border: 1px solid var(--card-border);
+  padding: 0.86rem;
+  min-height: 132px;
+}
+.operis-panel-title {
+  margin: 0 0 0.65rem 0;
+  color: var(--blue);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.operis-staff-list {
+  display: grid;
+  gap: 0.5rem;
+}
+.staff-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem;
+  padding: 0.52rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--card-border) 80%, transparent);
+  background: color-mix(in srgb, var(--card-bg) 88%, var(--neutral-100) 12%);
+  transition: transform var(--transition-fast), border var(--transition-fast), box-shadow var(--transition-fast);
+}
+.staff-row:hover,
+.staff-row:focus-within {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--card-border) 58%);
+  box-shadow: 0 6px 14px #0B1F3A12;
+}
+.staff-main {
+  display: grid;
+  gap: 0.12rem;
+}
+.staff-name {
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+.staff-zone {
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+}
+.staff-metric {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.staff-status {
+  border-radius: 999px;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.45rem;
+  font-weight: 700;
+}
+.staff-status.healthy {
+  color: #0f4f2f;
+  background: #d9f1e4;
+}
+.staff-status.warning {
+  color: #705000;
+  background: #fff3cf;
+}
+.staff-status.critical {
+  color: #7a1b21;
+  background: #ffdfe2;
+}
+.operis-chart-wrap {
+  display: grid;
+  gap: 0.6rem;
+}
+.operis-mini-chart {
+  width: 100%;
+  height: 78px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--card-border) 75%, transparent);
+  background: color-mix(in srgb, var(--card-bg) 89%, var(--neutral-100) 11%);
+}
+.operis-bars {
+  display: grid;
+  gap: 0.4rem;
+}
+.operis-bar-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 42px;
+  gap: 0.35rem;
+  align-items: center;
+}
+.operis-bar-label {
+  font-size: 0.69rem;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+.operis-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card-border) 66%, transparent);
+  overflow: hidden;
+}
+.operis-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 75%, var(--button-bg) 25%);
+  transition: width var(--transition);
+}
+.operis-bar-val {
+  text-align: right;
+  font-size: 0.73rem;
+  color: var(--blue);
+  font-weight: 700;
+}
+.system-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+.system-tile {
+  border: 1px solid color-mix(in srgb, var(--card-border) 82%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--card-bg) 89%, var(--neutral-100) 11%);
+  padding: 0.5rem;
+  display: grid;
+  gap: 0.15rem;
+}
+.system-name {
+  font-size: 0.67rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+.system-value {
+  color: var(--blue);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+body[data-theme="dark"] .staff-status.healthy {
+  color: #b6f6cf;
+  background: #173427;
+}
+body[data-theme="dark"] .staff-status.warning {
+  color: #f4d688;
+  background: #3f3112;
+}
+body[data-theme="dark"] .staff-status.critical {
+  color: #ffb7bc;
+  background: #472025;
 }
 @media (max-width: 1100px) {
   .operis-dashboard {
-    flex-direction: column;
-    gap: 1.5rem;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
   }
-  .operis-warehouse, .operis-sidepanel {
-    min-width: 0;
-    width: 100%;
+  .operis-runtime-strip {
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .operis-app-container {
+    padding: 0 0.8rem;
+  }
+  .operis-runtime-strip {
+    grid-template-columns: repeat(2, minmax(110px, 1fr));
+  }
+  .operis-warehouse {
+    min-height: 420px;
   }
 }
 /* Palette */
