@@ -1,63 +1,86 @@
-// Smooth scroll CTA
+
+// Smooth scroll for hero CTA
+function smoothScrollTo(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth' });
+}
 const cta = document.getElementById('cta-explore');
 if (cta) {
   cta.addEventListener('click', function(e) {
     e.preventDefault();
-    document.getElementById('platform').scrollIntoView({ behavior: 'smooth' });
+    smoothScrollTo('#platform');
   });
 }
 
-// Sticky topbar appear on scroll
-const topbar = document.getElementById('topbar');
-let topbarVisible = false;
+// Sticky nav on scroll
+const nav = document.getElementById('topnav');
+let navSticky = false;
 window.addEventListener('scroll', () => {
-  if (window.scrollY > 32 && !topbarVisible) {
-    topbar.classList.add('visible');
-    topbarVisible = true;
-  } else if (window.scrollY <= 32 && topbarVisible) {
-    topbar.classList.remove('visible');
-    topbarVisible = false;
+  if (window.scrollY > 32 && !navSticky) {
+    nav.classList.add('sticky');
+    navSticky = true;
+  } else if (window.scrollY <= 32 && navSticky) {
+    nav.classList.remove('sticky');
+    navSticky = false;
   }
 });
+
+// Hero image fallback if not found
+window.addEventListener('DOMContentLoaded', () => {
+  const heroBg = document.getElementById('hero-bg');
+  if (heroBg) {
+    const img = new window.Image();
+    img.src = '/assets/hero.jpg';
+    img.onload = () => { heroBg.classList.remove('noimg'); };
+    img.onerror = () => { heroBg.classList.add('noimg'); };
+  }
+});
+
 
 // Platform explorer state
 const explorerNav = document.getElementById('explorer-nav');
 const explorerPanel = document.getElementById('explorer-panel');
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const platformData = {
   IFS: {
+    title: 'IFS',
     desc: 'Intelligent Factory Suite: Orchestrate, monitor, and optimize manufacturing operations in real time.',
     kpis: [
-      { label: 'OEE', value: 98.2, unit: '%'},
-      { label: 'Downtime', value: 1.1, unit: 'h/mo'},
-      { label: 'Yield', value: 99.7, unit: '%'}
+      { label: 'OEE', value: 98.2, unit: '%', icon: '⚙️'},
+      { label: 'Downtime', value: 1.1, unit: 'h/mo', icon: '⏱️'},
+      { label: 'Yield', value: 99.7, unit: '%', icon: '📈'}
     ],
     chart: [82, 90, 95, 98, 97, 98, 98]
   },
   IPS: {
+    title: 'IPS',
     desc: 'Industrial Process Suite: Automate and control complex process flows with precision.',
     kpis: [
-      { label: 'Throughput', value: 1200, unit: 'units/h'},
-      { label: 'Energy Use', value: 0.82, unit: 'kWh/unit'},
-      { label: 'Defects', value: 0.2, unit: '%'}
+      { label: 'Throughput', value: 1200, unit: 'units/h', icon: '🔄'},
+      { label: 'Energy Use', value: 0.82, unit: 'kWh/unit', icon: '⚡'},
+      { label: 'Defects', value: 0.2, unit: '%', icon: '❌'}
     ],
     chart: [1100, 1150, 1200, 1190, 1200, 1205, 1200]
   },
   ICS: {
+    title: 'ICS',
     desc: 'Industrial Control Suite: Secure, scalable, and resilient control for critical infrastructure.',
     kpis: [
-      { label: 'Uptime', value: 99.999, unit: '%'},
-      { label: 'Latency', value: 2, unit: 'ms'},
-      { label: 'Incidents', value: 0, unit: 'this year'}
+      { label: 'Uptime', value: 99.999, unit: '%', icon: '🔒'},
+      { label: 'Latency', value: 2, unit: 'ms', icon: '⚡'},
+      { label: 'Incidents', value: 0, unit: 'this year', icon: '🛡️'}
     ],
     chart: [99.99, 99.995, 99.999, 99.999, 99.999, 99.999, 99.999]
   },
   Hardware: {
+    title: 'Hardware',
     desc: 'Edge Hardware: Rugged, reliable, and high-performance devices for industrial environments.',
     kpis: [
-      { label: 'MTBF', value: 120000, unit: 'h'},
-      { label: 'Temp Range', value: '-40~85', unit: '°C'},
-      { label: 'Power', value: 8, unit: 'W avg'}
+      { label: 'MTBF', value: 120000, unit: 'h', icon: '🔋'},
+      { label: 'Temp Range', value: '-40~85', unit: '°C', icon: '🌡️'},
+      { label: 'Power', value: 8, unit: 'W avg', icon: '🔌'}
     ],
     chart: [7, 8, 8, 8, 8, 8, 8]
   }
@@ -67,10 +90,12 @@ function renderPanel(tab) {
   const data = platformData[tab];
   if (!data) return;
   explorerPanel.innerHTML = `
+    <h3 class="panel-title">${data.title}</h3>
     <div class="desc">${data.desc}</div>
     <div class="kpi-row">
       ${data.kpis.map(kpi => `
-        <div class="kpi">
+        <div class="kpi" tabindex="0">
+          <span class="kpi-icon" aria-hidden="true">${kpi.icon}</span>
           <span class="kpi-label">${kpi.label}</span>
           <span class="kpi-value">${kpi.value}<span class="kpi-unit">${kpi.unit}</span></span>
         </div>
@@ -78,31 +103,55 @@ function renderPanel(tab) {
     </div>
     <div class="chart">${renderChart(tab, data.chart)}</div>
   `;
+  if (!prefersReducedMotion) {
+    const chart = explorerPanel.querySelector('.chart');
+    if (chart) {
+      chart.style.opacity = 0;
+      setTimeout(() => { chart.style.opacity = 1; }, 60);
+    }
+  }
 }
 
 function renderChart(tab, values) {
-  // Simple SVG line or bar chart
-  const w = 220, h = 60, pad = 12;
+  // Cinematic SVG line chart with animate-in
+  const w = 240, h = 72, pad = 16;
   const min = Math.min(...values), max = Math.max(...values);
   const points = values.map((v,i) => {
     const x = pad + i * ((w-2*pad)/(values.length-1));
     const y = h - pad - ((v-min)/(max-min||1))*(h-2*pad);
     return `${x},${y}`;
   }).join(' ');
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-    <polyline points="${points}" fill="none" stroke="#0B1F3A" stroke-width="3" stroke-linecap="round" style="filter: drop-shadow(0 2px 8px #0B1F3A22)"/>
-    <circle cx="${w-pad}" cy="${h - pad - ((values[values.length-1]-min)/(max-min||1))*(h-2*pad)}" r="5" fill="#6B4E2E"/>
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible">
+    <defs>
+      <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#0B1F3A" stop-opacity=".9"/>
+        <stop offset="100%" stop-color="#6B4E2E" stop-opacity=".5"/>
+      </linearGradient>
+    </defs>
+    <polyline points="${points}" fill="none" stroke="url(#g1)" stroke-width="4" stroke-linecap="round" style="filter: drop-shadow(0 2px 8px #0B1F3A22)"/>
+    <circle cx="${w-pad}" cy="${h - pad - ((values[values.length-1]-min)/(max-min||1))*(h-2*pad)}" r="7" fill="#6B4E2E"/>
   </svg>`;
 }
 
-// Tab switching
+// Tab switching + focus/keyboard
 if (explorerNav && explorerPanel) {
   explorerNav.addEventListener('click', e => {
     if (e.target.classList.contains('nav-item')) {
-      Array.from(explorerNav.children).forEach(btn => btn.classList.remove('active'));
+      Array.from(explorerNav.children).forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      });
       e.target.classList.add('active');
+      e.target.setAttribute('aria-selected', 'true');
       renderPanel(e.target.dataset.tab);
+      explorerPanel.focus();
     }
+  });
+  explorerNav.addEventListener('keydown', e => {
+    const items = Array.from(explorerNav.querySelectorAll('.nav-item'));
+    const idx = items.findIndex(btn => btn.classList.contains('active'));
+    if (e.key === 'ArrowDown' && idx < items.length-1) { items[idx+1].focus(); }
+    if (e.key === 'ArrowUp' && idx > 0) { items[idx-1].focus(); }
   });
   // Initial render
   renderPanel('IFS');
