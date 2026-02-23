@@ -7,16 +7,13 @@
   --shadow: rgba(18, 18, 18, 0.12);
 }
 
-body {
-  background: var(--cream);
-  color: var(--ink);
-}
-
 .platform-journey {
+  --pj-progress: 0;
   position: relative;
   min-height: 320vh;
-  background: radial-gradient(circle at 18% 16%, rgba(28, 42, 57, 0.04), transparent 46%),
-    radial-gradient(circle at 82% 74%, rgba(106, 78, 66, 0.07), transparent 55%),
+  background:
+    radial-gradient(circle at 18% 16%, rgba(28, 42, 57, 0.05), transparent 46%),
+    radial-gradient(circle at 82% 74%, rgba(106, 78, 66, 0.08), transparent 55%),
     var(--cream);
   overflow: clip;
 }
@@ -33,90 +30,112 @@ body {
 
 .platform-journey-stage {
   position: relative;
-  height: 100vh;
   width: min(1240px, 94vw);
+  height: 100vh;
   margin-inline: auto;
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
   align-items: center;
-  gap: clamp(1.2rem, 3vw, 2.6rem);
 }
 
 .platform-lines {
   position: absolute;
-  inset: 11% 0 10% 0;
+  inset: 10% 0;
   pointer-events: none;
-  opacity: 0.42;
+  opacity: 0.36;
+  transition: opacity 320ms ease;
 }
 
 .platform-lines .line {
   position: absolute;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(28, 42, 57, 0.32), transparent);
+  background: linear-gradient(90deg, transparent, rgba(28, 42, 57, 0.36), transparent);
   transform-origin: left center;
+  will-change: transform, opacity;
 }
 
-.platform-lines .l1 { top: 22%; left: 2%; width: 46%; }
-.platform-lines .l2 { top: 33%; right: 2%; width: 42%; }
-.platform-lines .l3 { top: 62%; left: 10%; width: 37%; }
-.platform-lines .l4 { top: 74%; right: 8%; width: 32%; }
+.platform-lines .l1 { top: 20%; left: 3%; width: 45%; }
+.platform-lines .l2 { top: 34%; right: 4%; width: 42%; }
+.platform-lines .l3 { top: 63%; left: 9%; width: 40%; }
+.platform-lines .l4 { top: 76%; right: 8%; width: 34%; }
 
-.journey-copy {
+.pj-worlds {
   position: relative;
-  z-index: 4;
-  max-width: 520px;
+  height: 100%;
 }
 
-.journey-kicker {
+.pj-world {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  align-items: center;
+  gap: clamp(1.2rem, 3vw, 2.6rem);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.pj-world.is-active {
+  pointer-events: auto;
+}
+
+.pj-copy {
+  max-width: 520px;
+  transform: translateY(24px);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.pj-kicker {
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   font-size: 0.72rem;
-  color: rgba(18, 18, 18, 0.64);
+  color: rgba(18, 18, 18, 0.62);
 }
 
-.journey-title {
+.pj-title {
   margin: 0.5rem 0 0;
-  font-size: clamp(2.05rem, 5vw, 4rem);
+  font-size: clamp(2.1rem, 5vw, 4rem);
+  line-height: 1.06;
   font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  letter-spacing: 0.01em;
   color: var(--blue);
 }
 
-.journey-subtitle {
-  margin: 0.72rem 0 0;
-  font-size: clamp(1rem, 1.45vw, 1.15rem);
-  color: rgba(18, 18, 18, 0.76);
+.pj-subtitle {
+  margin: 0.74rem 0 0;
+  font-size: clamp(1rem, 1.45vw, 1.16rem);
+  color: rgba(18, 18, 18, 0.75);
   max-width: 48ch;
 }
 
-.journey-bullets {
+.pj-bullets {
   margin: 0.95rem 0 0;
   padding-left: 1rem;
   color: rgba(18, 18, 18, 0.76);
   display: grid;
-  gap: 0.42rem;
+  gap: 0.4rem;
   font-size: 0.95rem;
 }
 
-.journey-cta {
-  margin-top: 1.2rem;
+.pj-cta {
+  margin-top: 1.22rem;
   display: inline-flex;
+  min-height: 42px;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
   padding: 0.62rem 1.1rem;
   border-radius: 999px;
+  text-decoration: none;
   border: 1px solid color-mix(in srgb, var(--blue) 80%, var(--brown) 20%);
   color: var(--blue);
-  text-decoration: none;
-  background: color-mix(in srgb, var(--cream) 92%, white 8%);
+  background: color-mix(in srgb, var(--cream) 92%, #fff 8%);
   box-shadow: 0 6px 16px color-mix(in srgb, var(--shadow) 60%, transparent);
   transition: border-color 220ms ease, color 220ms ease, transform 220ms ease, box-shadow 220ms ease;
 }
 
-.journey-cta:hover,
-.journey-cta:focus-visible {
+.pj-cta:hover,
+.pj-cta:focus-visible {
   transform: translateY(-1px);
   color: var(--brown);
   border-color: var(--brown);
@@ -124,27 +143,10 @@ body {
   outline: none;
 }
 
-.journey-previews {
-  position: relative;
-  min-height: 540px;
-  display: grid;
-  align-items: center;
-}
-
-.journey-world {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  align-items: center;
+.pj-preview {
+  transform: translateX(24px) translateY(calc((var(--pj-progress) - 0.5) * 10px)) scale(0.98);
   opacity: 0;
-  transform: translateY(10px) scale(0.985);
-  pointer-events: none;
-}
-
-.journey-world.is-active {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
+  will-change: transform, opacity;
 }
 
 .app-window {
@@ -267,65 +269,65 @@ body {
   gap: 0.5rem;
 }
 
-.platform-journey[data-state='entry'] .journey-world,
-.platform-journey[data-state='entry'] .journey-world.is-active {
-  opacity: 0;
-  transform: translateY(12px) scale(0.985);
+.platform-journey[data-world='operis'] {
+  background:
+    radial-gradient(circle at 24% 22%, rgba(28, 42, 57, 0.09), transparent 48%),
+    radial-gradient(circle at 80% 74%, rgba(106, 78, 66, 0.10), transparent 56%),
+    var(--cream);
 }
 
-.platform-journey[data-world='operis'] .journey-title,
-.platform-journey[data-world='astra'] .journey-title {
-  color: color-mix(in srgb, var(--blue) 86%, var(--brown) 14%);
+.platform-journey[data-world='astra'] {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(28, 42, 57, 0.12), transparent 52%),
+    radial-gradient(circle at 78% 72%, rgba(106, 78, 66, 0.08), transparent 58%),
+    var(--cream);
+}
+
+.platform-journey[data-world='astra'] .platform-lines {
+  opacity: 0.2;
 }
 
 .platform-journey[data-world='astra'] .node {
   background: color-mix(in srgb, var(--blue) 58%, var(--brown) 42%);
 }
 
-.platform-journey.journey-fallback {
+.platform-journey.pj-fallback {
   min-height: auto;
   padding: 2rem 0;
 }
 
-.platform-journey.journey-fallback .platform-journey-stage {
-  position: static;
-  height: auto;
-  min-height: 0;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-.platform-journey.journey-fallback .platform-lines {
+.platform-journey.pj-fallback .platform-lines {
   display: none;
 }
 
-.platform-journey.journey-fallback .journey-previews {
-  display: block;
-  min-height: 0;
+.platform-journey.pj-fallback .platform-journey-stage {
+  height: auto;
 }
 
-.platform-journey.journey-fallback .journey-world,
-.platform-journey.journey-fallback .journey-world.is-active,
-.platform-journey.journey-fallback[data-state='entry'] .journey-world,
-.platform-journey.journey-fallback[data-state='entry'] .journey-world.is-active {
+.platform-journey.pj-fallback .pj-worlds {
+  display: grid;
+  gap: 1rem;
+}
+
+.platform-journey.pj-fallback .pj-world {
   position: static !important;
   opacity: 1 !important;
   transform: none !important;
   pointer-events: auto !important;
-  margin-bottom: 0.8rem;
+  grid-template-columns: 1fr;
+  border-top: 1px solid rgba(28, 42, 57, 0.12);
+  padding-top: 1rem;
+}
+
+.platform-journey.pj-fallback .pj-copy,
+.platform-journey.pj-fallback .pj-preview {
+  transform: none !important;
+  opacity: 1 !important;
 }
 
 @media (max-width: 1024px) {
-  .platform-journey-stage {
+  .pj-world {
     grid-template-columns: 1fr;
-    align-content: center;
-    padding: 1rem 0;
-    height: auto;
-    min-height: 100vh;
-  }
-
-  .journey-previews {
-    min-height: 420px;
   }
 
   .app-window {
@@ -336,34 +338,39 @@ body {
 @media (max-width: 760px) {
   .platform-journey {
     min-height: auto;
-    padding: 2.1rem 0;
+    padding: 2rem 0;
   }
 
   .platform-journey-stage {
-    position: static;
-    min-height: 0;
-    gap: 1rem;
+    height: auto;
   }
 
   .platform-lines {
     display: none;
   }
 
-  .journey-title {
-    font-size: clamp(1.8rem, 9vw, 2.5rem);
+  .pj-world {
+    position: static;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    margin-bottom: 1rem;
   }
 
-  .journey-bullets {
-    font-size: 0.9rem;
+  .pj-copy,
+  .pj-preview {
+    opacity: 1;
+    transform: none;
   }
 
-  .journey-previews {
-    min-height: 350px;
+  .pj-worlds {
+    display: grid;
+    gap: 1rem;
   }
 
   .panel-grid,
-  .astra-stats,
-  .ops-grid {
+  .ops-grid,
+  .astra-stats {
     grid-template-columns: 1fr;
   }
 }
@@ -374,24 +381,29 @@ body {
     padding: 2rem 0;
   }
 
+  .platform-lines {
+    display: none;
+  }
+
   .platform-journey-stage {
-    position: static;
     height: auto;
-    min-height: 0;
-    grid-template-columns: 1fr;
+  }
+
+  .pj-worlds {
+    display: grid;
     gap: 1rem;
   }
 
-  .journey-world {
-    position: relative;
+  .pj-world {
+    position: static;
     opacity: 1;
     transform: none;
     pointer-events: auto;
-    margin-bottom: 0.8rem;
   }
 
-  .journey-previews {
-    display: block;
-    min-height: 0;
+  .pj-copy,
+  .pj-preview {
+    opacity: 1;
+    transform: none;
   }
 }
