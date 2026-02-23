@@ -1,3 +1,6 @@
+/ascentra     /ascentra/index.html   200
+/operis       /operis/index.html     200
+/astra        /astra/index.html      200
 /index.html  /  301
 /assets/*    /assets/:splat  200
 /*           /  200

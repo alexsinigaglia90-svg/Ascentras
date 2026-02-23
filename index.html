@@ -15,8 +15,14 @@
   <meta name="twitter:description" content="Operational excellence, engineered with elegance.">
   <meta name="twitter:image" content="/assets/og-image.png">
   <link rel="preload" href="/assets/styles.css" as="style">
+  <link rel="preload" href="/assets/css/platform-journey.css" as="style">
   <link rel="preload" href="/assets/app.js" as="script">
+  <link rel="preload" href="/assets/js/platform-journey.js" as="script">
   <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="stylesheet" href="/assets/css/platform-journey.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script defer src="/assets/js/platform-journey.js"></script>
   <script defer src="/assets/app.js"></script>
 </head>
 <body>
@@ -68,6 +74,70 @@
     </div>
   </section>
   <main>
+    <section id="platform-journey" class="platform-journey" aria-label="Journey through Ascentra, Operis and Astra">
+      <div class="platform-journey-noise" aria-hidden="true"></div>
+      <div class="platform-journey-stage" id="platform-journey-stage">
+        <div class="platform-lines" aria-hidden="true">
+          <span class="line l1"></span>
+          <span class="line l2"></span>
+          <span class="line l3"></span>
+          <span class="line l4"></span>
+        </div>
+        <div class="journey-copy">
+          <p class="journey-kicker" data-journey-key="kicker">Platform Journey</p>
+          <h2 class="journey-title" id="journey-title">Ascentra</h2>
+          <p class="journey-subtitle" id="journey-subtitle">Consulting intelligence and engineering orchestration for measurable execution.</p>
+          <ul class="journey-bullets" id="journey-bullets">
+            <li>Strategy and operating model alignment</li>
+            <li>Mechanization and software architecture</li>
+            <li>Execution governance with measurable outcomes</li>
+          </ul>
+          <a class="journey-cta" id="journey-cta" href="/ascentra" aria-label="Explore Ascentra">Explore Ascentra</a>
+        </div>
+
+        <div class="journey-previews" id="journey-previews">
+          <article class="journey-world world-ascentra is-active" data-world="ascentra" aria-label="Ascentra web app preview">
+            <div class="app-window glass">
+              <header class="app-head" data-journey-key="preview_ascentra_head">Ascentra Orchestration</header>
+              <div class="panel-grid">
+                <div class="panel-card" data-journey-key="preview_ascentra_strategy">Strategy</div>
+                <div class="panel-card" data-journey-key="preview_ascentra_mechanization">Mechanization</div>
+                <div class="panel-card" data-journey-key="preview_ascentra_software">Software</div>
+              </div>
+              <div class="kpi-strip">
+                <span>ROI +18%</span><span>Lead Time -23%</span><span>Uptime 99.4%</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="journey-world world-operis" data-world="operis" aria-label="Operis web app preview">
+            <div class="app-window glass">
+              <header class="app-head" data-journey-key="preview_operis_head">Operis Operational Control</header>
+              <div class="ops-grid">
+                <div class="shift-tile" data-journey-key="preview_operis_shift_a">Shift A · 21 staff</div>
+                <div class="shift-tile" data-journey-key="preview_operis_shift_b">Shift B · 19 staff</div>
+                <div class="shift-tile" data-journey-key="preview_operis_shift_c">Shift C · 17 staff</div>
+                <div class="perf-badge" data-journey-key="preview_operis_execution">Execution 97.8%</div>
+              </div>
+              <div class="assist-ribbon" data-journey-key="preview_operis_ribbon">Backed by Ascentra dashboard assist</div>
+            </div>
+          </article>
+
+          <article class="journey-world world-astra" data-world="astra" aria-label="Astra web app preview">
+            <div class="app-window glass">
+              <header class="app-head" data-journey-key="preview_astra_head">Astra Mission Console</header>
+              <div class="astra-mission" data-journey-key="preview_astra_mission">Cycle Count Run · Zone D4</div>
+              <div class="astra-map">
+                <span class="node n1"></span><span class="node n2"></span><span class="node n3"></span>
+                <span class="node n4"></span><span class="node n5"></span>
+              </div>
+              <div class="astra-stats"><span data-journey-key="preview_astra_battery">Battery 84%</span><span data-journey-key="preview_astra_coverage">Coverage 92%</span><span data-journey-key="preview_astra_drone">Drone 06 · Active</span></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="operis-app" id="operis-app">
       <div class="operis-app-container">
         <div class="operis-header">
@@ -97,7 +167,7 @@
         </div>
       </div>
     </section>
-      <div class="container platform-explorer">
+      <div class="container platform-explorer" id="platform">
         <h2 class="section-title" data-i18n="platform_title">Platform</h2>
         <div class="explorer-grid">
           <nav class="explorer-nav" id="explorer-nav">
