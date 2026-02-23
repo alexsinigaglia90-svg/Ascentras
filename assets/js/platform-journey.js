@@ -328,6 +328,7 @@
       const timeline = window.gsap.timeline({
         defaults: { ease: 'power2.inOut' },
         scrollTrigger: {
+          id: 'platformJourneyPin',
           trigger: section,
           start: 'top top',
           end: '+=300%',
@@ -359,6 +360,17 @@
         .to('.journey-previews', { y: -2, duration: 0.1 }, 0.6)
         .to(lines, { scaleX: 1.28, opacity: 0.34, duration: 0.1 }, 0.82)
         .to('.journey-previews', { y: 0, duration: 0.1 }, 0.88);
+
+      window.setTimeout(() => {
+        if (section.classList.contains('journey-fallback')) return;
+
+        const pinTrigger = window.ScrollTrigger.getById('platformJourneyPin');
+        const hasPin = Boolean(pinTrigger && (pinTrigger.pin || (pinTrigger.vars && pinTrigger.vars.pin)));
+
+        if (!hasPin) {
+          forceVisibleFallback(section, new Error('ScrollTrigger pin guard: pin not active'));
+        }
+      }, 1000);
 
       section.addEventListener('mousemove', (event) => {
         const rect = stage.getBoundingClientRect();
