@@ -6,6 +6,7 @@
       console.error('[PlatformJourney] fallback:', reason);
     }
 
+    root.classList.remove('pj-enhanced');
     root.classList.add('pj-fallback');
     root.setAttribute('data-world', 'ascentra');
 
@@ -70,6 +71,7 @@
 
       gsap.registerPlugin(ScrollTrigger);
       console.log('[PlatformJourney] GSAP+ScrollTrigger loaded');
+      root.classList.add('pj-enhanced');
 
       const ascentra = worlds.find((world) => world.dataset.world === 'ascentra');
       const operis = worlds.find((world) => world.dataset.world === 'operis');

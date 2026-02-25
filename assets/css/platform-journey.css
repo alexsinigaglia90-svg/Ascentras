@@ -60,7 +60,8 @@
 
 .pj-worlds {
   position: relative;
-  height: 100%;
+  display: grid;
+  gap: 1rem;
 }
 
 .pj-build-indicator {
@@ -86,29 +87,22 @@
 }
 
 .pj-world {
-  position: absolute;
-  inset: 0;
+  position: static;
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   align-items: center;
   gap: clamp(1.2rem, 3vw, 2.6rem);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
   z-index: 1;
   will-change: opacity, transform;
 }
 
-.pj-world.is-active {
-  visibility: visible;
-  pointer-events: auto;
-  z-index: 3;
-}
-
 .pj-copy {
   max-width: 520px;
-  transform: translateY(24px);
-  opacity: 0;
+  transform: none;
+  opacity: 1;
   will-change: transform, opacity;
 }
 
@@ -170,9 +164,37 @@
 }
 
 .pj-preview {
+  transform: none;
+  opacity: 1;
+  will-change: transform, opacity;
+}
+
+.platform-journey.pj-enhanced .pj-worlds {
+  height: 100%;
+}
+
+.platform-journey.pj-enhanced .pj-world {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.platform-journey.pj-enhanced .pj-world.is-active {
+  visibility: visible;
+  pointer-events: auto;
+  z-index: 3;
+}
+
+.platform-journey.pj-enhanced .pj-copy {
+  transform: translateY(24px);
+  opacity: 0;
+}
+
+.platform-journey.pj-enhanced .pj-preview {
   transform: translateX(24px) translateY(calc((var(--pj-progress) - 0.5) * 10px)) scale(0.98);
   opacity: 0;
-  will-change: transform, opacity;
 }
 
 .app-window {
