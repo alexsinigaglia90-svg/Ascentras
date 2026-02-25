@@ -78,7 +78,7 @@
             bestDistance = distance;
             candidate = world;
           }
-          const inView = rect.bottom > window.innerHeight * 0.08 && rect.top < window.innerHeight * 0.92;
+          const inView = rect.bottom > window.innerHeight * 0.02 && rect.top < window.innerHeight * 0.98;
           world.classList.toggle('is-revealed', inView);
         });
 
@@ -118,6 +118,7 @@
       window.addEventListener('scroll', onScrollOrResize, { passive: true });
       window.addEventListener('resize', onScrollOrResize);
       updateActiveWorld();
+      window.setTimeout(updateActiveWorld, 80);
 
       root.addEventListener('mousemove', (event) => {
         if (!gsap) return;

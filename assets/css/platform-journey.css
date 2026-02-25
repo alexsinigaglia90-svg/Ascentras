@@ -93,12 +93,13 @@
   grid-template-columns: 1fr 1.2fr;
   align-items: center;
   gap: clamp(1.2rem, 3vw, 2.6rem);
-  opacity: 0.78;
+  opacity: 0.38;
   visibility: visible;
   pointer-events: auto;
   z-index: 1;
-  transform: translateY(14px);
-  transition: opacity 260ms ease, transform 260ms ease;
+  transform: translateY(22px) scale(0.985);
+  filter: saturate(0.82);
+  transition: opacity 340ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 340ms cubic-bezier(0.22, 0.61, 0.36, 1), filter 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
   border-top: 1px solid rgba(28, 42, 57, 0.1);
   padding-top: clamp(0.9rem, 2.2vw, 1.2rem);
   will-change: opacity, transform;
@@ -110,13 +111,44 @@
 }
 
 .pj-world.is-revealed {
-  opacity: 0.92;
-  transform: translateY(4px);
+  opacity: 0.78;
+  transform: translateY(10px) scale(0.993);
+  filter: saturate(0.94);
 }
 
 .pj-world.is-active {
   opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: saturate(1);
+}
+
+.pj-copy,
+.pj-preview {
+  opacity: 0.32;
+  transform: translateY(14px);
+  transition: opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.pj-world.is-revealed .pj-copy,
+.pj-world.is-revealed .pj-preview {
+  opacity: 0.84;
+  transform: translateY(4px);
+}
+
+.pj-world.is-active .pj-copy,
+.pj-world.is-active .pj-preview {
+  opacity: 1;
   transform: translateY(0);
+}
+
+.pj-world .app-window {
+  transition: transform 340ms cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 340ms cubic-bezier(0.22, 0.61, 0.36, 1), border-color 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.pj-world.is-active .app-window {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 38px rgba(18, 18, 18, 0.18);
+  border-color: color-mix(in srgb, var(--blue) 24%, transparent);
 }
 
 .pj-copy {
@@ -425,15 +457,17 @@
 
 .operis-mini-trend-path {
   fill: none;
-  stroke-width: 2.8;
+  stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
+  stroke-dasharray: 5 3;
+  animation: miniTrendFlow 6.8s linear infinite;
 }
 
 .operis-mini-trend-path.glow {
-  stroke-width: 4.8;
-  opacity: 0.26;
+  stroke-width: 6.2;
+  opacity: 0.22;
   filter: url(#miniTrendGlow);
 }
 
@@ -443,12 +477,23 @@
 
 .operis-mini-trend-path.p2 {
   stroke: url(#miniTrendSecond);
-  opacity: 0.92;
+  opacity: 0.9;
+  animation-duration: 7.6s;
 }
 
 .operis-mini-trend-path.p3 {
   stroke: url(#miniTrendThird);
-  opacity: 0.78;
+  opacity: 0.74;
+  animation-duration: 8.4s;
+}
+
+@keyframes miniTrendFlow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -64;
+  }
 }
 
 .operis-mini-trend-dot {
