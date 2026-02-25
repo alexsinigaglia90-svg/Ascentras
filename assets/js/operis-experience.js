@@ -251,6 +251,37 @@
     });
   }
 
+  function setupTopbarMotion() {
+    const topbar = document.querySelector('.operis-topbar');
+    if (!topbar) return;
+
+    const onScroll = () => {
+      topbar.classList.toggle('is-scrolled', window.scrollY > 22);
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  function setupMagneticNav() {
+    const targets = Array.from(document.querySelectorAll('.operis-nav a, .hero-actions .btn, .support-cta-row .btn'));
+    if (!targets.length) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    targets.forEach((target) => {
+      target.addEventListener('mousemove', (event) => {
+        const rect = target.getBoundingClientRect();
+        const nx = (event.clientX - rect.left) / rect.width - 0.5;
+        const ny = (event.clientY - rect.top) / rect.height - 0.5;
+        target.style.transform = `translate(${(nx * 5).toFixed(2)}px, ${(ny * 3).toFixed(2)}px)`;
+      });
+
+      target.addEventListener('mouseleave', () => {
+        target.style.transform = 'translate(0px, 0px)';
+      });
+    });
+  }
+
   function setupCinematicCompare() {
     const shell = document.querySelector('[data-compare-shell]');
     const range = document.getElementById('compare-range');
@@ -320,6 +351,8 @@
     setupReveals();
     setupCinematicStory();
     setupCinematicCompare();
+    setupTopbarMotion();
+    setupMagneticNav();
     setupMicroInteractions();
     setupRoleFilters();
     setupSimulator();
