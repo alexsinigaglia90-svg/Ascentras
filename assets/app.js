@@ -107,6 +107,23 @@ const i18n = {
     operis_panel_load: 'Loading performance and throughput',
     operis_panel_avgtime: 'Average delivery trend',
     operis_panel_profit: 'Profit evolution by country',
+    operis_dashboard_headline: 'Picking Zone Performance Command',
+    operis_dashboard_subheadline: 'Direct labor monitoring with station-level efficiency and throughput control.',
+    operis_direct_labor: 'Direct Labor',
+    operis_throughput: 'Throughput',
+    operis_efficiency: 'Efficiency',
+    operis_active_stations: 'Active Stations',
+    operis_zone_network: 'Picking Zone Network',
+    operis_station_panel: 'Stations',
+    operis_employee_compare: 'Employee Compare',
+    operis_history_days: 'history',
+    operis_period_30: '30 days',
+    operis_period_60: '60 days',
+    operis_period_90: '90 days',
+    operis_metric_trend: 'units / hour',
+    operis_staff_watch: 'Team Watch',
+    operis_zone_focus: 'Zone Focus',
+    operis_station_focus: 'Station Focus',
     platform_title: 'Platform',
     platform_ifs: 'IFS',
     platform_ifs_desc: 'Intelligent Factory Suite: Orchestrate, monitor, and optimize manufacturing operations in real time.',
@@ -198,6 +215,23 @@ const i18n = {
     operis_panel_load: 'Laadprestatie en throughput',
     operis_panel_avgtime: 'Gemiddelde levertijd trend',
     operis_panel_profit: 'Winstontwikkeling per land',
+    operis_dashboard_headline: 'Picking Zone Performance Command',
+    operis_dashboard_subheadline: 'Direct labor monitoring met station-niveau efficiëntie en throughput sturing.',
+    operis_direct_labor: 'Direct Labor',
+    operis_throughput: 'Throughput',
+    operis_efficiency: 'Efficiëntie',
+    operis_active_stations: 'Actieve Stations',
+    operis_zone_network: 'Picking Zone Netwerk',
+    operis_station_panel: 'Stations',
+    operis_employee_compare: 'Medewerker Vergelijking',
+    operis_history_days: 'historie',
+    operis_period_30: '30 dagen',
+    operis_period_60: '60 dagen',
+    operis_period_90: '90 dagen',
+    operis_metric_trend: 'units / uur',
+    operis_staff_watch: 'Team Overzicht',
+    operis_zone_focus: 'Zone Focus',
+    operis_station_focus: 'Station Focus',
     platform_title: 'Platform',
     platform_ifs: 'IFS',
     platform_ifs_desc: 'Intelligent Factory Suite: Orkestreer, monitor en optimaliseer productieprocessen realtime.',
@@ -341,55 +375,6 @@ function initOperisDashboard() {
     return t('operis_flow_nominal');
   }
 
-  const state = {
-    running: false,
-    picksHour: 842,
-    replHour: 416,
-    flowState: 'Nominal',
-    health: 98.9,
-    selectedTile: 'revenue',
-    summary: {
-      revenue: 248400,
-      profit: 61100,
-      margin: 24.6,
-      shipments: 1296,
-      avgDelivery: 43
-    },
-    delivery: {
-      within: 86,
-      out: 14
-    },
-    countries: {
-      nl: 34,
-      de: 27,
-      be: 21,
-      fr: 18
-    },
-    fleet: {
-      total: 128,
-      moving: 91,
-      maintenance: 9,
-      health: 95.2
-    },
-    loading: {
-      avgTime: 28,
-      avgWeight: 612
-    },
-    avgDeliverySeries: [41, 40, 39, 40, 42, 41, 43, 44, 43, 42, 43, 43],
-    profitSeries: [56, 58, 57, 59, 61, 63, 62, 64, 66, 67, 68, 69]
-  };
-
-  function currency(value) {
-    return `€${Math.round(value).toLocaleString()}`;
-  }
-
-  function percentToStroke(percent, radius) {
-    const circumference = 2 * Math.PI * radius;
-    const value = Math.max(0, Math.min(100, percent));
-    const dash = (value / 100) * circumference;
-    return `${dash} ${circumference - dash}`;
-  }
-
   function seriesToPoints(series, width, height, min, max) {
     return series.map((value, index) => {
       const x = (index / (series.length - 1 || 1)) * width;
@@ -398,174 +383,230 @@ function initOperisDashboard() {
     }).join(' ');
   }
 
-  function renderWarehouse() {
-    const onTime = state.delivery.within;
-    const outTime = state.delivery.out;
-    const ringStroke = percentToStroke(onTime, 44);
+  function seededSeries(seed, base, drift) {
+    let current = base;
+    const out = [];
+    for (let index = 0; index < 90; index += 1) {
+      const wave = Math.sin((index + seed) / 6) * 2.4;
+      const micro = Math.cos((index + seed * 2) / 9) * 1.6;
+      const bump = ((index + seed) % 11 === 0 ? 2.2 : 0) - ((index + seed) % 17 === 0 ? 1.4 : 0);
+      current = Math.max(54, Math.min(132, current + drift + wave * 0.22 + micro * 0.18 + bump * 0.12));
+      out.push(Number(current.toFixed(1)));
+    }
+    return out;
+  }
 
-    const avgMin = Math.min(...state.avgDeliverySeries) - 2;
-    const avgMax = Math.max(...state.avgDeliverySeries) + 2;
-    const avgPoints = seriesToPoints(state.avgDeliverySeries, 340, 86, avgMin, avgMax);
+  const state = {
+    running: false,
+    flowState: 'Nominal',
+    health: 97.8,
+    period: 30,
+    selectedZone: 'pick-east',
+    selectedStation: 'E-01',
+    selectedEmployees: ['emma', 'noah', 'sara'],
+    zones: [
+      { id: 'pick-east', nameKey: 'operis_zone_pick_east', labor: 16, throughput: 438, stations: ['E-01', 'E-02', 'E-03', 'E-04'] },
+      { id: 'pick-west', nameKey: 'operis_zone_pick_west', labor: 15, throughput: 412, stations: ['W-01', 'W-02', 'W-03', 'W-04'] },
+      { id: 'repl-core', nameKey: 'operis_zone_repl_core', labor: 10, throughput: 205, stations: ['R-01', 'R-02', 'R-03'] },
+      { id: 'buffer-north', nameKey: 'operis_zone_buffer_north', labor: 9, throughput: 184, stations: ['B-01', 'B-02', 'B-03'] },
+      { id: 'sortation', nameKey: 'operis_zone_sortation', labor: 12, throughput: 261, stations: ['S-01', 'S-02', 'S-03', 'S-04'] }
+    ],
+    employees: {
+      emma: { name: 'Emma V.', role: 'Picker', series: seededSeries(2, 92, 0.06) },
+      noah: { name: 'Noah K.', role: 'Picker', series: seededSeries(7, 88, 0.05) },
+      sara: { name: 'Sara D.', role: 'Replenisher', series: seededSeries(12, 84, 0.04) },
+      liam: { name: 'Liam R.', role: 'Picker', series: seededSeries(19, 90, 0.03) },
+      mila: { name: 'Mila T.', role: 'Sortation', series: seededSeries(24, 86, 0.05) }
+    }
+  };
 
-    const profitMin = Math.min(...state.profitSeries) - 3;
-    const profitMax = Math.max(...state.profitSeries) + 3;
-    const profitPoints = seriesToPoints(state.profitSeries, 340, 86, profitMin, profitMax);
+  function getZone(zoneId) {
+    return state.zones.find((zone) => zone.id === zoneId) || state.zones[0];
+  }
 
-    const countryValues = Object.values(state.countries);
-    const countryMax = Math.max(...countryValues, 1);
+  function zoneEfficiency(zone) {
+    return (zone.throughput / Math.max(1, zone.labor * 28)) * 100;
+  }
 
-    warehouse.innerHTML = `
-      <div class="operis-console">
-        <div class="operis-console-header">
-          <div>
-            <div class="console-title">${t('operis_console_title')}</div>
-            <div class="console-subtitle">${t('operis_console_subtitle')}</div>
+  function getTotals() {
+    const picksHour = state.zones.reduce((sum, zone) => sum + zone.throughput, 0);
+    const replHour = getZone('repl-core').throughput;
+    const labor = state.zones.reduce((sum, zone) => sum + zone.labor, 0);
+    const stations = state.zones.reduce((sum, zone) => sum + zone.stations.length, 0);
+    const efficiency = state.zones.reduce((sum, zone) => sum + zoneEfficiency(zone), 0) / state.zones.length;
+    return { picksHour, replHour, labor, stations, efficiency };
+  }
+
+  function updateHealthAndFlow() {
+    const totals = getTotals();
+    const efficiencyScore = Math.max(72, Math.min(99.7, totals.efficiency));
+    const laborBalance = Math.max(76, Math.min(99, 100 - Math.abs(totals.labor - 62) * 1.1));
+    state.health = (efficiencyScore + laborBalance + 96.2) / 3;
+
+    if (state.health < 88 || totals.efficiency < 82) state.flowState = 'Constrained';
+    else if (state.health < 93 || totals.efficiency < 89) state.flowState = 'Watch';
+    else state.flowState = 'Nominal';
+  }
+
+  function updateRuntimeStrip() {
+    const totals = getTotals();
+    const picks = document.getElementById('operis-picks-hour');
+    const repl = document.getElementById('operis-repl-hour');
+    const flow = document.getElementById('operis-flow-state');
+    const health = document.getElementById('operis-health');
+    const mode = document.getElementById('operis-mode');
+
+    if (picks) picks.textContent = `${Math.round(totals.picksHour)}`;
+    if (repl) repl.textContent = `${Math.round(totals.replHour)}`;
+    if (flow) flow.textContent = flowText(state.flowState);
+    if (health) health.textContent = `${state.health.toFixed(2)}%`;
+    if (mode) mode.textContent = state.running ? t('operis_mode_live') : t('operis_mode_standby');
+  }
+
+  function renderChart() {
+    const colors = ['var(--accent)', 'var(--gold)', 'var(--blue)'];
+    const activeEmployees = state.selectedEmployees.map((id) => state.employees[id]).filter(Boolean);
+    const allValues = activeEmployees.flatMap((entry) => entry.series.slice(-state.period));
+    const min = Math.min(...allValues, 60) - 4;
+    const max = Math.max(...allValues, 120) + 4;
+
+    const lineMarkup = activeEmployees.map((entry, index) => {
+      const values = entry.series.slice(-state.period);
+      const points = seriesToPoints(values, 640, 220, min, max);
+      return `<polyline points="${points}" fill="none" stroke="${colors[index % colors.length]}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>`;
+    }).join('');
+
+    const legendMarkup = state.selectedEmployees.map((id, index) => {
+      const employee = state.employees[id];
+      const value = employee.series[employee.series.length - 1];
+      return `<div class="opx-legend-item"><span class="opx-legend-dot" style="background:${colors[index % colors.length]}"></span><span>${employee.name}</span><strong>${value.toFixed(1)}</strong></div>`;
+    }).join('');
+
+    return `
+      <div class="opx-chart-card">
+        <div class="opx-chart-head">
+          <h3>${t('operis_employee_compare')}</h3>
+          <div class="opx-periods" role="group" aria-label="History period">
+            <button class="opx-period ${state.period === 30 ? 'active' : ''}" type="button" data-period="30">${t('operis_period_30')}</button>
+            <button class="opx-period ${state.period === 60 ? 'active' : ''}" type="button" data-period="60">${t('operis_period_60')}</button>
+            <button class="opx-period ${state.period === 90 ? 'active' : ''}" type="button" data-period="90">${t('operis_period_90')}</button>
           </div>
-          <div class="console-period">${t('operis_period_label')}: ${t('operis_period_value')}</div>
         </div>
-
-        <div class="operis-grid-board" role="group" aria-label="Operis interactive board">
-          <div class="op-stack">
-            <button class="op-card ${state.selectedTile === 'revenue' ? 'active' : ''}" type="button" data-tile="revenue">
-              <div class="op-card-minititle">${t('operis_summary_revenue')}</div>
-              <div class="op-card-value">${currency(state.summary.revenue)}</div>
-              <div class="op-card-delta delta-up">+2.4%</div>
+        <div class="opx-employee-pills" role="group" aria-label="Employee selection">
+          ${Object.entries(state.employees).map(([id, employee]) => `
+            <button class="opx-employee-pill ${state.selectedEmployees.includes(id) ? 'active' : ''}" type="button" data-employee="${id}">
+              <span>${employee.name}</span>
+              <small>${employee.role}</small>
             </button>
-            <button class="op-card ${state.selectedTile === 'profit' ? 'active' : ''}" type="button" data-tile="profit">
-              <div class="op-card-minititle">${t('operis_summary_profit')}</div>
-              <div class="op-card-value">${currency(state.summary.profit)}</div>
-              <div class="op-card-delta delta-up">+1.7%</div>
-            </button>
-            <button class="op-card ${state.selectedTile === 'margin' ? 'active' : ''}" type="button" data-tile="margin">
-              <div class="op-card-minititle">${t('operis_summary_margin')}</div>
-              <div class="op-card-value">${state.summary.margin.toFixed(1)}%</div>
-              <div class="op-card-delta ${state.summary.margin >= 24 ? 'delta-up' : 'delta-down'}">${state.summary.margin >= 24 ? '+' : '-'}0.3pt</div>
-            </button>
-            <button class="op-card ${state.selectedTile === 'shipments' ? 'active' : ''}" type="button" data-tile="shipments">
-              <div class="op-card-minititle">${t('operis_summary_shipments')}</div>
-              <div class="op-card-value">${Math.round(state.summary.shipments).toLocaleString()}</div>
-              <div class="op-card-delta delta-up">+3.2%</div>
-            </button>
-            <button class="op-card ${state.selectedTile === 'avgDelivery' ? 'active' : ''}" type="button" data-tile="avgDelivery">
-              <div class="op-card-minititle">${t('operis_summary_avg_delivery')}</div>
-              <div class="op-card-value">${state.summary.avgDelivery.toFixed(0)}m</div>
-              <div class="op-card-delta ${state.summary.avgDelivery <= 44 ? 'delta-up' : 'delta-down'}">${state.summary.avgDelivery <= 44 ? '-1.2m' : '+1.2m'}</div>
-            </button>
-          </div>
-
-          <button class="op-card op-card-large ${state.selectedTile === 'delivery' ? 'active' : ''}" type="button" data-tile="delivery">
-            <div>
-              <div class="op-card-title">${t('operis_delivery_status')}</div>
-              <div class="op-donut-wrap">
-                <svg class="op-ring" viewBox="0 0 128 128" role="img" aria-label="Delivery status">
-                  <circle class="op-ring-bg" cx="64" cy="64" r="44"></circle>
-                  <circle class="op-ring-val" cx="64" cy="64" r="44" stroke-dasharray="${ringStroke}"></circle>
-                  <text class="op-ring-label" x="64" y="56" text-anchor="middle">${t('operis_within_limit')}</text>
-                  <text class="op-ring-value" x="64" y="76" text-anchor="middle">${onTime}%</text>
-                </svg>
-                <div class="op-list">
-                  <div class="op-list-row"><span>${t('operis_within_limit')}</span><strong>${onTime}%</strong></div>
-                  <div class="op-list-row"><span>${t('operis_out_of_limit')}</span><strong>${outTime}%</strong></div>
-                </div>
-              </div>
-            </div>
-            <div class="op-bottom-note">${t('operis_panel_delivery')}</div>
-          </button>
-
-          <button class="op-card op-card-large ${state.selectedTile === 'country' ? 'active' : ''}" type="button" data-tile="country">
-            <div>
-              <div class="op-card-title">${t('operis_deliveries_country')}</div>
-              <svg class="op-country-chart" viewBox="0 0 320 106" role="img" aria-label="Deliveries by country">
-                ${Object.entries(state.countries).map(([key, value], index) => {
-                  const width = (value / countryMax) * 220;
-                  const y = 12 + index * 22;
-                  const color = ['#d4a531', '#9fc2e4', '#b58a5a', '#cfd9e6'][index] || '#d4a531';
-                  return `<rect x="76" y="${y}" width="${width.toFixed(1)}" height="12" rx="6" fill="${color}"></rect><text x="12" y="${y + 10}" fill="#edf4fb" font-size="10">${key.toUpperCase()}</text><text x="${(84 + width).toFixed(1)}" y="${y + 10}" fill="#edf4fb" font-size="10">${value}%</text>`;
-                }).join('')}
-              </svg>
-              <div class="op-country-legends">
-                ${Object.entries(state.countries).map(([key, value], index) => {
-                  const color = ['#d4a531', '#9fc2e4', '#b58a5a', '#cfd9e6'][index] || '#d4a531';
-                  return `<span class="op-legend"><span class="op-legend-dot" style="background:${color}"></span>${key.toUpperCase()} ${value}%</span>`;
-                }).join('')}
-              </div>
-            </div>
-            <div class="op-bottom-note">${t('operis_panel_country')}</div>
-          </button>
-
-          <button class="op-card op-card-large ${state.selectedTile === 'fleet' ? 'active' : ''}" type="button" data-tile="fleet">
-            <div>
-              <div class="op-card-title">${t('operis_status_fleet')}</div>
-              <svg class="op-gauge" viewBox="0 0 240 72" role="img" aria-label="Fleet health gauge">
-                <path class="op-gauge-track" d="M20 58 A98 98 0 0 1 220 58"></path>
-                <path class="op-gauge-value" d="M20 58 A98 98 0 0 1 ${20 + (state.fleet.health / 100) * 200} 58"></path>
-                <text class="op-gauge-text" x="120" y="44" text-anchor="middle">${state.fleet.health.toFixed(1)}%</text>
-              </svg>
-              <div class="op-list">
-                <div class="op-list-row"><span>${t('operis_total_fleet')}</span><strong>${state.fleet.total}</strong></div>
-                <div class="op-list-row"><span>${t('operis_on_move')}</span><strong>${state.fleet.moving}</strong></div>
-                <div class="op-list-row"><span>${t('operis_maintenance')}</span><strong>${state.fleet.maintenance}</strong></div>
-              </div>
-            </div>
-            <div class="op-bottom-note">${t('operis_panel_fleet')}</div>
-          </button>
-
-          <button class="op-card op-card-large ${state.selectedTile === 'load' ? 'active' : ''}" type="button" data-tile="load">
-            <div>
-              <div class="op-card-title">${t('operis_avg_loading_time')} / ${t('operis_avg_loading_weight')}</div>
-              <svg class="op-mix-chart" viewBox="0 0 340 110" role="img" aria-label="Loading performance">
-                <polyline points="0,95 35,78 70,76 105,62 140,68 175,52 210,58 245,49 280,46 315,39 340,36" fill="none" stroke="#d4a531" stroke-width="3" stroke-linecap="round"></polyline>
-                <polyline points="0,88 35,84 70,80 105,75 140,71 175,67 210,63 245,60 280,55 315,52 340,48" fill="none" stroke="#9fc2e4" stroke-width="3" stroke-linecap="round"></polyline>
-              </svg>
-              <div class="op-list">
-                <div class="op-list-row"><span>${t('operis_avg_loading_time')}</span><strong>${state.loading.avgTime.toFixed(0)}m</strong></div>
-                <div class="op-list-row"><span>${t('operis_avg_loading_weight')}</span><strong>${Math.round(state.loading.avgWeight)} kg</strong></div>
-              </div>
-            </div>
-            <div class="op-bottom-note">${t('operis_panel_load')}</div>
-          </button>
-
-          <button class="op-card op-card-large ${state.selectedTile === 'avgtime' ? 'active' : ''}" type="button" data-tile="avgtime">
-            <div>
-              <div class="op-card-title">${t('operis_avg_delivery_time')}</div>
-              <svg class="op-mix-chart" viewBox="0 0 340 110" role="img" aria-label="Average delivery trend">
-                <polyline points="${avgPoints}" fill="none" stroke="#9fc2e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
-              </svg>
-            </div>
-            <div class="op-bottom-note">${t('operis_panel_avgtime')}</div>
-          </button>
-
-          <button class="op-card op-card-large ${state.selectedTile === 'profitTrend' ? 'active' : ''}" type="button" data-tile="profitTrend">
-            <div>
-              <div class="op-card-title">${t('operis_profit_country')}</div>
-              <svg class="op-profit-chart" viewBox="0 0 340 110" role="img" aria-label="Profit evolution chart">
-                <polyline points="${profitPoints}" fill="none" stroke="#d4a531" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
-              </svg>
-            </div>
-            <div class="op-bottom-note">${t('operis_panel_profit')}</div>
-          </button>
+          `).join('')}
+        </div>
+        <svg class="opx-trend" viewBox="0 0 640 220" role="img" aria-label="Employee throughput trend chart">
+          <g class="opx-grid">
+            <line x1="0" y1="20" x2="640" y2="20"></line>
+            <line x1="0" y1="75" x2="640" y2="75"></line>
+            <line x1="0" y1="130" x2="640" y2="130"></line>
+            <line x1="0" y1="185" x2="640" y2="185"></line>
+          </g>
+          ${lineMarkup}
+        </svg>
+        <div class="opx-chart-meta">
+          <span>${state.period} ${t('operis_history_days')} · ${t('operis_metric_trend')}</span>
+          <div class="opx-legend">${legendMarkup}</div>
         </div>
       </div>
     `;
   }
 
+  function renderWarehouse() {
+    const zone = getZone(state.selectedZone);
+    const totals = getTotals();
+    const stationFocus = state.selectedStation || zone.stations[0];
+
+    warehouse.innerHTML = `
+      <div class="opx-shell">
+        <div class="opx-head">
+          <div>
+            <div class="opx-title">${t('operis_dashboard_headline')}</div>
+            <div class="opx-subtitle">${t('operis_dashboard_subheadline')}</div>
+          </div>
+          <div class="opx-focus">
+            <span>${t('operis_zone_focus')}: <strong>${t(zone.nameKey)}</strong></span>
+            <span>${t('operis_station_focus')}: <strong>${stationFocus}</strong></span>
+          </div>
+        </div>
+
+        <div class="opx-kpis">
+          <div class="opx-kpi"><span>${t('operis_direct_labor')}</span><strong>${totals.labor}</strong></div>
+          <div class="opx-kpi"><span>${t('operis_throughput')}</span><strong>${Math.round(totals.picksHour)}</strong></div>
+          <div class="opx-kpi"><span>${t('operis_efficiency')}</span><strong>${totals.efficiency.toFixed(1)}%</strong></div>
+          <div class="opx-kpi"><span>${t('operis_active_stations')}</span><strong>${totals.stations}</strong></div>
+        </div>
+
+        <div class="opx-main-grid">
+          <div class="opx-zone-card">
+            <h3>${t('operis_zone_network')}</h3>
+            <div class="opx-zones" role="group" aria-label="Picking zones">
+              ${state.zones.map((entry) => {
+                const isActive = state.selectedZone === entry.id;
+                return `
+                  <button class="opx-zone ${isActive ? 'active' : ''}" type="button" data-zone="${entry.id}">
+                    <div class="opx-zone-name">${t(entry.nameKey)}</div>
+                    <div class="opx-zone-row"><span>${t('operis_direct_labor')}</span><strong>${entry.labor}</strong></div>
+                    <div class="opx-zone-row"><span>${t('operis_throughput')}</span><strong>${Math.round(entry.throughput)}</strong></div>
+                    <div class="opx-zone-stations">${entry.stations.map((station) => `<span>${station}</span>`).join('')}</div>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="opx-station-card">
+            <h3>${t('operis_station_panel')}</h3>
+            <div class="opx-stations">
+              ${zone.stations.map((station) => `
+                <button class="opx-station ${stationFocus === station ? 'active' : ''}" type="button" data-station="${station}">
+                  <span>${station}</span>
+                  <small>${Math.round(zone.throughput / zone.stations.length)} u/h</small>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        ${renderChart()}
+      </div>
+    `;
+  }
+
   function renderSupportPanels() {
-    const laneValue = Math.round((state.delivery.within + state.fleet.health) / 2);
-    const statusKey = laneValue > 88 ? 'operis_status_healthy' : laneValue > 80 ? 'operis_status_warning' : 'operis_status_critical';
+    const zone = getZone(state.selectedZone);
+    const sortedEmployees = Object.values(state.employees)
+      .map((employee) => ({
+        ...employee,
+        current: employee.series[employee.series.length - 1]
+      }))
+      .sort((a, b) => b.current - a.current);
 
     staffPanel.innerHTML = `
-      <h3 class="operis-panel-title">${t('operis_panel_workforce')}</h3>
+      <h3 class="operis-panel-title">${t('operis_staff_watch')}</h3>
       <div class="operis-staff-list">
-        <div class="staff-row"><div class="staff-main"><div class="staff-name">${t('operis_zone_pick_east')}</div><div class="staff-zone">A-Team</div></div><div class="staff-metric"><span class="staff-status healthy">${t('operis_status_healthy')}</span></div></div>
-        <div class="staff-row"><div class="staff-main"><div class="staff-name">${t('operis_zone_repl_core')}</div><div class="staff-zone">B-Team</div></div><div class="staff-metric"><span class="staff-status warning">${t('operis_status_warning')}</span></div></div>
+        ${sortedEmployees.slice(0, 4).map((employee, index) => `
+          <div class="staff-row">
+            <div class="staff-main">
+              <div class="staff-name">${employee.name}</div>
+              <div class="staff-zone">${employee.role}</div>
+            </div>
+            <div class="staff-metric"><span class="staff-status ${index === 0 ? 'healthy' : index === 1 ? 'warning' : 'critical'}">${employee.current.toFixed(1)}</span></div>
+          </div>
+        `).join('')}
       </div>
     `;
 
     chartsPanel.innerHTML = `
       <h3 class="operis-panel-title">${t('operis_panel_flow')}</h3>
       <div class="operis-chart-wrap">
-        <svg class="operis-mini-chart" viewBox="0 0 320 80" role="img" aria-label="Flow trend">
-          <polyline points="${seriesToPoints(state.avgDeliverySeries, 320, 70, 35, 48)}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        <svg class="operis-mini-chart" viewBox="0 0 320 80" role="img" aria-label="Zone trend">
+          <polyline points="${seriesToPoints(zone.stations.map((_, idx) => zone.throughput / zone.stations.length + idx * 3), 320, 70, 60, 130)}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
         </svg>
       </div>
     `;
@@ -573,126 +614,29 @@ function initOperisDashboard() {
     systemsPanel.innerHTML = `
       <h3 class="operis-panel-title">${t('operis_panel_system_layers')}</h3>
       <div class="system-grid">
-        <div class="system-tile"><div class="system-name">WMS</div><div class="system-value">${Math.max(97.1, state.health - 0.4).toFixed(2)}%</div></div>
-        <div class="system-tile"><div class="system-name">WCS</div><div class="system-value">${Math.max(96.8, state.health - 0.8).toFixed(2)}%</div></div>
-        <div class="system-tile"><div class="system-name">TMS</div><div class="system-value">${Math.max(96.4, state.health - 1.1).toFixed(2)}%</div></div>
-        <div class="system-tile"><div class="system-name">OPS</div><div class="system-value">${Math.max(97.0, state.health - 0.6).toFixed(2)}%</div></div>
+        <div class="system-tile"><div class="system-name">WMS</div><div class="system-value">${Math.max(95.2, state.health - 0.4).toFixed(2)}%</div></div>
+        <div class="system-tile"><div class="system-name">WCS</div><div class="system-value">${Math.max(94.6, state.health - 0.8).toFixed(2)}%</div></div>
+        <div class="system-tile"><div class="system-name">LM</div><div class="system-value">${Math.max(94.0, state.health - 1.0).toFixed(2)}%</div></div>
+        <div class="system-tile"><div class="system-name">OPS</div><div class="system-value">${Math.max(94.8, state.health - 0.6).toFixed(2)}%</div></div>
       </div>
-      <div class="op-bottom-note">${t(statusKey)}</div>
+      <div class="op-bottom-note">${flowText(state.flowState)}</div>
     `;
-  }
-
-  function updateRuntimeStrip() {
-    const picks = document.getElementById('operis-picks-hour');
-    const repl = document.getElementById('operis-repl-hour');
-    const flow = document.getElementById('operis-flow-state');
-    const health = document.getElementById('operis-health');
-    const mode = document.getElementById('operis-mode');
-
-    if (picks) picks.textContent = `${Math.round(state.picksHour)}`;
-    if (repl) repl.textContent = `${Math.round(state.replHour)}`;
-    if (flow) flow.textContent = flowText(state.flowState);
-    if (health) health.textContent = `${state.health.toFixed(2)}%`;
-    if (mode) mode.textContent = state.running ? t('operis_mode_live') : t('operis_mode_standby');
-  }
-
-  function updateHealthAndFlow() {
-    const onTimeScore = state.delivery.within;
-    const fleetScore = state.fleet.health;
-    const marginScore = Math.min(100, state.summary.margin * 3.5);
-    state.health = (onTimeScore + fleetScore + marginScore) / 3;
-
-    if (state.delivery.within < 80 || state.fleet.health < 90) state.flowState = 'Constrained';
-    else if (state.delivery.within < 87 || state.fleet.health < 94) state.flowState = 'Watch';
-    else state.flowState = 'Nominal';
-  }
-
-  function applyTileAction(tile) {
-    state.selectedTile = tile;
-
-    if (tile === 'revenue') state.summary.revenue += 650 + Math.random() * 420;
-    if (tile === 'profit') state.summary.profit += 180 + Math.random() * 130;
-    if (tile === 'margin') state.summary.margin = Math.max(21, Math.min(29, state.summary.margin + (Math.random() - 0.5) * 0.45));
-    if (tile === 'shipments') {
-      state.summary.shipments = Math.max(860, state.summary.shipments + (Math.random() - 0.4) * 44);
-      state.picksHour = 700 + state.summary.shipments * 0.11;
-    }
-    if (tile === 'avgDelivery') {
-      state.summary.avgDelivery = Math.max(32, Math.min(58, state.summary.avgDelivery + (Math.random() - 0.6) * 2.3));
-    }
-
-    if (tile === 'delivery') {
-      const withinShift = (Math.random() - 0.4) * 1.8;
-      state.delivery.within = Math.max(74, Math.min(96, state.delivery.within + withinShift));
-      state.delivery.out = 100 - state.delivery.within;
-    }
-
-    if (tile === 'country') {
-      const keys = Object.keys(state.countries);
-      const source = keys[Math.floor(Math.random() * keys.length)];
-      const target = keys[Math.floor(Math.random() * keys.length)];
-      if (source !== target && state.countries[source] > 12) {
-        state.countries[source] -= 1;
-        state.countries[target] += 1;
-      }
-    }
-
-    if (tile === 'fleet') {
-      state.fleet.moving = Math.max(74, Math.min(state.fleet.total - state.fleet.maintenance, state.fleet.moving + Math.round((Math.random() - 0.35) * 5)));
-      state.fleet.health = Math.max(88, Math.min(99.8, state.fleet.health + (Math.random() - 0.45) * 0.9));
-    }
-
-    if (tile === 'load') {
-      state.loading.avgTime = Math.max(19, Math.min(44, state.loading.avgTime + (Math.random() - 0.45) * 1.5));
-      state.loading.avgWeight = Math.max(460, Math.min(760, state.loading.avgWeight + (Math.random() - 0.5) * 22));
-      state.replHour = Math.max(260, Math.min(880, state.replHour + (Math.random() - 0.45) * 18));
-    }
-
-    if (tile === 'avgtime') {
-      const next = Math.max(35, Math.min(48, state.summary.avgDelivery + (Math.random() - 0.5) * 2.2));
-      state.avgDeliverySeries.push(next);
-      if (state.avgDeliverySeries.length > 12) state.avgDeliverySeries.shift();
-      state.summary.avgDelivery = next;
-    }
-
-    if (tile === 'profitTrend') {
-      const last = state.profitSeries[state.profitSeries.length - 1] || 62;
-      state.profitSeries.push(Math.max(48, Math.min(82, last + (Math.random() - 0.35) * 2.3)));
-      if (state.profitSeries.length > 12) state.profitSeries.shift();
-    }
-
-    updateHealthAndFlow();
-    updateRuntimeStrip();
-    renderWarehouse();
-    renderSupportPanels();
   }
 
   function tick() {
     if (!state.running) return;
 
-    state.summary.revenue = Math.max(180000, state.summary.revenue + (Math.random() - 0.35) * 1700);
-    state.summary.profit = Math.max(42000, state.summary.profit + (Math.random() - 0.38) * 610);
-    state.summary.margin = Math.max(20, Math.min(30, state.summary.margin + (Math.random() - 0.45) * 0.25));
+    state.zones.forEach((zone, index) => {
+      zone.throughput = Math.max(140, Math.min(520, zone.throughput + (Math.random() - 0.47) * (14 + index * 2)));
+      zone.labor = Math.max(7, Math.min(22, zone.labor + (Math.random() - 0.5) * 0.3));
+    });
 
-    state.summary.shipments = Math.max(840, state.summary.shipments + (Math.random() - 0.4) * 18);
-    state.summary.avgDelivery = Math.max(36, Math.min(50, state.summary.avgDelivery + (Math.random() - 0.53) * 0.55));
-
-    state.picksHour = Math.max(500, Math.min(1650, 680 + state.summary.shipments * 0.13 + (Math.random() - 0.5) * 14));
-    state.replHour = Math.max(280, Math.min(980, state.replHour + (Math.random() - 0.47) * 9));
-
-    state.delivery.within = Math.max(75, Math.min(96, state.delivery.within + (Math.random() - 0.47) * 0.55));
-    state.delivery.out = 100 - state.delivery.within;
-
-    state.fleet.moving = Math.max(70, Math.min(state.fleet.total - state.fleet.maintenance, state.fleet.moving + Math.round((Math.random() - 0.48) * 2)));
-    state.fleet.health = Math.max(88, Math.min(99.9, state.fleet.health + (Math.random() - 0.5) * 0.34));
-
-    const avgNext = Math.max(35, Math.min(49, state.summary.avgDelivery + (Math.random() - 0.5) * 1.1));
-    state.avgDeliverySeries.push(avgNext);
-    if (state.avgDeliverySeries.length > 12) state.avgDeliverySeries.shift();
-
-    const profitNext = Math.max(48, Math.min(82, (state.profitSeries[state.profitSeries.length - 1] || 60) + (Math.random() - 0.45) * 1.45));
-    state.profitSeries.push(profitNext);
-    if (state.profitSeries.length > 12) state.profitSeries.shift();
+    Object.values(state.employees).forEach((employee, index) => {
+      const last = employee.series[employee.series.length - 1] || 84;
+      const next = Math.max(54, Math.min(132, last + (Math.random() - 0.48) * (3.1 + index * 0.18)));
+      employee.series.push(Number(next.toFixed(1)));
+      if (employee.series.length > 90) employee.series.shift();
+    });
 
     updateHealthAndFlow();
     updateRuntimeStrip();
@@ -702,21 +646,51 @@ function initOperisDashboard() {
 
   function setupInteractions() {
     warehouse.addEventListener('click', (event) => {
-      const tile = event.target.closest('[data-tile]');
-      if (!tile) return;
-      const tileKey = tile.getAttribute('data-tile');
-      if (!tileKey) return;
-      applyTileAction(tileKey);
-    });
+      const zoneButton = event.target.closest('[data-zone]');
+      if (zoneButton) {
+        const zoneId = zoneButton.getAttribute('data-zone');
+        const zone = getZone(zoneId);
+        state.selectedZone = zone.id;
+        state.selectedStation = zone.stations[0];
+        renderWarehouse();
+        renderSupportPanels();
+        return;
+      }
 
-    warehouse.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      const tile = event.target.closest('[data-tile]');
-      if (!tile) return;
-      event.preventDefault();
-      const tileKey = tile.getAttribute('data-tile');
-      if (!tileKey) return;
-      applyTileAction(tileKey);
+      const stationButton = event.target.closest('[data-station]');
+      if (stationButton) {
+        const stationId = stationButton.getAttribute('data-station');
+        state.selectedStation = stationId;
+        renderWarehouse();
+        return;
+      }
+
+      const periodButton = event.target.closest('[data-period]');
+      if (periodButton) {
+        const nextPeriod = Number(periodButton.getAttribute('data-period'));
+        if ([30, 60, 90].includes(nextPeriod)) {
+          state.period = nextPeriod;
+          renderWarehouse();
+        }
+        return;
+      }
+
+      const employeeButton = event.target.closest('[data-employee]');
+      if (employeeButton) {
+        const employeeId = employeeButton.getAttribute('data-employee');
+        const exists = state.selectedEmployees.includes(employeeId);
+
+        if (exists && state.selectedEmployees.length > 1) {
+          state.selectedEmployees = state.selectedEmployees.filter((id) => id !== employeeId);
+        } else if (!exists) {
+          if (state.selectedEmployees.length >= 3) {
+            state.selectedEmployees = state.selectedEmployees.slice(1);
+          }
+          state.selectedEmployees.push(employeeId);
+        }
+
+        renderWarehouse();
+      }
     });
   }
 
@@ -762,7 +736,7 @@ function initOperisDashboard() {
   setInterval(() => {
     if (!state.running) return;
     tick();
-  }, 950);
+  }, 900);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
