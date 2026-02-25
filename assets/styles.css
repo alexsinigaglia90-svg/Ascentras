@@ -389,12 +389,12 @@ main {
 
 .operis-dashboard {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.55fr);
   gap: 0.75rem;
 }
 
 .operis-warehouse {
-  min-height: 620px;
+  min-height: 720px;
   background: color-mix(in srgb, var(--surface) 92%, var(--bg) 8%);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -402,7 +402,311 @@ main {
 }
 
 .operis-sidepanel {
-  display: none;
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 0.62rem;
+}
+
+.opx-shell {
+  border-radius: 14px;
+  background: linear-gradient(170deg, color-mix(in srgb, var(--surface) 12%, var(--blue) 88%), color-mix(in srgb, var(--surface) 8%, var(--accent) 92%));
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  color: color-mix(in srgb, var(--surface) 92%, #fff 8%);
+  padding: 0.85rem;
+  min-height: 680px;
+  display: grid;
+  gap: 0.62rem;
+}
+
+.opx-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: flex-end;
+}
+
+.opx-title {
+  font-size: 1.22rem;
+  line-height: 1.2;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  color: color-mix(in srgb, var(--surface) 96%, #fff 4%);
+}
+
+.opx-subtitle {
+  margin-top: 0.2rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--surface) 82%, var(--muted) 18%);
+  max-width: 68ch;
+}
+
+.opx-focus {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  text-align: right;
+  color: color-mix(in srgb, var(--surface) 84%, var(--muted) 16%);
+}
+
+.opx-focus strong {
+  color: color-mix(in srgb, var(--surface) 96%, #fff 4%);
+}
+
+.opx-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.opx-kpi {
+  border: 1px solid color-mix(in srgb, var(--surface) 22%, transparent);
+  background: color-mix(in srgb, var(--surface) 14%, transparent);
+  border-radius: 11px;
+  padding: 0.52rem 0.58rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.opx-kpi span {
+  display: block;
+  font-size: 0.69rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--surface) 78%, var(--muted) 22%);
+}
+
+.opx-kpi strong {
+  display: block;
+  margin-top: 0.14rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+
+.opx-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.84fr;
+  gap: 0.58rem;
+}
+
+.opx-zone-card,
+.opx-station-card,
+.opx-chart-card {
+  border: 1px solid color-mix(in srgb, var(--surface) 20%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 10%, transparent);
+  padding: 0.6rem;
+}
+
+.opx-zone-card h3,
+.opx-station-card h3,
+.opx-chart-card h3 {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--surface) 86%, var(--muted) 14%);
+}
+
+.opx-zones {
+  margin-top: 0.46rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.opx-zone {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--surface) 20%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 8%, transparent);
+  color: inherit;
+  padding: 0.5rem;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.opx-zone:hover,
+.opx-zone:focus-visible,
+.opx-zone.active {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--gold) 72%, var(--surface) 28%);
+  background: color-mix(in srgb, var(--surface) 14%, transparent);
+  outline: none;
+}
+
+.opx-zone-name {
+  font-size: 0.89rem;
+  font-weight: 650;
+}
+
+.opx-zone-row {
+  margin-top: 0.18rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  color: color-mix(in srgb, var(--surface) 82%, var(--muted) 18%);
+}
+
+.opx-zone-stations {
+  margin-top: 0.34rem;
+  display: flex;
+  gap: 0.26rem;
+  flex-wrap: wrap;
+}
+
+.opx-zone-stations span {
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--surface) 26%, transparent);
+  padding: 0.14rem 0.38rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+}
+
+.opx-stations {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.38rem;
+}
+
+.opx-station {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--surface) 22%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 8%, transparent);
+  color: inherit;
+  padding: 0.46rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.opx-station.active,
+.opx-station:hover,
+.opx-station:focus-visible {
+  border-color: color-mix(in srgb, var(--gold) 72%, var(--surface) 28%);
+  outline: none;
+}
+
+.opx-station small {
+  font-size: 0.68rem;
+  opacity: 0.86;
+}
+
+.opx-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.opx-periods {
+  display: inline-flex;
+  border: 1px solid color-mix(in srgb, var(--surface) 20%, transparent);
+  border-radius: 999px;
+  padding: 0.14rem;
+}
+
+.opx-period {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  border-radius: 999px;
+  padding: 0.22rem 0.52rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.opx-period.active {
+  background: color-mix(in srgb, var(--gold) 72%, var(--surface) 28%);
+  color: color-mix(in srgb, var(--blue) 90%, var(--ink) 10%);
+}
+
+.opx-employee-pills {
+  margin-top: 0.48rem;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.38rem;
+}
+
+.opx-employee-pill {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--surface) 20%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 8%, transparent);
+  color: inherit;
+  text-align: left;
+  padding: 0.4rem;
+  cursor: pointer;
+}
+
+.opx-employee-pill.active,
+.opx-employee-pill:hover,
+.opx-employee-pill:focus-visible {
+  border-color: color-mix(in srgb, var(--gold) 76%, var(--surface) 24%);
+  background: color-mix(in srgb, var(--surface) 14%, transparent);
+  outline: none;
+}
+
+.opx-employee-pill span {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 630;
+}
+
+.opx-employee-pill small {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.66rem;
+  opacity: 0.82;
+}
+
+.opx-trend {
+  margin-top: 0.5rem;
+  width: 100%;
+  height: 220px;
+}
+
+.opx-grid line {
+  stroke: color-mix(in srgb, var(--surface) 22%, transparent);
+  stroke-width: 1;
+}
+
+.opx-chart-meta {
+  margin-top: 0.32rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: flex-start;
+  font-size: 0.71rem;
+  color: color-mix(in srgb, var(--surface) 80%, var(--muted) 20%);
+}
+
+.opx-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.34rem;
+}
+
+.opx-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid color-mix(in srgb, var(--surface) 20%, transparent);
+  border-radius: 999px;
+  padding: 0.12rem 0.35rem;
+}
+
+.opx-legend-item strong {
+  font-size: 0.68rem;
+}
+
+.opx-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
 .operis-console {
@@ -859,6 +1163,27 @@ main {
     grid-template-columns: repeat(3, minmax(120px, 1fr));
   }
 
+  .operis-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .operis-sidepanel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: 1fr;
+  }
+
+  .opx-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .opx-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .opx-employee-pills {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .operis-grid-board {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: repeat(5, minmax(130px, auto));
@@ -905,6 +1230,26 @@ main {
 
   .operis-runtime-strip {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .operis-sidepanel {
+    grid-template-columns: 1fr;
+  }
+
+  .opx-head {
+    display: grid;
+  }
+
+  .opx-focus {
+    text-align: left;
+  }
+
+  .opx-employee-pills {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .opx-chart-meta {
+    display: grid;
   }
 
   .operis-grid-board {
