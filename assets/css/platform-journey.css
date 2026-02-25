@@ -179,22 +179,26 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transform: translateY(12px);
+  transition: opacity 260ms ease, transform 260ms ease;
 }
 
 .platform-journey.pj-enhanced .pj-world.is-active {
+  opacity: 1;
   visibility: visible;
   pointer-events: auto;
   z-index: 3;
+  transform: translateY(0);
 }
 
 .platform-journey.pj-enhanced .pj-copy {
-  transform: translateY(24px);
-  opacity: 0;
+  transform: none;
+  opacity: 1;
 }
 
 .platform-journey.pj-enhanced .pj-preview {
-  transform: translateX(24px) translateY(calc((var(--pj-progress) - 0.5) * 10px)) scale(0.98);
-  opacity: 0;
+  transform: translateY(calc((var(--pj-progress) - 0.5) * 10px));
+  opacity: 1;
 }
 
 .app-window {

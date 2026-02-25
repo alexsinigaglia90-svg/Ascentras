@@ -110,30 +110,6 @@
 
       function applyWorldState(activeKey) {
         setWorld(root, worlds, activeKey);
-
-        Object.entries(worldNodes).forEach(([key, node]) => {
-          const isActive = key === activeKey;
-          gsap.to(node.world, {
-            opacity: isActive ? 1 : 0,
-            y: isActive ? 0 : 10,
-            duration: 0.22,
-            overwrite: true
-          });
-          gsap.to(node.copy, {
-            opacity: isActive ? 1 : 0,
-            y: isActive ? 0 : 12,
-            duration: 0.22,
-            overwrite: true
-          });
-          gsap.to(node.preview, {
-            opacity: isActive ? 1 : 0,
-            x: isActive ? 0 : 10,
-            scale: isActive ? 1 : 0.99,
-            duration: 0.22,
-            overwrite: true
-          });
-          node.world.style.pointerEvents = isActive ? 'auto' : 'none';
-        });
       }
 
       applyWorldState('ascentra');
@@ -149,6 +125,12 @@
         pin: true,
         pinSpacing: true,
         anticipatePin: 1,
+        snap: {
+          snapTo: [0, 0.5, 1],
+          duration: { min: 0.14, max: 0.3 },
+          delay: 0.04,
+          ease: 'power2.out'
+        },
         invalidateOnRefresh: true,
         onUpdate: (self) => {
           const progress = self.progress;
