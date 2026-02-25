@@ -15,7 +15,7 @@
     radial-gradient(circle at 18% 16%, rgba(28, 42, 57, 0.05), transparent 46%),
     radial-gradient(circle at 82% 74%, rgba(106, 78, 66, 0.08), transparent 55%),
     var(--cream);
-  overflow: clip;
+  overflow: hidden;
 }
 
 .platform-journey-noise {
