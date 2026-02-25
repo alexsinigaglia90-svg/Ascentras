@@ -118,7 +118,7 @@
                 <li>Live control panels without implementation burden</li>
                 <li>Performance uplift backed by Ascentra standards</li>
               </ul>
-              <a class="pj-cta" href="/operis/" aria-label="Explore Operis">Explore Operis</a>
+              <a class="pj-cta" href="/operis/" data-page-transition="operis" aria-label="Explore Operis">Explore Operis</a>
             </div>
             <div class="pj-preview">
               <div class="app-window glass operis-mini-window">
@@ -148,21 +148,51 @@
                   <div class="operis-mini-trend">
                     <div class="operis-mini-trendhead">Employee compare · 30/60/90d</div>
                     <svg viewBox="0 0 320 118" role="img" aria-label="Employee throughput trend">
+                      <defs>
+                        <linearGradient id="miniTrendPrimary" x1="0" y1="0" x2="320" y2="118" gradientUnits="userSpaceOnUse">
+                          <stop offset="0%" stop-color="rgba(28, 42, 57, 0.98)"></stop>
+                          <stop offset="100%" stop-color="rgba(65, 101, 137, 0.92)"></stop>
+                        </linearGradient>
+                        <linearGradient id="miniTrendSecond" x1="0" y1="0" x2="320" y2="118" gradientUnits="userSpaceOnUse">
+                          <stop offset="0%" stop-color="rgba(106, 78, 66, 0.86)"></stop>
+                          <stop offset="100%" stop-color="rgba(65, 101, 137, 0.86)"></stop>
+                        </linearGradient>
+                        <linearGradient id="miniTrendThird" x1="0" y1="0" x2="320" y2="118" gradientUnits="userSpaceOnUse">
+                          <stop offset="0%" stop-color="rgba(112, 128, 146, 0.78)"></stop>
+                          <stop offset="100%" stop-color="rgba(106, 78, 66, 0.74)"></stop>
+                        </linearGradient>
+                        <filter id="miniTrendGlow" x="-10%" y="-20%" width="120%" height="160%">
+                          <feGaussianBlur stdDeviation="2.2" result="blur"></feGaussianBlur>
+                          <feMerge>
+                            <feMergeNode in="blur"></feMergeNode>
+                            <feMergeNode in="SourceGraphic"></feMergeNode>
+                          </feMerge>
+                        </filter>
+                      </defs>
                       <g>
                         <line x1="0" y1="16" x2="320" y2="16"></line>
                         <line x1="0" y1="46" x2="320" y2="46"></line>
                         <line x1="0" y1="76" x2="320" y2="76"></line>
                         <line x1="0" y1="106" x2="320" y2="106"></line>
                       </g>
-                      <polyline points="0,88 30,84 60,74 90,70 120,64 150,58 180,54 210,48 240,45 270,39 300,34 320,30"></polyline>
-                      <polyline points="0,94 30,91 60,86 90,82 120,74 150,70 180,67 210,63 240,58 270,53 300,49 320,45"></polyline>
-                      <polyline points="0,98 30,95 60,92 90,89 120,83 150,79 180,75 210,71 240,66 270,63 300,60 320,57"></polyline>
+                      <path class="operis-mini-trend-path glow p1" d="M0 88 C20 85, 40 79, 60 74 C82 70, 102 67, 120 64 C142 60, 162 56, 180 54 C202 50, 222 47, 240 45 C262 41, 286 36, 320 30"></path>
+                      <path class="operis-mini-trend-path p1" d="M0 88 C20 85, 40 79, 60 74 C82 70, 102 67, 120 64 C142 60, 162 56, 180 54 C202 50, 222 47, 240 45 C262 41, 286 36, 320 30"></path>
+
+                      <path class="operis-mini-trend-path glow p2" d="M0 94 C20 93, 40 89, 60 86 C82 83, 101 78, 120 74 C142 72, 162 69, 180 67 C202 64, 222 60, 240 58 C262 55, 286 51, 320 45"></path>
+                      <path class="operis-mini-trend-path p2" d="M0 94 C20 93, 40 89, 60 86 C82 83, 101 78, 120 74 C142 72, 162 69, 180 67 C202 64, 222 60, 240 58 C262 55, 286 51, 320 45"></path>
+
+                      <path class="operis-mini-trend-path p3" d="M0 98 C20 96, 40 94, 60 92 C82 90, 102 86, 120 83 C142 80, 162 77, 180 75 C202 72, 222 69, 240 66 C262 64, 286 61, 320 57"></path>
+
+                      <circle class="operis-mini-trend-dot p1" cx="320" cy="30" r="2.8"></circle>
+                      <circle class="operis-mini-trend-dot p2" cx="320" cy="45" r="2.3"></circle>
+                      <circle class="operis-mini-trend-dot p3" cx="320" cy="57" r="2"></circle>
                     </svg>
                     <div class="operis-mini-legend"><span class="l1">Emma</span><span class="l2">Noah</span><span class="l3">Sara</span></div>
                   </div>
                 </div>
 
                 <div class="assist-ribbon">Live labor monitoring · pure throughput & efficiency</div>
+                <a class="operis-mini-cta" href="/operis/" data-page-transition="operis" aria-label="Open Operis environment">Enter Operis environment</a>
               </div>
             </div>
           </article>

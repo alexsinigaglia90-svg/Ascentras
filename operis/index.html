@@ -3,29 +3,234 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Operis | Operational Control</title>
-  <meta name="description" content="Operis operationele detachering and dashboard support.">
+  <title>Operis | Workforce & Warehouse Excellence</title>
+  <meta name="description" content="Operis brengt logistiek- en warehouseprofessionals, dashboarding en Ascentra Supply Chain consulting samen voor blijvend operationeel resultaat.">
   <link rel="stylesheet" href="/assets/styles.css">
-  <style>
-    .page-shell{min-height:100vh;display:grid;place-items:center;padding:2rem 1rem;background:var(--bg);}
-    .page-card{width:min(900px,95vw);border:1px solid var(--border);border-radius:18px;background:color-mix(in srgb,var(--surface) 92%,var(--bg) 8%);padding:1.4rem;box-shadow:var(--shadow)}
-    .page-title{margin:0;font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;font-size:clamp(2rem,5vw,3.3rem);color:var(--blue)}
-    .page-sub{margin:.7rem 0 0;color:var(--muted);max-width:62ch}
-    .page-actions{margin-top:1rem;display:flex;gap:.65rem;flex-wrap:wrap}
-  </style>
+  <link rel="stylesheet" href="/assets/css/operis-experience.css">
 </head>
-<body>
-  <main class="page-shell">
-    <section class="page-card">
-      <p class="hero-eyebrow">Operis</p>
-      <h1 class="page-title">Operational Detachering + Dashboard Assist</h1>
-      <p class="page-sub">This page is the dedicated destination for operational staffing, execution support and free dashboard assistance backed by Ascentra expertise.</p>
-      <div class="page-actions">
-        <a class="btn pill" href="/">Back to homepage</a>
-        <a class="btn pill secondary" href="/ascentra">Explore Ascentra</a>
-        <a class="btn pill secondary" href="/astra">Explore Astra</a>
+<body class="page-enter">
+  <div class="operis-bg" aria-hidden="true"></div>
+
+  <header class="operis-topbar">
+    <div class="operis-wrap topbar-inner">
+      <a class="operis-wordmark" href="/">Ascentra · Operis</a>
+      <nav class="operis-nav">
+        <a href="#story">Story</a>
+        <a href="#journey">Journey</a>
+        <a href="#roles">Roles</a>
+        <a href="#simulator">Impact</a>
+        <a href="#support">Support</a>
+      </nav>
+      <a class="btn pill" data-page-transition="home" href="/">Back to Home</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="operis-hero reveal" id="story">
+      <div class="operis-wrap hero-grid">
+        <div>
+          <p class="hero-eyebrow">Operis Platform</p>
+          <h1 class="hero-title">Logistiek- en warehouseprofessionals die blijvend verschil maken.</h1>
+          <p class="hero-copy">Operis levert professionals op alle operationele rollen in, om en rondom het warehouse. Onze mensen worden ondersteund door standaard trajecten, BI-platformen en performance dashboards, gerealiseerd met de Ascentra SC consulting group van ervaren supply chain professionals.</p>
+          <div class="hero-actions">
+            <a class="btn pill" href="#simulator">Explore Impact</a>
+            <a class="btn pill secondary" href="#support">See Support Model</a>
+          </div>
+        </div>
+
+        <div class="hero-control-card" aria-label="Operis control preview">
+          <div class="hero-control-head">
+            <span>Operis Execution Console</span>
+            <strong>Live</strong>
+          </div>
+          <div class="hero-control-grid">
+            <div class="hero-kpi"><span>Direct labor</span><strong>62</strong></div>
+            <div class="hero-kpi"><span>Throughput</span><strong>1,342/h</strong></div>
+            <div class="hero-kpi"><span>Efficiency</span><strong>96.8%</strong></div>
+            <div class="hero-kpi"><span>Support SLA</span><strong>24/7</strong></div>
+          </div>
+          <div class="hero-lines">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="operis-strip reveal">
+      <div class="operis-wrap strip-grid">
+        <article><span>Interim Success Rate</span><strong data-counter="98.4">98.4%</strong></article>
+        <article><span>Operational Roles Filled</span><strong data-counter="1200">1,200+</strong></article>
+        <article><span>Dashboard Activation</span><strong data-counter="100">100%</strong></article>
+        <article><span>Average Ramp-up</span><strong data-counter="14">14 days</strong></article>
+      </div>
+    </section>
+
+    <section class="operis-cinematic reveal" id="journey" data-cinematic>
+      <div class="operis-wrap cinematic-wrap">
+        <div class="cinematic-sticky">
+          <div class="cinematic-meta">
+            <p class="hero-eyebrow">Scroll Journey</p>
+            <h2>How Operis creates durable warehouse impact.</h2>
+            <div class="cinematic-progress"><span id="cinematic-progress-fill"></span></div>
+          </div>
+
+          <div class="cinematic-stage" id="cinematic-stage">
+            <article class="cinematic-scene is-active" data-scene="0">
+              <p class="cinematic-kicker">Step 01 · Deploy</p>
+              <h3>Operational professionals embedded in your flow.</h3>
+              <p>From picker and replenisher to shift-lead and supervisor: Operis deploys the right professionals where execution quality matters most.</p>
+              <div class="scene-chips"><span>Floor execution</span><span>Role fit</span><span>Speed to value</span></div>
+            </article>
+
+            <article class="cinematic-scene" data-scene="1">
+              <p class="cinematic-kicker">Step 02 · Support</p>
+              <h3>SC veterans and BI tooling stabilize daily performance.</h3>
+              <p>Ascentra SC consulting and BI dashboards are structurally attached, so field teams receive immediate analytical and tactical backup.</p>
+              <div class="scene-chips"><span>Ascentra SC Group</span><span>BI dashboards</span><span>Real-time steering</span></div>
+            </article>
+
+            <article class="cinematic-scene" data-scene="2">
+              <p class="cinematic-kicker">Step 03 · Sustain</p>
+              <h3>Interim period turns into sustained measurable results.</h3>
+              <p>Structured trajectories transfer performance gains into the customer operation, securing continuity after the initial deployment period.</p>
+              <div class="scene-chips"><span>Governed handover</span><span>KPI continuity</span><span>Long-term effect</span></div>
+            </article>
+          </div>
+
+          <div class="cinematic-dots" role="tablist" aria-label="Journey progress">
+            <button type="button" class="cinematic-dot is-active" data-jump-scene="0" aria-label="Step 1"></button>
+            <button type="button" class="cinematic-dot" data-jump-scene="1" aria-label="Step 2"></button>
+            <button type="button" class="cinematic-dot" data-jump-scene="2" aria-label="Step 3"></button>
+          </div>
+
+          <div class="cinematic-compare" aria-label="Before and after comparison">
+            <div class="compare-head">
+              <p class="hero-eyebrow">Before vs After</p>
+              <strong><span id="compare-percent">58</span>% Operis + Ascentra impact</strong>
+            </div>
+
+            <div class="compare-shell" data-compare-shell style="--split:58%;">
+              <div class="compare-pane compare-before">
+                <h4>Before</h4>
+                <ul>
+                  <li>Labor visibility fragmented</li>
+                  <li>Throughput variance between shifts</li>
+                  <li>Limited SC support on escalations</li>
+                </ul>
+              </div>
+
+              <div class="compare-pane compare-after" aria-hidden="true">
+                <h4>After</h4>
+                <ul>
+                  <li>Live BI with direct labor transparency</li>
+                  <li>Stabilized zone throughput performance</li>
+                  <li>Embedded SC consulting support model</li>
+                </ul>
+              </div>
+
+              <div class="compare-divider" aria-hidden="true"></div>
+              <button class="compare-handle" type="button" aria-label="Drag to compare"></button>
+            </div>
+
+            <input id="compare-range" class="compare-range" type="range" min="15" max="85" value="58" aria-label="Comparison split">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="operis-roles reveal" id="roles">
+      <div class="operis-wrap">
+        <div class="section-head">
+          <p class="hero-eyebrow">Role Spectrum</p>
+          <h2>Professionals across every warehouse operating layer.</h2>
+        </div>
+
+        <div class="role-filters" role="group" aria-label="Role filter">
+          <button class="role-filter active" data-role-filter="all" type="button">All Roles</button>
+          <button class="role-filter" data-role-filter="operations" type="button">Operations</button>
+          <button class="role-filter" data-role-filter="supervision" type="button">Supervision</button>
+          <button class="role-filter" data-role-filter="automation" type="button">Automation</button>
+          <button class="role-filter" data-role-filter="data" type="button">Data & BI</button>
+        </div>
+
+        <div class="role-grid">
+          <article class="role-card" data-role="operations"><h3>Order Picker</h3><p>Output consistency, quality and process discipline on the floor.</p></article>
+          <article class="role-card" data-role="operations"><h3>Reachtruck Driver</h3><p>Safe high-bay flow and replenishment execution at speed.</p></article>
+          <article class="role-card" data-role="supervision"><h3>Shift Lead</h3><p>Shift orchestration with accountability on labor and throughput.</p></article>
+          <article class="role-card" data-role="supervision"><h3>Warehouse Supervisor</h3><p>Cross-zone balancing and execution governance.</p></article>
+          <article class="role-card" data-role="automation"><h3>WMS / WCS Specialist</h3><p>System-driven execution and process stability.</p></article>
+          <article class="role-card" data-role="data"><h3>Performance Analyst</h3><p>Live BI dashboards and measurable improvement tracks.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="operis-simulator reveal" id="simulator">
+      <div class="operis-wrap simulator-grid">
+        <div class="sim-copy">
+          <p class="hero-eyebrow">Engagement</p>
+          <h2>Interactive impact simulator.</h2>
+          <p>Adjust the team scope and support depth to see how Operis + Ascentra support can influence performance outcomes during an interim trajectory.</p>
+          <div class="sim-control">
+            <label for="sim-team">Team size</label>
+            <input id="sim-team" type="range" min="8" max="120" value="42">
+            <div class="sim-value" id="sim-team-value">42 people</div>
+          </div>
+          <div class="sim-control">
+            <label for="sim-support">Support depth</label>
+            <input id="sim-support" type="range" min="1" max="5" value="3">
+            <div class="sim-value" id="sim-support-value">Level 3 · Embedded BI + weekly SC coaching</div>
+          </div>
+        </div>
+
+        <div class="sim-panel">
+          <div class="sim-metric"><span>Projected Throughput</span><strong id="sim-throughput">1,180 / h</strong></div>
+          <div class="sim-metric"><span>Projected Efficiency</span><strong id="sim-efficiency">93.6%</strong></div>
+          <div class="sim-metric"><span>Stability Score</span><strong id="sim-stability">89.2</strong></div>
+          <div class="sim-chart" aria-hidden="true">
+            <svg viewBox="0 0 420 140">
+              <defs>
+                <linearGradient id="simLine" x1="0" y1="0" x2="420" y2="140" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="rgba(23,58,93,0.98)"></stop>
+                  <stop offset="100%" stop-color="rgba(177,138,91,0.86)"></stop>
+                </linearGradient>
+              </defs>
+              <path id="sim-path" d="M0 112 C38 102, 72 100, 102 91 C146 78, 184 73, 218 64 C264 51, 304 43, 340 35 C372 28, 396 20, 420 14"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="operis-support reveal" id="support">
+      <div class="operis-wrap">
+        <div class="section-head">
+          <p class="hero-eyebrow">Ascentra Support Backbone</p>
+          <h2>Support from the full organization, not only one interim profile.</h2>
+        </div>
+
+        <div class="support-grid">
+          <article>
+            <h3>SC Consulting Group</h3>
+            <p>Senior supply chain veterans support trajectory design, escalation and execution governance.</p>
+          </article>
+          <article>
+            <h3>BI Platform Included</h3>
+            <p>Performance dashboards, labor visibility and throughput insights are included with every Operis deployment.</p>
+          </article>
+          <article>
+            <h3>Result Guaranteeing Tracks</h3>
+            <p>Structured improvement tracks secure temporary impact into long-term operational results.</p>
+          </article>
+        </div>
+
+        <div class="support-cta-row">
+          <a class="btn pill" href="/">Return to Ascentra</a>
+          <a class="btn pill secondary" href="#story">Replay Operis Story</a>
+        </div>
       </div>
     </section>
   </main>
+
+  <script src="/assets/js/operis-experience.js" defer></script>
 </body>
 </html>

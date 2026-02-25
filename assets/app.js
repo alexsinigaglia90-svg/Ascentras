@@ -4,6 +4,25 @@ function smoothScrollTo(selector) {
   el.scrollIntoView({ behavior: 'smooth' });
 }
 
+function initPageTransitions() {
+  document.querySelectorAll('a[data-page-transition]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      if (event.defaultPrevented) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const href = link.getAttribute('href');
+      if (!href || href.startsWith('#')) return;
+
+      event.preventDefault();
+      document.body.classList.add('page-leaving');
+
+      window.setTimeout(() => {
+        window.location.href = href;
+      }, 420);
+    });
+  });
+}
+
 const root = document.documentElement;
 
 function setTheme(theme) {
@@ -775,6 +794,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setLang(localStorage.getItem('lang') || 'en');
   setStyle(localStorage.getItem('style') || 'ivory');
 
+  initPageTransitions();
   initOperisDashboard();
   initPlatformExplorer();
 });

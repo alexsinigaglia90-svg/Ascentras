@@ -1,0 +1,757 @@
+.operis-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 36%),
+    radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--gold) 15%, transparent), transparent 44%),
+    radial-gradient(circle at 62% 84%, color-mix(in srgb, var(--blue) 10%, transparent), transparent 40%);
+  z-index: 0;
+}
+
+.operis-wrap {
+  width: min(1220px, 92vw);
+  margin-inline: auto;
+}
+
+.operis-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 0.9rem 0;
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.operis-wordmark {
+  text-decoration: none;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 1.28rem;
+  color: var(--blue);
+}
+
+.operis-nav {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.operis-nav a {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+main {
+  position: relative;
+  z-index: 1;
+}
+
+.operis-hero {
+  padding: 3.8rem 0 1.8rem;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr minmax(360px, 0.94fr);
+  gap: 1.1rem;
+  align-items: center;
+}
+
+.hero-title {
+  margin: 0.35rem 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.05;
+  color: var(--blue);
+}
+
+.hero-copy {
+  margin-top: 0.85rem;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.hero-actions {
+  margin-top: 1.15rem;
+  display: flex;
+  gap: 0.62rem;
+  flex-wrap: wrap;
+}
+
+.hero-control-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg) 12%);
+  box-shadow: var(--shadow);
+  padding: 0.9rem;
+}
+
+.hero-control-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.hero-control-head strong {
+  color: var(--blue);
+}
+
+.hero-control-grid {
+  margin-top: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.hero-kpi {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--bg) 8%);
+  padding: 0.54rem;
+}
+
+.hero-kpi span {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hero-kpi strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--blue);
+  font-size: 1.02rem;
+}
+
+.hero-lines {
+  margin-top: 0.62rem;
+  display: grid;
+  gap: 0.44rem;
+}
+
+.hero-lines span {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 82%, transparent), color-mix(in srgb, var(--gold) 72%, transparent));
+  animation: pulseLine 3.6s ease-in-out infinite;
+}
+
+.hero-lines span:nth-child(2) { animation-delay: 0.2s; }
+.hero-lines span:nth-child(3) { animation-delay: 0.4s; }
+
+.operis-strip {
+  padding: 0.45rem 0 1.2rem;
+}
+
+.strip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.56rem;
+}
+
+.strip-grid article {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
+  padding: 0.62rem;
+}
+
+.strip-grid span {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.strip-grid strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.15rem;
+  color: var(--blue);
+}
+
+.operis-roles,
+.operis-simulator,
+.operis-support {
+  padding: 1.8rem 0;
+}
+
+.operis-cinematic {
+  min-height: 255vh;
+  padding: 1.1rem 0 0;
+}
+
+.cinematic-wrap {
+  position: relative;
+}
+
+.cinematic-sticky {
+  position: sticky;
+  top: 92px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
+  box-shadow: var(--shadow);
+  padding: 0.95rem;
+  min-height: min(72vh, 680px);
+  display: grid;
+  grid-template-columns: 0.74fr 1fr auto;
+  gap: 0.78rem;
+  align-items: stretch;
+}
+
+.cinematic-meta {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--bg) 6%);
+  padding: 0.78rem;
+}
+
+.cinematic-meta h2 {
+  margin: 0.3rem 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(1.24rem, 2.2vw, 1.95rem);
+  color: var(--blue);
+  line-height: 1.18;
+}
+
+.cinematic-progress {
+  margin-top: 0.9rem;
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 75%, var(--bg) 25%);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.cinematic-progress span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 80%, transparent), color-mix(in srgb, var(--gold) 76%, transparent));
+  transition: width 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.cinematic-stage {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--gold) 10%, transparent), transparent 42%),
+    radial-gradient(circle at 16% 72%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 46%),
+    color-mix(in srgb, var(--surface) 94%, var(--bg) 6%);
+  overflow: hidden;
+}
+
+.cinematic-scene {
+  position: absolute;
+  inset: 0;
+  padding: 1rem;
+  opacity: 0;
+  transform: translateY(16px) scale(0.985);
+  transition: opacity 420ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+  display: grid;
+  align-content: center;
+}
+
+.cinematic-scene.is-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.cinematic-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cinematic-scene h3 {
+  margin: 0.46rem 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(1.34rem, 2.2vw, 2rem);
+  line-height: 1.12;
+  color: var(--blue);
+}
+
+.cinematic-scene p {
+  margin-top: 0.62rem;
+  color: var(--muted);
+  font-size: 0.98rem;
+  max-width: 55ch;
+}
+
+.scene-chips {
+  margin-top: 0.76rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.scene-chips span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.22rem 0.48rem;
+  font-size: 0.74rem;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
+}
+
+.cinematic-dots {
+  display: grid;
+  align-content: center;
+  gap: 0.44rem;
+}
+
+.cinematic-dot {
+  width: 10px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg) 12%);
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.cinematic-dot.is-active {
+  transform: scale(1.06);
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--gold) 38%);
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface) 80%);
+}
+
+.cinematic-compare {
+  grid-column: 1 / -1;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--bg) 6%);
+  padding: 0.66rem;
+}
+
+.compare-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.44rem;
+}
+
+.compare-head strong {
+  color: var(--blue);
+  font-size: 0.84rem;
+}
+
+.compare-shell {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 154px;
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
+  user-select: none;
+  touch-action: none;
+}
+
+.compare-pane {
+  position: absolute;
+  inset: 0;
+  padding: 0.7rem;
+  display: grid;
+  align-content: center;
+}
+
+.compare-pane h4 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  color: var(--blue);
+  font-size: 1.05rem;
+}
+
+.compare-pane ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.05rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  display: grid;
+  gap: 0.26rem;
+}
+
+.compare-before {
+  background: linear-gradient(120deg, color-mix(in srgb, var(--surface) 92%, var(--bg) 8%), color-mix(in srgb, var(--surface) 86%, var(--bg) 14%));
+}
+
+.compare-after {
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 18%, var(--surface) 82%), color-mix(in srgb, var(--gold) 14%, var(--surface) 86%));
+  clip-path: inset(0 0 0 var(--split));
+}
+
+.compare-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--split);
+  width: 2px;
+  transform: translateX(-1px);
+  background: color-mix(in srgb, var(--accent) 52%, var(--gold) 48%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface) 85%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.compare-handle {
+  position: absolute;
+  left: var(--split);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 62%, var(--gold) 38%);
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
+  box-shadow: 0 8px 16px rgba(8, 23, 42, 0.14);
+  cursor: ew-resize;
+}
+
+.compare-handle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: color-mix(in srgb, var(--accent) 64%, var(--gold) 36%);
+}
+
+.compare-range {
+  margin-top: 0.52rem;
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.section-head h2 {
+  margin: 0.34rem 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+  color: var(--blue);
+}
+
+.role-filters {
+  margin-top: 0.9rem;
+  display: flex;
+  gap: 0.46rem;
+  flex-wrap: wrap;
+}
+
+.role-filter {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
+  color: var(--text);
+  font-size: 0.78rem;
+  padding: 0.36rem 0.62rem;
+  cursor: pointer;
+}
+
+.role-filter.active {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--gold) 40%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 24%, transparent);
+}
+
+.role-grid {
+  margin-top: 0.82rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.58rem;
+}
+
+.role-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--bg) 8%);
+  padding: 0.78rem;
+  transform-style: preserve-3d;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), opacity 220ms ease, box-shadow var(--transition-fast);
+}
+
+.role-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--gold) 42%);
+  box-shadow: 0 10px 20px rgba(8, 23, 42, 0.12);
+}
+
+.role-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--blue);
+}
+
+.role-card p {
+  margin-top: 0.42rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.role-card.hidden {
+  opacity: 0.25;
+  transform: scale(0.98);
+}
+
+.simulator-grid {
+  display: grid;
+  grid-template-columns: 1fr minmax(360px, 0.92fr);
+  gap: 0.85rem;
+}
+
+.sim-copy h2 {
+  margin: 0.32rem 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(1.6rem, 3vw, 2.45rem);
+  color: var(--blue);
+}
+
+.sim-copy p {
+  margin-top: 0.6rem;
+  color: var(--muted);
+  max-width: 56ch;
+}
+
+.sim-control {
+  margin-top: 0.9rem;
+}
+
+.sim-control label {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.sim-control input {
+  margin-top: 0.45rem;
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.sim-value {
+  margin-top: 0.26rem;
+  font-size: 0.87rem;
+  color: var(--blue);
+}
+
+.sim-panel {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
+  box-shadow: var(--shadow);
+  padding: 0.82rem;
+}
+
+.sim-metric {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--bg) 6%);
+  padding: 0.46rem 0.56rem;
+  margin-bottom: 0.42rem;
+}
+
+.sim-metric span {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.sim-metric strong {
+  display: block;
+  margin-top: 0.16rem;
+  color: var(--blue);
+}
+
+.sim-chart {
+  margin-top: 0.56rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.44rem;
+  background: color-mix(in srgb, var(--surface) 93%, var(--bg) 7%);
+}
+
+.sim-chart svg {
+  width: 100%;
+  height: 132px;
+}
+
+#sim-path {
+  fill: none;
+  stroke: url(#simLine);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.support-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.62rem;
+}
+
+.support-grid article {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--bg) 8%);
+  padding: 0.8rem;
+}
+
+.support-grid h3 {
+  margin: 0;
+  color: var(--blue);
+}
+
+.support-grid p {
+  margin-top: 0.42rem;
+  color: var(--muted);
+}
+
+.support-cta-row {
+  margin-top: 0.9rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 620ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-control-card.is-interactive {
+  transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes pulseLine {
+  0%, 100% { opacity: 0.55; transform: scaleX(0.84); transform-origin: left center; }
+  50% { opacity: 0.95; transform: scaleX(1); transform-origin: left center; }
+}
+
+@media (max-width: 1024px) {
+  .hero-grid,
+  .simulator-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .operis-cinematic {
+    min-height: auto;
+    padding-top: 1.6rem;
+  }
+
+  .cinematic-sticky {
+    position: static;
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .cinematic-stage {
+    min-height: 360px;
+  }
+
+  .cinematic-dots {
+    grid-auto-flow: column;
+    justify-content: start;
+  }
+
+  .cinematic-compare {
+    padding: 0.58rem;
+  }
+
+  .cinematic-dot {
+    width: 28px;
+    height: 10px;
+  }
+
+  .strip-grid,
+  .role-grid,
+  .support-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .operis-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .operis-hero {
+    padding-top: 2rem;
+  }
+
+  .strip-grid,
+  .role-grid,
+  .support-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .operis-cinematic {
+    min-height: auto;
+  }
+
+  .cinematic-sticky {
+    position: static;
+  }
+
+  .cinematic-scene {
+    position: static;
+    opacity: 1;
+    transform: none;
+  }
+
+  .cinematic-stage {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .cinematic-progress span {
+    transition: none;
+  }
+
+  .compare-handle {
+    transition: none;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .hero-lines span {
+    animation: none;
+  }
+}
