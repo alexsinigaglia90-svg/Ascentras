@@ -282,6 +282,14 @@ nav {
   display: none;
 }
 
+.hero-video.is-hidden {
+  display: none;
+}
+
+.hero-fallback.is-visible {
+  display: flex;
+}
+
 .hero-bg.noimg {
   background: radial-gradient(circle at 15% 15%, #244a70 0%, #11233a 38%, #0a1524 100%);
 }
@@ -729,6 +737,18 @@ main {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+}
+
+.opx-legend-dot.tone-1 {
+  background: var(--accent);
+}
+
+.opx-legend-dot.tone-2 {
+  background: var(--gold);
+}
+
+.opx-legend-dot.tone-3 {
+  background: var(--blue);
 }
 
 .operis-console {

@@ -498,7 +498,7 @@ function initOperisDashboard() {
     const legendMarkup = state.selectedEmployees.map((id, index) => {
       const employee = state.employees[id];
       const value = employee.series[employee.series.length - 1];
-      return `<div class="opx-legend-item"><span class="opx-legend-dot" style="background:${colors[index % colors.length]}"></span><span>${employee.name}</span><strong>${value.toFixed(1)}</strong></div>`;
+      return `<div class="opx-legend-item"><span class="opx-legend-dot tone-${(index % colors.length) + 1}"></span><span>${employee.name}</span><strong>${value.toFixed(1)}</strong></div>`;
     }).join('');
 
     return `
@@ -777,7 +777,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const heroFallback = document.getElementById('hero-fallback');
   if (heroVideo && heroFallback) {
     heroVideo.addEventListener('loadeddata', () => {
-      heroFallback.style.display = 'none';
+      heroVideo.classList.remove('is-hidden');
+      heroFallback.classList.remove('is-visible');
+    });
+    heroVideo.addEventListener('error', () => {
+      heroVideo.classList.add('is-hidden');
+      heroFallback.classList.add('is-visible');
     });
   }
 
