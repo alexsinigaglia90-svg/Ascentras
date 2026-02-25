@@ -105,14 +105,14 @@
         const rect = stage.getBoundingClientRect();
         const nx = ((event.clientX - rect.left) / rect.width - 0.5) * 14;
         const ny = ((event.clientY - rect.top) / rect.height - 0.5) * 10;
-        gsap.to(active, { x: nx, y: ny, duration: 0.42, overwrite: true, ease: 'power2.out' });
+        gsap.to(active, { x: nx, y: ny, duration: 0.24, overwrite: true, ease: 'power3.out' });
       });
 
       root.addEventListener('mouseleave', () => {
         if (!gsap) return;
         const active = root.querySelector('.pj-world.is-active .pj-preview');
         if (!active) return;
-        gsap.to(active, { x: 0, y: 0, duration: 0.52, overwrite: true, ease: 'power3.out' });
+        gsap.to(active, { x: 0, y: 0, duration: 0.3, overwrite: true, ease: 'power3.out' });
       });
 
       if (!hasLoggedInit) {

@@ -229,7 +229,7 @@
         const rect = heroCard.getBoundingClientRect();
         const nx = (event.clientX - rect.left) / rect.width - 0.5;
         const ny = (event.clientY - rect.top) / rect.height - 0.5;
-        heroCard.style.transform = `perspective(920px) rotateX(${(-ny * 3.5).toFixed(2)}deg) rotateY(${(nx * 4.2).toFixed(2)}deg) translateY(-1px)`;
+        heroCard.style.transform = `perspective(920px) rotateX(${(-ny * 4.2).toFixed(2)}deg) rotateY(${(nx * 5.1).toFixed(2)}deg) translateY(-1px)`;
       });
 
       heroCard.addEventListener('mouseleave', () => {
@@ -242,7 +242,7 @@
         const rect = card.getBoundingClientRect();
         const nx = (event.clientX - rect.left) / rect.width - 0.5;
         const ny = (event.clientY - rect.top) / rect.height - 0.5;
-        card.style.transform = `perspective(760px) rotateX(${(-ny * 2.4).toFixed(2)}deg) rotateY(${(nx * 2.8).toFixed(2)}deg) translateY(-2px)`;
+        card.style.transform = `perspective(760px) rotateX(${(-ny * 2.8).toFixed(2)}deg) rotateY(${(nx * 3.2).toFixed(2)}deg) translateY(-2px)`;
       });
 
       card.addEventListener('mouseleave', () => {
@@ -273,7 +273,7 @@
         const rect = target.getBoundingClientRect();
         const nx = (event.clientX - rect.left) / rect.width - 0.5;
         const ny = (event.clientY - rect.top) / rect.height - 0.5;
-        target.style.transform = `translate(${(nx * 5).toFixed(2)}px, ${(ny * 3).toFixed(2)}px)`;
+        target.style.transform = `translate(${(nx * 6.4).toFixed(2)}px, ${(ny * 3.8).toFixed(2)}px)`;
       });
 
       target.addEventListener('mouseleave', () => {
