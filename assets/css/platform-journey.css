@@ -93,12 +93,16 @@
   align-items: center;
   gap: clamp(1.2rem, 3vw, 2.6rem);
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  z-index: 1;
   will-change: opacity, transform;
 }
 
 .pj-world.is-active {
+  visibility: visible;
   pointer-events: auto;
+  z-index: 3;
 }
 
 .pj-copy {
@@ -620,6 +624,7 @@
   .pj-world {
     position: static;
     opacity: 1;
+    visibility: visible;
     transform: none;
     pointer-events: auto;
     margin-bottom: 1rem;
@@ -665,6 +670,7 @@
   .pj-world {
     position: static;
     opacity: 1;
+    visibility: visible;
     transform: none;
     pointer-events: auto;
   }
