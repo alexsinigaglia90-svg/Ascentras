@@ -795,35 +795,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .platform-journey {
-    min-height: auto;
-    padding: 2rem 0;
-  }
-
   .platform-lines {
-    display: none;
+    opacity: 0.14;
   }
 
-  .platform-journey-stage {
-    height: auto;
-  }
-
-  .pj-worlds {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .pj-world {
-    position: static;
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    pointer-events: auto;
-  }
-
+  .pj-world,
   .pj-copy,
   .pj-preview {
-    opacity: 1;
+    transition-duration: 80ms;
     transform: none;
+  }
+
+  .operis-mini-trend-path {
+    animation: none;
   }
 }

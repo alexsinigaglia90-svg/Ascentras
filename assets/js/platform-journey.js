@@ -1,6 +1,13 @@
 (function initPlatformJourney() {
   let hasLoggedInit = false;
 
+  function setRuntimeState(root, state, detail) {
+    root.setAttribute('data-pj-state', state);
+    const indicator = root.querySelector('.pj-build-indicator');
+    if (!indicator) return;
+    indicator.textContent = detail ? `Build: LIVE · PJ: ${state.toUpperCase()} · ${detail}` : `Build: LIVE · PJ: ${state.toUpperCase()}`;
+  }
+
   function fallbackStack(root, worlds, reason) {
     if (reason) {
       console.error('[PlatformJourney] fallback:', reason);
@@ -10,6 +17,7 @@
     root.classList.remove('pj-cinematic-ready');
     root.classList.add('pj-fallback');
     root.setAttribute('data-world', 'ascentra');
+    setRuntimeState(root, 'fallback', reason?.message || 'safe');
 
     worlds.forEach((world) => {
       world.classList.add('is-active');
@@ -41,6 +49,8 @@
     const root = document.getElementById('platform-journey');
     if (!root) return;
 
+    setRuntimeState(root, 'boot');
+
     const stage = root.querySelector('#platform-journey-stage');
     const worlds = Array.from(root.querySelectorAll('.pj-world'));
 
@@ -49,16 +59,14 @@
       return;
     }
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      fallbackStack(root, worlds);
-      return;
-    }
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     try {
       root.classList.add('pj-enhanced');
       setWorld(root, worlds, 'ascentra');
       window.requestAnimationFrame(() => {
         root.classList.add('pj-cinematic-ready');
+        setRuntimeState(root, 'cinematic');
       });
 
       const hasGsap = Boolean(window.gsap && window.ScrollTrigger);
@@ -115,12 +123,13 @@
         const activePreview = root.querySelector('.pj-world.is-active .pj-preview');
         const healthy = isActuallyVisible(activeWorld) && (isActuallyVisible(activeCopy) || isActuallyVisible(activePreview));
         if (!healthy) {
-          fallbackStack(root, worlds, new Error('Visibility health-check failed'));
+          setRuntimeState(root, 'cinematic', 'degraded-visibility');
+          console.warn('[PlatformJourney] visibility health-check not ideal, keeping cinematic mode active');
         }
       }, 220);
 
       root.addEventListener('mousemove', (event) => {
-        if (!gsap) return;
+        if (!gsap || prefersReducedMotion) return;
         const active = root.querySelector('.pj-world.is-active .pj-preview');
         if (!active) return;
         const rect = stage.getBoundingClientRect();
@@ -130,7 +139,7 @@
       });
 
       root.addEventListener('mouseleave', () => {
-        if (!gsap) return;
+        if (!gsap || prefersReducedMotion) return;
         const active = root.querySelector('.pj-world.is-active .pj-preview');
         if (!active) return;
         gsap.to(active, { x: 0, y: 0, duration: 0.3, overwrite: true, ease: 'power3.out' });
