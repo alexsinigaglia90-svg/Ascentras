@@ -251,6 +251,192 @@
   padding-top: 0.58rem;
 }
 
+.operis-mini-window {
+  border-radius: 14px;
+  padding: 0.76rem;
+  border-color: color-mix(in srgb, var(--blue) 16%, transparent);
+  background: color-mix(in srgb, var(--surface, #fff) 88%, var(--cream) 12%);
+  box-shadow: 0 12px 28px rgba(18, 18, 18, 0.12);
+  aspect-ratio: 1.72 / 1;
+}
+
+.operis-mini-window .app-head {
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.46rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  color: rgba(28, 42, 57, 0.76);
+}
+
+.operis-mini-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.operis-mini-kpi {
+  border: 1px solid color-mix(in srgb, var(--blue) 14%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, #fff 82%, var(--cream) 18%);
+  padding: 0.46rem 0.56rem;
+}
+
+.operis-mini-kpi span {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(28, 42, 57, 0.74);
+}
+
+.operis-mini-kpi strong {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.operis-mini-grid {
+  margin-top: 0.6rem;
+  display: grid;
+  grid-template-columns: 1fr 0.84fr;
+  gap: 0.58rem;
+  min-height: 168px;
+}
+
+.operis-mini-zones {
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 0.42rem;
+  height: 100%;
+}
+
+.operis-mini-zoneline {
+  border: 1px solid color-mix(in srgb, var(--blue) 15%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, #fff 80%, var(--cream) 20%);
+  padding: 0.5rem 0.6rem;
+  transition: border-color 200ms ease, transform 200ms ease, background 200ms ease;
+}
+
+.operis-mini-zoneline.active,
+.operis-mini-zoneline:hover {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--gold) 48%);
+  background: color-mix(in srgb, #fff 90%, var(--cream) 10%);
+  transform: translateY(-1px);
+}
+
+.operis-mini-zonehead {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: rgba(28, 42, 57, 0.9);
+}
+
+.operis-mini-stations {
+  margin-top: 0.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.operis-mini-stations span {
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, transparent);
+  padding: 0.12rem 0.36rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: rgba(28, 42, 57, 0.78);
+  background: color-mix(in srgb, #fff 84%, var(--cream) 16%);
+}
+
+.operis-mini-trend {
+  border: 1px solid color-mix(in srgb, var(--blue) 14%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, #fff 80%, var(--cream) 20%);
+  padding: 0.5rem 0.6rem;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+}
+
+.operis-mini-trendhead {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(28, 42, 57, 0.74);
+}
+
+.operis-mini-trend svg {
+  margin-top: 0.26rem;
+  width: 100%;
+  height: 100%;
+  min-height: 106px;
+}
+
+.operis-mini-trend line {
+  stroke: rgba(28, 42, 57, 0.14);
+  stroke-width: 1;
+}
+
+.operis-mini-trend polyline {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.operis-mini-trend polyline:nth-of-type(1) {
+  stroke: rgba(28, 42, 57, 0.92);
+}
+
+.operis-mini-trend polyline:nth-of-type(2) {
+  stroke: rgba(65, 101, 137, 0.86);
+}
+
+.operis-mini-trend polyline:nth-of-type(3) {
+  stroke: rgba(106, 78, 66, 0.82);
+}
+
+.operis-mini-legend {
+  margin-top: 0.28rem;
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.operis-mini-legend span {
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, transparent);
+  padding: 0.1rem 0.36rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+  color: rgba(28, 42, 57, 0.78);
+  background: color-mix(in srgb, #fff 84%, var(--cream) 16%);
+}
+
+.operis-mini-legend .l1 {
+  border-color: rgba(28, 42, 57, 0.48);
+}
+
+.operis-mini-legend .l2 {
+  border-color: rgba(65, 101, 137, 0.45);
+}
+
+.operis-mini-legend .l3 {
+  border-color: rgba(106, 78, 66, 0.45);
+}
+
+.operis-mini-window .assist-ribbon {
+  margin-top: 0.52rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: rgba(28, 42, 57, 0.76);
+  border-top: 1px dashed rgba(28, 42, 57, 0.22);
+  padding-top: 0.5rem;
+}
+
 .astra-map {
   margin-top: 0.6rem;
   height: 142px;
@@ -354,6 +540,15 @@
 
   .app-window {
     margin-left: 0;
+  }
+
+  .operis-mini-grid {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .operis-mini-window {
+    aspect-ratio: auto;
   }
 }
 
