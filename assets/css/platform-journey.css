@@ -376,27 +376,52 @@
 }
 
 .operis-mini-trend line {
-  stroke: rgba(28, 42, 57, 0.14);
+  stroke: rgba(28, 42, 57, 0.11);
   stroke-width: 1;
 }
 
-.operis-mini-trend polyline {
+.operis-mini-trend-path {
   fill: none;
-  stroke-width: 3;
+  stroke-width: 2.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
-.operis-mini-trend polyline:nth-of-type(1) {
-  stroke: rgba(28, 42, 57, 0.92);
+.operis-mini-trend-path.glow {
+  stroke-width: 4.8;
+  opacity: 0.26;
+  filter: url(#miniTrendGlow);
 }
 
-.operis-mini-trend polyline:nth-of-type(2) {
-  stroke: rgba(65, 101, 137, 0.86);
+.operis-mini-trend-path.p1 {
+  stroke: url(#miniTrendPrimary);
 }
 
-.operis-mini-trend polyline:nth-of-type(3) {
-  stroke: rgba(106, 78, 66, 0.82);
+.operis-mini-trend-path.p2 {
+  stroke: url(#miniTrendSecond);
+  opacity: 0.92;
+}
+
+.operis-mini-trend-path.p3 {
+  stroke: url(#miniTrendThird);
+  opacity: 0.78;
+}
+
+.operis-mini-trend-dot {
+  opacity: 0.95;
+}
+
+.operis-mini-trend-dot.p1 {
+  fill: rgba(28, 42, 57, 0.95);
+}
+
+.operis-mini-trend-dot.p2 {
+  fill: rgba(65, 101, 137, 0.88);
+}
+
+.operis-mini-trend-dot.p3 {
+  fill: rgba(106, 78, 66, 0.82);
 }
 
 .operis-mini-legend {
@@ -435,6 +460,32 @@
   color: rgba(28, 42, 57, 0.76);
   border-top: 1px dashed rgba(28, 42, 57, 0.22);
   padding-top: 0.5rem;
+}
+
+.operis-mini-cta {
+  margin-top: 0.48rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.38rem 0.82rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--blue) 64%, var(--brown) 36%);
+  background: linear-gradient(140deg, color-mix(in srgb, #fff 88%, var(--cream) 12%), color-mix(in srgb, #fff 80%, var(--cream) 20%));
+  color: var(--blue);
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.operis-mini-cta:hover,
+.operis-mini-cta:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--brown);
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--shadow) 58%, transparent);
+  outline: none;
 }
 
 .astra-map {
