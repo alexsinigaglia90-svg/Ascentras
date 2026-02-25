@@ -1,4 +1,8 @@
 (function initOperisExperience() {
+  function enableEnhancedMode() {
+    document.body.classList.add('operis-enhanced');
+  }
+
   function markPageEntered() {
     document.body.classList.add('page-enter');
     requestAnimationFrame(() => {
@@ -12,6 +16,11 @@
   function setupReveals() {
     const revealItems = document.querySelectorAll('.reveal');
     if (!revealItems.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      revealItems.forEach((item) => item.classList.add('visible'));
+      return;
+    }
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -163,9 +172,12 @@
 
     if (!section || !stage || !progress || scenes.length === 0) return;
 
+    section.classList.add('operis-cinematic-ready');
+
     const mobile = window.matchMedia('(max-width: 1024px)').matches;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (mobile || reduced) {
+      section.classList.remove('operis-cinematic-ready');
       scenes.forEach((scene, index) => scene.classList.toggle('is-active', index === 0));
       dots.forEach((dot, index) => dot.classList.toggle('is-active', index === 0));
       progress.style.width = '33%';
@@ -347,6 +359,7 @@
   }
 
   window.addEventListener('DOMContentLoaded', () => {
+    enableEnhancedMode();
     markPageEntered();
     setupReveals();
     setupCinematicStory();
