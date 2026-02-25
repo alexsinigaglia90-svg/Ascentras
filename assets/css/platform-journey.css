@@ -168,9 +168,12 @@
 }
 
 .platform-journey.pj-enhanced.pj-cinematic-ready .pj-world.is-active {
+  opacity: 1;
   visibility: visible;
   pointer-events: auto;
   z-index: 3;
+  transform: translateY(0) scale(1);
+  filter: saturate(1);
 }
 
 .pj-copy,
