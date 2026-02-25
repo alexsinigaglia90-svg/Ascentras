@@ -105,75 +105,66 @@
 
       setWorld(root, worlds, 'ascentra');
 
-      gsap.set(worlds, { opacity: 0, y: 16, pointerEvents: 'none' });
-      gsap.set([worldNodes.ascentra.world], { opacity: 1, y: 0, pointerEvents: 'auto' });
-      gsap.set([worldNodes.ascentra.copy], { opacity: 1, y: 0 });
-      gsap.set([worldNodes.ascentra.preview], { opacity: 1, x: 0, scale: 1 });
-      gsap.set([
-        worldNodes.operis.copy,
-        worldNodes.astra.copy
-      ], { opacity: 0, y: 24 });
-      gsap.set([
-        worldNodes.operis.preview,
-        worldNodes.astra.preview
-      ], { opacity: 0, x: 24, scale: 0.98 });
-
       const lines = gsap.utils.toArray('.platform-lines .line', root);
-      gsap.set(lines, { scaleX: 0.85, opacity: 0.2 });
+      gsap.set(lines, { scaleX: 0.95, opacity: 0.26 });
 
-      const timeline = gsap.timeline({
-        defaults: { ease: 'power2.inOut' },
-        scrollTrigger: {
-          id: 'platformJourneyPin',
-          trigger: root,
-          start: 'top top',
-          end: '+=240%',
-          scrub: 1.15,
-          pin: true,
-          pinSpacing: true,
-          anticipatePin: 1,
-          fastScrollEnd: true,
-          snap: {
-            snapTo: [0, 0.5, 1],
-            duration: { min: 0.2, max: 0.42 },
-            delay: 0.08,
-            ease: 'power3.out'
-          },
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            const progress = self.progress;
-            root.style.setProperty('--pj-progress', progress.toFixed(4));
+      function applyWorldState(activeKey) {
+        setWorld(root, worlds, activeKey);
 
-            if (progress < 0.33) setWorld(root, worlds, 'ascentra');
-            else if (progress < 0.66) setWorld(root, worlds, 'operis');
-            else setWorld(root, worlds, 'astra');
+        Object.entries(worldNodes).forEach(([key, node]) => {
+          const isActive = key === activeKey;
+          gsap.to(node.world, {
+            opacity: isActive ? 1 : 0,
+            y: isActive ? 0 : 10,
+            duration: 0.22,
+            overwrite: true
+          });
+          gsap.to(node.copy, {
+            opacity: isActive ? 1 : 0,
+            y: isActive ? 0 : 12,
+            duration: 0.22,
+            overwrite: true
+          });
+          gsap.to(node.preview, {
+            opacity: isActive ? 1 : 0,
+            x: isActive ? 0 : 10,
+            scale: isActive ? 1 : 0.99,
+            duration: 0.22,
+            overwrite: true
+          });
+          node.world.style.pointerEvents = isActive ? 'auto' : 'none';
+        });
+      }
+
+      applyWorldState('ascentra');
+
+      let currentStage = 'ascentra';
+
+      ScrollTrigger.create({
+        id: 'platformJourneyPin',
+        trigger: root,
+        start: 'top top',
+        end: '+=220%',
+        scrub: 0.9,
+        pin: true,
+        pinSpacing: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          const progress = self.progress;
+          root.style.setProperty('--pj-progress', progress.toFixed(4));
+
+          const nextStage = progress < 0.34 ? 'ascentra' : (progress < 0.67 ? 'operis' : 'astra');
+          if (nextStage !== currentStage) {
+            currentStage = nextStage;
+            applyWorldState(currentStage);
           }
+
+          const lineScale = 0.95 + progress * 0.2;
+          const lineOpacity = 0.26 + (1 - Math.abs(progress - 0.5) * 2) * 0.18;
+          gsap.set(lines, { scaleX: lineScale, opacity: Math.max(0.2, lineOpacity) });
         }
       });
-
-      timeline
-        .fromTo(worldNodes.ascentra.copy, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.12 }, 0)
-        .fromTo(worldNodes.ascentra.preview, { opacity: 0, x: 24, scale: 0.98 }, { opacity: 1, x: 0, scale: 1, duration: 0.12 }, 0)
-        .to(lines, { scaleX: 1.0, opacity: 0.4, duration: 0.18 }, 0.06)
-
-        .add(() => setWorld(root, worlds, 'operis'), 0.33)
-        .to(worldNodes.ascentra.world, { opacity: 0, x: -30, duration: 0.14 }, 0.33)
-        .to(worldNodes.ascentra.copy, { opacity: 0, y: -10, duration: 0.14 }, 0.33)
-        .to(worldNodes.ascentra.preview, { opacity: 0, x: -10, scale: 0.985, duration: 0.14 }, 0.33)
-        .to(worldNodes.operis.world, { opacity: 1, y: 0, pointerEvents: 'auto', duration: 0.14 }, 0.36)
-        .fromTo(worldNodes.operis.copy, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.14 }, 0.38)
-        .fromTo(worldNodes.operis.preview, { opacity: 0, x: 24, scale: 0.98 }, { opacity: 1, x: 0, scale: 1, duration: 0.14 }, 0.4)
-        .to(lines, { scaleX: 1.15, opacity: 0.5, duration: 0.14 }, 0.45)
-
-        .add(() => setWorld(root, worlds, 'astra'), 0.66)
-        .to(worldNodes.ascentra.world, { opacity: 0, x: -34, duration: 0.1 }, 0.66)
-        .to(worldNodes.operis.world, { opacity: 0, x: -28, duration: 0.14 }, 0.66)
-        .to(worldNodes.operis.copy, { opacity: 0, y: -10, duration: 0.14 }, 0.66)
-        .to(worldNodes.operis.preview, { opacity: 0, x: -10, scale: 0.985, duration: 0.14 }, 0.66)
-        .to(worldNodes.astra.world, { opacity: 1, y: 0, pointerEvents: 'auto', duration: 0.14 }, 0.7)
-        .fromTo(worldNodes.astra.copy, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.14 }, 0.72)
-        .fromTo(worldNodes.astra.preview, { opacity: 0, x: 24, scale: 0.98 }, { opacity: 1, x: 0, scale: 1, duration: 0.14 }, 0.74)
-        .to(lines, { scaleX: 1.25, opacity: 0.28, duration: 0.14 }, 0.86);
 
       window.setTimeout(() => {
         const trigger = ScrollTrigger.getById('platformJourneyPin');
