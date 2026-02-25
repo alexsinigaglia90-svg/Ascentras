@@ -10,7 +10,7 @@
 .platform-journey {
   --pj-progress: 0;
   position: relative;
-  min-height: 320vh;
+  min-height: 100vh;
   background:
     radial-gradient(circle at 18% 16%, rgba(28, 42, 57, 0.05), transparent 46%),
     radial-gradient(circle at 82% 74%, rgba(106, 78, 66, 0.08), transparent 55%),

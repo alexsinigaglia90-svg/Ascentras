@@ -125,10 +125,18 @@
           id: 'platformJourneyPin',
           trigger: root,
           start: 'top top',
-          end: '+=300%',
-          scrub: 1,
+          end: '+=240%',
+          scrub: 1.15,
           pin: true,
+          pinSpacing: true,
           anticipatePin: 1,
+          fastScrollEnd: true,
+          snap: {
+            snapTo: [0, 0.5, 1],
+            duration: { min: 0.2, max: 0.42 },
+            delay: 0.08,
+            ease: 'power3.out'
+          },
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             const progress = self.progress;
@@ -140,55 +148,6 @@
           }
         }
       });
-
-      const stageCount = 3;
-      let stageIndex = 0;
-      let wheelLocked = false;
-
-      function stageToProgress(index) {
-        if (stageCount <= 1) return 0;
-        return index / (stageCount - 1);
-      }
-
-      function syncStageFromTrigger() {
-        const trigger = ScrollTrigger.getById('platformJourneyPin');
-        if (!trigger) return;
-        const progress = Math.max(0, Math.min(1, trigger.progress || 0));
-        stageIndex = Math.round(progress * (stageCount - 1));
-      }
-
-      function scrollToStage(nextStage) {
-        const trigger = ScrollTrigger.getById('platformJourneyPin');
-        if (!trigger || !trigger.isActive || wheelLocked) return;
-
-        const clampedStage = Math.max(0, Math.min(stageCount - 1, nextStage));
-        if (clampedStage === stageIndex) return;
-
-        const distance = trigger.end - trigger.start;
-        const targetProgress = stageToProgress(clampedStage);
-        const targetY = trigger.start + distance * targetProgress;
-
-        stageIndex = clampedStage;
-        wheelLocked = true;
-
-        window.scrollTo({ top: targetY, behavior: 'smooth' });
-
-        window.setTimeout(() => {
-          wheelLocked = false;
-          syncStageFromTrigger();
-        }, 520);
-      }
-
-      root.addEventListener('wheel', (event) => {
-        const trigger = ScrollTrigger.getById('platformJourneyPin');
-        if (!trigger || !trigger.isActive) return;
-        if (Math.abs(event.deltaY) < 3) return;
-
-        event.preventDefault();
-        syncStageFromTrigger();
-        const direction = event.deltaY > 0 ? 1 : -1;
-        scrollToStage(stageIndex + direction);
-      }, { passive: false });
 
       timeline
         .fromTo(worldNodes.ascentra.copy, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.12 }, 0)
