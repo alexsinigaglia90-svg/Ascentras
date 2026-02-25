@@ -30,6 +30,13 @@
     return Math.max(0, Math.min(1, value));
   }
 
+  function isActuallyVisible(element) {
+    if (!element) return false;
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    return style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0.05 && rect.width > 8 && rect.height > 8;
+  }
+
   function init() {
     const root = document.getElementById('platform-journey');
     if (!root) return;
@@ -101,6 +108,16 @@
       window.addEventListener('resize', syncFromScroll);
       syncFromScroll();
       window.setTimeout(syncFromScroll, 100);
+
+      window.setTimeout(() => {
+        const activeWorld = root.querySelector('.pj-world.is-active');
+        const activeCopy = root.querySelector('.pj-world.is-active .pj-copy');
+        const activePreview = root.querySelector('.pj-world.is-active .pj-preview');
+        const healthy = isActuallyVisible(activeWorld) && (isActuallyVisible(activeCopy) || isActuallyVisible(activePreview));
+        if (!healthy) {
+          fallbackStack(root, worlds, new Error('Visibility health-check failed'));
+        }
+      }, 220);
 
       root.addEventListener('mousemove', (event) => {
         if (!gsap) return;
