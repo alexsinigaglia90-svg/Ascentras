@@ -196,7 +196,7 @@
         .to(lines, { scaleX: 1.0, opacity: 0.4, duration: 0.18 }, 0.06)
 
         .add(() => setWorld(root, worlds, 'operis'), 0.33)
-        .to(worldNodes.ascentra.world, { opacity: 0.18, x: -26, duration: 0.14 }, 0.33)
+        .to(worldNodes.ascentra.world, { opacity: 0, x: -30, duration: 0.14 }, 0.33)
         .to(worldNodes.ascentra.copy, { opacity: 0, y: -10, duration: 0.14 }, 0.33)
         .to(worldNodes.ascentra.preview, { opacity: 0, x: -10, scale: 0.985, duration: 0.14 }, 0.33)
         .to(worldNodes.operis.world, { opacity: 1, y: 0, pointerEvents: 'auto', duration: 0.14 }, 0.36)
@@ -205,7 +205,8 @@
         .to(lines, { scaleX: 1.15, opacity: 0.5, duration: 0.14 }, 0.45)
 
         .add(() => setWorld(root, worlds, 'astra'), 0.66)
-        .to(worldNodes.operis.world, { opacity: 0.14, x: -24, duration: 0.14 }, 0.66)
+        .to(worldNodes.ascentra.world, { opacity: 0, x: -34, duration: 0.1 }, 0.66)
+        .to(worldNodes.operis.world, { opacity: 0, x: -28, duration: 0.14 }, 0.66)
         .to(worldNodes.operis.copy, { opacity: 0, y: -10, duration: 0.14 }, 0.66)
         .to(worldNodes.operis.preview, { opacity: 0, x: -10, scale: 0.985, duration: 0.14 }, 0.66)
         .to(worldNodes.astra.world, { opacity: 1, y: 0, pointerEvents: 'auto', duration: 0.14 }, 0.7)
