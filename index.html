@@ -121,15 +121,48 @@
               <a class="pj-cta" href="/operis/" aria-label="Explore Operis">Explore Operis</a>
             </div>
             <div class="pj-preview">
-              <div class="app-window glass">
+              <div class="app-window glass operis-mini-window">
                 <header class="app-head">Operis Operational Control</header>
-                <div class="ops-grid">
-                  <div class="shift-tile">Shift A · 21 staff</div>
-                  <div class="shift-tile">Shift B · 19 staff</div>
-                  <div class="shift-tile">Shift C · 17 staff</div>
-                  <div class="perf-badge">Execution 97.8%</div>
+                <div class="operis-mini-kpis">
+                  <div class="operis-mini-kpi"><span>Direct labor</span><strong>62</strong></div>
+                  <div class="operis-mini-kpi"><span>Throughput</span><strong>1,342/h</strong></div>
+                  <div class="operis-mini-kpi"><span>Efficiency</span><strong>96.8%</strong></div>
                 </div>
-                <div class="assist-ribbon">Backed by Ascentra dashboard assist</div>
+
+                <div class="operis-mini-grid">
+                  <div class="operis-mini-zones">
+                    <div class="operis-mini-zoneline active">
+                      <div class="operis-mini-zonehead"><strong>Pick East</strong><span>438/h</span></div>
+                      <div class="operis-mini-stations"><span>E-01</span><span>E-02</span><span>E-03</span></div>
+                    </div>
+                    <div class="operis-mini-zoneline">
+                      <div class="operis-mini-zonehead"><strong>Pick West</strong><span>412/h</span></div>
+                      <div class="operis-mini-stations"><span>W-01</span><span>W-02</span><span>W-03</span></div>
+                    </div>
+                    <div class="operis-mini-zoneline">
+                      <div class="operis-mini-zonehead"><strong>Sortation</strong><span>261/h</span></div>
+                      <div class="operis-mini-stations"><span>S-01</span><span>S-02</span><span>S-03</span></div>
+                    </div>
+                  </div>
+
+                  <div class="operis-mini-trend">
+                    <div class="operis-mini-trendhead">Employee compare · 30/60/90d</div>
+                    <svg viewBox="0 0 320 118" role="img" aria-label="Employee throughput trend">
+                      <g>
+                        <line x1="0" y1="16" x2="320" y2="16"></line>
+                        <line x1="0" y1="46" x2="320" y2="46"></line>
+                        <line x1="0" y1="76" x2="320" y2="76"></line>
+                        <line x1="0" y1="106" x2="320" y2="106"></line>
+                      </g>
+                      <polyline points="0,88 30,84 60,74 90,70 120,64 150,58 180,54 210,48 240,45 270,39 300,34 320,30"></polyline>
+                      <polyline points="0,94 30,91 60,86 90,82 120,74 150,70 180,67 210,63 240,58 270,53 300,49 320,45"></polyline>
+                      <polyline points="0,98 30,95 60,92 90,89 120,83 150,79 180,75 210,71 240,66 270,63 300,60 320,57"></polyline>
+                    </svg>
+                    <div class="operis-mini-legend"><span class="l1">Emma</span><span class="l2">Noah</span><span class="l3">Sara</span></div>
+                  </div>
+                </div>
+
+                <div class="assist-ribbon">Live labor monitoring · pure throughput & efficiency</div>
               </div>
             </div>
           </article>
