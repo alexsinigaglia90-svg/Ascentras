@@ -7,6 +7,7 @@
     }
 
     root.classList.remove('pj-enhanced');
+    root.classList.remove('pj-cinematic-ready');
     root.classList.add('pj-fallback');
     root.setAttribute('data-world', 'ascentra');
 
@@ -49,6 +50,9 @@
     try {
       root.classList.add('pj-enhanced');
       setWorld(root, worlds, 'ascentra');
+      window.requestAnimationFrame(() => {
+        root.classList.add('pj-cinematic-ready');
+      });
 
       const hasGsap = Boolean(window.gsap && window.ScrollTrigger);
       const gsap = hasGsap ? window.gsap : null;

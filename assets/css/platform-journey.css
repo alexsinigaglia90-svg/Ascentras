@@ -90,7 +90,7 @@
   gap: clamp(1rem, 2.4vw, 1.6rem);
 }
 
-.platform-journey.pj-enhanced .pj-worlds {
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-worlds {
   height: 100%;
 }
 
@@ -134,7 +134,7 @@
   will-change: opacity, transform;
 }
 
-.platform-journey.pj-enhanced .pj-world {
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-world {
   position: absolute;
   inset: 0;
   opacity: 0;
@@ -163,7 +163,7 @@
   filter: saturate(1);
 }
 
-.platform-journey.pj-enhanced .pj-world.is-active {
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-world.is-active {
   visibility: visible;
   pointer-events: auto;
   z-index: 3;
@@ -176,8 +176,8 @@
   transition: opacity 210ms cubic-bezier(0.2, 0.9, 0.2, 1), transform 210ms cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
-.platform-journey.pj-enhanced .pj-copy,
-.platform-journey.pj-enhanced .pj-preview {
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-copy,
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-preview {
   opacity: 0;
   transform: translateY(20px);
 }
@@ -194,8 +194,8 @@
   transform: translateY(0);
 }
 
-.platform-journey.pj-enhanced .pj-world.is-active .pj-copy,
-.platform-journey.pj-enhanced .pj-world.is-active .pj-preview {
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-world.is-active .pj-copy,
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-world.is-active .pj-preview {
   opacity: 1;
   transform: translateY(0);
 }
@@ -280,19 +280,19 @@
   will-change: transform, opacity;
 }
 
-.platform-journey.pj-enhanced .pj-worlds {
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-worlds {
   height: 100%;
 }
 
-.platform-journey.pj-enhanced .pj-world {
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-world {
   inset: 0;
 }
 
-.platform-journey.pj-enhanced .pj-world.is-active {
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-world.is-active {
   z-index: 3;
 }
 
-.platform-journey.pj-enhanced .pj-copy {
+.platform-journey.pj-enhanced.pj-cinematic-ready .pj-copy {
   transform: none;
   opacity: 1;
 }
