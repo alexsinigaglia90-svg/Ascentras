@@ -99,22 +99,69 @@ function labelTexture(label: string): THREE.CanvasTexture {
   return texture;
 }
 
-function TileMaterial({ kind, hover, active }: { kind: CircuitTile['kind']; hover: boolean; active: boolean }) {
-  const palette =
-    kind === 'F'
-      ? { color: '#6ca9ff', emissive: '#4c8ef5' }
-      : kind === 'M'
-        ? { color: '#8caed9', emissive: '#6f91bb' }
-        : { color: '#a4b3c4', emissive: '#708196' };
+function BeveledBlock({
+  size,
+  radius = 0.08,
+  color,
+  emissive,
+  emissiveIntensity = 0.2,
+  roughness = 0.4,
+  metalness = 0.3,
+  stripColor,
+  stripOpacity = 0.85
+}: {
+  size: [number, number, number];
+  radius?: number;
+  color: string;
+  emissive: string;
+  emissiveIntensity?: number;
+  roughness?: number;
+  metalness?: number;
+  stripColor?: string;
+  stripOpacity?: number;
+}) {
+  const [width, height, depth] = size;
+  const coreW = Math.max(0.05, width - radius * 2);
+  const coreD = Math.max(0.05, depth - radius * 2);
+  const cx = width / 2 - radius;
+  const cz = depth / 2 - radius;
 
   return (
-    <meshStandardMaterial
-      color={palette.color}
-      emissive={palette.emissive}
-      emissiveIntensity={0.18 + (hover ? 0.2 : 0) + (active ? 0.3 : 0)}
-      roughness={0.38}
-      metalness={0.32}
-    />
+    <group>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[coreW, height, depth]} />
+        <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={roughness} metalness={metalness} />
+      </mesh>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[width, height, coreD]} />
+        <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={roughness} metalness={metalness} />
+      </mesh>
+
+      {[
+        [cx, 0, cz],
+        [-cx, 0, cz],
+        [cx, 0, -cz],
+        [-cx, 0, -cz]
+      ].map((pos, index) => (
+        <mesh key={index} position={pos as [number, number, number]} castShadow receiveShadow>
+          <cylinderGeometry args={[radius, radius, height, 18]} />
+          <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={roughness} metalness={metalness} />
+        </mesh>
+      ))}
+
+      {stripColor ? (
+        <>
+          <mesh position={[0, height * 0.28, depth * 0.42]}>
+            <boxGeometry args={[coreW * 0.82, Math.max(0.012, height * 0.08), 0.04]} />
+            <meshStandardMaterial color={stripColor} emissive={stripColor} emissiveIntensity={0.45} transparent opacity={stripOpacity} roughness={0.22} metalness={0.2} />
+          </mesh>
+          <mesh position={[0, height * 0.28, -depth * 0.42]}>
+            <boxGeometry args={[coreW * 0.82, Math.max(0.012, height * 0.08), 0.04]} />
+            <meshStandardMaterial color={stripColor} emissive={stripColor} emissiveIntensity={0.42} transparent opacity={stripOpacity * 0.9} roughness={0.22} metalness={0.2} />
+          </mesh>
+        </>
+      ) : null}
+    </group>
   );
 }
 
@@ -169,13 +216,18 @@ function Conveyor({ from, to }: { from: GridCell; to: GridCell }) {
 
   return (
     <group position={center} rotation={[0, rotationY, 0]}>
-      <mesh>
-        <boxGeometry args={[length, 0.06, 0.38]} />
-        <meshStandardMaterial color="#293a52" emissive="#3d587d" emissiveIntensity={0.2} roughness={0.46} metalness={0.3} />
-      </mesh>
+      <BeveledBlock
+        size={[length, 0.08, 0.4]}
+        radius={0.08}
+        color="#293a52"
+        emissive="#3d587d"
+        emissiveIntensity={0.2}
+        stripColor="#86aee2"
+        stripOpacity={0.78}
+      />
       <group ref={stripeRef}>
         {new Array(6).fill(0).map((_, index) => (
-          <mesh key={index}>
+          <mesh key={index} castShadow>
             <boxGeometry args={[0.28, 0.012, 0.18]} />
             <meshStandardMaterial color="#9fc0ec" emissive="#7ea9e2" emissiveIntensity={0.4} roughness={0.34} metalness={0.24} />
           </mesh>
@@ -196,11 +248,16 @@ function StationObject({ cell, title, accent, scale = [0.88, 0.42, 0.88] as [num
 
   return (
     <group position={[x, y, z]}>
-      <mesh>
-        <boxGeometry args={scale} />
-        <meshStandardMaterial color="#263548" emissive={accent} emissiveIntensity={0.26} roughness={0.4} metalness={0.36} />
-      </mesh>
-      <mesh position={[0, 0.24, 0]}>
+      <BeveledBlock
+        size={scale}
+        radius={0.1}
+        color="#263548"
+        emissive={accent}
+        emissiveIntensity={0.24}
+        stripColor="#96b7e3"
+        stripOpacity={0.72}
+      />
+      <mesh position={[0, 0.24, 0]} castShadow receiveShadow>
         <boxGeometry args={[scale[0] * 0.88, 0.04, scale[2] * 0.88]} />
         <meshStandardMaterial color="#8ab0e2" emissive="#7da6dd" emissiveIntensity={0.2} roughness={0.28} metalness={0.3} />
       </mesh>
@@ -216,11 +273,16 @@ function DockGroup({ docks }: { docks: GridCell[] }) {
     <>
       {docks.map((dock, index) => (
         <group key={`dock-${dock.col}-${dock.row}`} position={cellToWorld(dock, 0.21)}>
-          <mesh>
-            <boxGeometry args={[0.94, 0.34, 0.58]} />
-            <meshStandardMaterial color="#1f2e42" emissive="#5b82bc" emissiveIntensity={0.2} roughness={0.45} metalness={0.32} />
-          </mesh>
-          <mesh position={[0, 0.2, 0.22]}>
+          <BeveledBlock
+            size={[0.94, 0.34, 0.58]}
+            radius={0.08}
+            color="#1f2e42"
+            emissive="#5b82bc"
+            emissiveIntensity={0.2}
+            stripColor="#9cc0ee"
+            stripOpacity={0.78}
+          />
+          <mesh position={[0, 0.2, 0.22]} castShadow>
             <planeGeometry args={[0.34, 0.18]} />
             <meshBasicMaterial color="#dce9ff" />
           </mesh>
@@ -287,10 +349,19 @@ function Tile({
 
   return (
     <group ref={groupRef} onPointerDown={onPointerDown} onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[0.82, 0.34, 0.82]} />
-        <TileMaterial kind={tile.kind} hover={hover} active={active} />
-      </mesh>
+      <group>
+        <BeveledBlock
+          size={[0.82, 0.34, 0.82]}
+          radius={0.1}
+          color={tile.kind === 'F' ? '#6ca9ff' : tile.kind === 'M' ? '#8caed9' : '#a4b3c4'}
+          emissive={tile.kind === 'F' ? '#4c8ef5' : tile.kind === 'M' ? '#6f91bb' : '#708196'}
+          emissiveIntensity={0.16 + (hover ? 0.18 : 0) + (active ? 0.24 : 0)}
+          roughness={0.36}
+          metalness={0.3}
+          stripColor={tile.kind === 'F' ? '#9cc3ff' : tile.kind === 'M' ? '#a8c7e9' : '#b8c6d8'}
+          stripOpacity={hover ? 0.94 : 0.74}
+        />
+      </group>
       <sprite position={[0, 0.42, 0]} scale={hover ? [0.5, 0.5, 0.5] : [0.44, 0.44, 0.44]}>
         <spriteMaterial map={tex} transparent depthWrite={false} />
       </sprite>
@@ -426,28 +497,43 @@ function SceneRig({
 
   return (
     <>
-      <fog attach="fog" args={['#060b12', 23, 58]} />
-      <ambientLight intensity={0.4} color="#a8c2e4" />
+      <fog attach="fog" args={['#0a1220', 20, 50]} />
+      <ambientLight intensity={0.36} color="#a8c2e4" />
       <hemisphereLight intensity={0.74} color="#dce9ff" groundColor="#111b2a" position={[0, 16, 0]} />
-      <directionalLight position={[11, 17, 9]} intensity={0.95} color="#dbe8ff" />
-      <directionalLight position={[-12, 9, -11]} intensity={0.55} color="#5f89c4" />
+      <directionalLight
+        castShadow
+        position={[10, 15, 8]}
+        intensity={0.92}
+        color="#dbe8ff"
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-camera-near={2}
+        shadow-camera-far={45}
+        shadow-camera-left={-14}
+        shadow-camera-right={14}
+        shadow-camera-top={12}
+        shadow-camera-bottom={-12}
+        shadow-radius={3}
+        shadow-bias={-0.00015}
+      />
+      <directionalLight position={[-12, 9, -11]} intensity={0.5} color="#5f89c4" />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]} receiveShadow>
         <planeGeometry args={[floorWidth, floorDepth]} />
         <meshStandardMaterial color="#0b121d" roughness={0.94} metalness={0.06} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-4, 0.005, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-4, 0.005, 0]} receiveShadow>
         <planeGeometry args={[8, BOARD_ROWS]} />
         <meshBasicMaterial color="#6f9ad4" transparent opacity={0.08} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4, 0.005, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4, 0.005, 0]} receiveShadow>
         <planeGeometry args={[8, BOARD_ROWS]} />
         <meshBasicMaterial color="#8ea8cc" transparent opacity={0.07} />
       </mesh>
 
-      <mesh position={cellToWorld({ col: 7, row: 4.5 }, 0.04)}>
+      <mesh position={cellToWorld({ col: 7, row: 4.5 }, 0.04)} castShadow receiveShadow>
         <boxGeometry args={[0.06, 0.08, BOARD_ROWS + 0.8]} />
         <meshStandardMaterial color="#9fb7db" emissive="#7b9ccf" emissiveIntensity={0.26} roughness={0.3} metalness={0.22} />
       </mesh>
@@ -554,21 +640,21 @@ function SceneRig({
       ))}
 
       {[...visualState.humanTargets, ...visualState.aiTargets].map((target, index) => (
-        <mesh key={`target-${index}-${target.col}-${target.row}`} position={cellToWorld(target, 0.06)}>
+        <mesh key={`target-${index}-${target.col}-${target.row}`} position={cellToWorld(target, 0.06)} castShadow>
           <torusGeometry args={[0.22, 0.028, 10, 20]} />
           <meshStandardMaterial color="#b7cdf2" emissive="#95b7e6" emissiveIntensity={0.28} transparent opacity={0.5} />
         </mesh>
       ))}
 
       {[...visualState.humanBoxes, ...visualState.aiBoxes].map((box) => (
-        <mesh key={box.id} position={cellToWorld(box.cell, 0.16)}>
+        <mesh key={box.id} position={cellToWorld(box.cell, 0.16)} castShadow receiveShadow>
           <boxGeometry args={[0.22, 0.22, 0.22]} />
           <meshStandardMaterial color="#d8e9ff" emissive="#89b0e8" emissiveIntensity={0.35} roughness={0.34} metalness={0.22} />
         </mesh>
       ))}
 
       {[...visualState.humanAgents, ...visualState.aiAgents].map((agent) => (
-        <mesh key={agent.id} position={cellToWorld(agent.cell, 0.22)}>
+        <mesh key={agent.id} position={cellToWorld(agent.cell, 0.22)} castShadow>
           <sphereGeometry args={[agent.role === 'picker' ? 0.16 : 0.14, 16, 16]} />
           <meshStandardMaterial
             color={agent.role === 'picker' ? '#7cb3ff' : '#b8d3ff'}
@@ -585,13 +671,13 @@ function SceneRig({
         enablePan={false}
         enableDamping
         dampingFactor={0.08}
-        minDistance={16}
-        maxDistance={26}
-        minPolarAngle={0.82}
-        maxPolarAngle={1.2}
-        minAzimuthAngle={-0.42}
-        maxAzimuthAngle={0.42}
-        target={[0, 0, 0]}
+        minDistance={14}
+        maxDistance={22}
+        minPolarAngle={0.86}
+        maxPolarAngle={1.14}
+        minAzimuthAngle={-0.36}
+        maxAzimuthAngle={0.36}
+        target={[0, 0.28, 0]}
       />
 
       {effectsEnabled ? (
@@ -662,7 +748,8 @@ export function ThreeScene(props: ThreeSceneProps) {
     >
       <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl border border-borderline/70 bg-slate-950/35">
         <Canvas
-          camera={{ position: [13.5, 13.8, 12.5], fov: 43 }}
+          shadows
+          camera={{ position: [11.8, 11.2, 10.6], fov: 40 }}
           gl={{ antialias: true }}
           onCreated={({ gl }) => {
             try {
