@@ -52,6 +52,7 @@ export default function WarehouseSimulatorPage() {
   const humanTotalFte = results ? results.human.requiredFte.pickers + results.human.requiredFte.runners : 0;
   const aiTotalFte = results ? results.ai.requiredFte.pickers + results.ai.requiredFte.runners : 0;
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const phaseLabel = phase === 'build' ? 'Build' : phase === 'ready' ? 'Ready' : phase === 'paused' ? 'Paused' : phase === 'simulating' ? 'Simulating' : 'Finished';
 
   const hasProgressToLose =
     humanTiles.length > 0 ||
@@ -85,7 +86,7 @@ export default function WarehouseSimulatorPage() {
     <div className="relative h-screen w-full overflow-hidden bg-ink text-[var(--as-text-main)]">
       <main className="relative z-10 grid h-screen grid-rows-[auto_auto_1fr] gap-3 p-3">
         <header className="glass-panel px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <a
                 href="/"
@@ -101,12 +102,18 @@ export default function WarehouseSimulatorPage() {
                   <span aria-hidden="true">/</span>
                   <span aria-current="page" className="text-[var(--as-text-main)]">Simulator</span>
                 </nav>
-                <h1 className="text-xl font-semibold tracking-[0.015em] text-[var(--as-text-main)]">Build → Ready → Simulate</h1>
-                <p className="mt-1 text-sm font-medium text-[var(--as-text-sub)]">Pick Circuit Builder · Human vs Ascentra Engine</p>
+                <h1 className="text-xl font-semibold tracking-[0.015em] text-[var(--as-text-main)]">Warehouse Simulator</h1>
+                <div className="phase-track mt-2 max-w-[360px]">
+                  <div className={`phase-pill ${phase === 'build' ? 'phase-pill-active' : ''}`}>Build</div>
+                  <div className={`phase-pill ${(phase === 'ready' || phase === 'paused' || phase === 'simulating' || phase === 'finished') ? 'phase-pill-done' : ''} ${phase === 'ready' ? 'phase-pill-active' : ''}`}>Ready</div>
+                  <div className={`phase-pill ${(phase === 'simulating' || phase === 'paused' || phase === 'finished') ? 'phase-pill-done' : ''} ${(phase === 'simulating' || phase === 'paused' || phase === 'finished') ? 'phase-pill-active' : ''}`}>Simulate</div>
+                </div>
               </div>
             </div>
-            <div className="rounded-full border border-borderline/90 bg-panel/80 px-4 py-2 text-sm font-semibold text-[var(--as-accent-strong)] shadow-panel">
-              Clock {simClockLabel}
+            <div className="flex items-center gap-2 rounded-full border border-borderline/90 bg-panel/80 px-4 py-2 text-sm font-semibold text-[var(--as-accent-strong)] shadow-panel">
+              <span>{phaseLabel}</span>
+              <span className="text-[var(--as-text-sub)]">•</span>
+              <span>Clock {simClockLabel}</span>
             </div>
           </div>
         </header>

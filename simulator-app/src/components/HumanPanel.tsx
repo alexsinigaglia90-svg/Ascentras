@@ -52,12 +52,48 @@ export function HumanPanel({
   onReset
 }: HumanPanelProps) {
   const total = counts.F + counts.M + counts.S;
+  const currentStep = phase === 'build' ? 'build' : phase === 'ready' ? 'ready' : 'simulate';
+
+  const primaryAction =
+    phase === 'build'
+      ? {
+          label: 'Ready',
+          onClick: onReady,
+          disabled: !humanReady
+        }
+      : phase === 'ready'
+        ? {
+            label: 'Start Simulation',
+            onClick: onStart,
+            disabled: !canStartSimulation
+          }
+        : phase === 'simulating'
+          ? {
+              label: 'Pause',
+              onClick: onPause,
+              disabled: false
+            }
+          : phase === 'paused'
+            ? {
+                label: 'Resume',
+                onClick: onStart,
+                disabled: !canStartSimulation
+              }
+            : {
+                label: 'Reset',
+                onClick: onReset,
+                disabled: false
+              };
 
   return (
     <aside className="glass-panel">
       <header className="mb-4">
         <h2 className="panel-title text-lg font-semibold tracking-[0.02em]">Human Mission</h2>
-        <p className="mt-1 text-sm font-medium text-[var(--as-text-sub)]">Build your pick circuit on the left half and prepare for the 09:00–17:00 run.</p>
+        <div className="phase-track mt-2">
+          <div className={`phase-pill ${currentStep === 'build' ? 'phase-pill-active' : ''}`}>Build</div>
+          <div className={`phase-pill ${currentStep === 'ready' ? 'phase-pill-active' : ''} ${phase !== 'build' ? 'phase-pill-done' : ''}`}>Ready</div>
+          <div className={`phase-pill ${currentStep === 'simulate' ? 'phase-pill-active' : ''} ${(phase === 'simulating' || phase === 'paused' || phase === 'finished') ? 'phase-pill-done' : ''}`}>Simulate</div>
+        </div>
       </header>
 
       <section className="subpanel">
@@ -70,7 +106,7 @@ export function HumanPanel({
       </section>
 
       <section className="subpanel mt-3">
-        <h3 className="panel-kicker mb-2 text-[0.7rem] uppercase">Build Controls</h3>
+        <h3 className="panel-kicker mb-2 text-[0.7rem] uppercase">Mover Palette</h3>
         <div className="grid gap-2">
           {KINDS.map((kind) => (
             <div key={kind} className="grid grid-cols-[1fr_1fr_auto] gap-2">
@@ -118,23 +154,19 @@ export function HumanPanel({
         </div>
       </section>
 
+      <section className="step-action mt-3">
+        <h3 className="panel-kicker mb-2 text-[0.7rem] uppercase">Current Action</h3>
+        <button
+          type="button"
+          disabled={primaryAction.disabled}
+          onClick={primaryAction.onClick}
+          className="control-btn control-btn-active w-full"
+        >
+          {primaryAction.label}
+        </button>
+      </section>
+
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          disabled={!humanReady || phase !== 'build'}
-          onClick={onReady}
-          className="control-btn control-btn-active"
-        >
-          Ready
-        </button>
-        <button
-          type="button"
-          onClick={onStart}
-          disabled={!canStartSimulation}
-          className="control-btn"
-        >
-          Start Simulation
-        </button>
         <button
           type="button"
           onClick={onPause}
@@ -145,8 +177,16 @@ export function HumanPanel({
         </button>
         <button
           type="button"
-          onClick={onReset}
+          onClick={onStart}
+          disabled={!(phase === 'paused' && canStartSimulation)}
           className="control-btn"
+        >
+          Resume
+        </button>
+        <button
+          type="button"
+          onClick={onReset}
+          className="control-btn col-span-2"
         >
           Reset
         </button>

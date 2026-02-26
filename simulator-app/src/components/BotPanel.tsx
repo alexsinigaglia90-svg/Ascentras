@@ -17,13 +17,19 @@ type BotPanelProps = {
 export function BotPanel({ phase, counts, metrics, activeAiFte, status, explanation, replayEnabled, analyzing, onReplayBuild }: BotPanelProps) {
   const totalPlaced = counts.F + counts.M + counts.S;
   const totalFte = activeAiFte.pickers + activeAiFte.runners;
+  const stepState = phase === 'build' ? 'Building' : phase === 'ready' ? 'Ready' : phase === 'paused' ? 'Paused' : phase === 'simulating' ? 'Running' : 'Complete';
 
   return (
     <aside className="glass-panel">
       <header className="mb-4">
         <h2 className="panel-title text-lg font-semibold tracking-[0.02em]">Ascentra Engine</h2>
+        <div className="phase-track mt-2">
+          <div className={`phase-pill ${phase === 'build' ? 'phase-pill-active' : ''}`}>Build</div>
+          <div className={`phase-pill ${(phase === 'ready' || phase === 'paused' || phase === 'simulating' || phase === 'finished') ? 'phase-pill-done' : ''}`}>Ready</div>
+          <div className={`phase-pill ${(phase === 'simulating' || phase === 'paused' || phase === 'finished') ? 'phase-pill-active' : ''}`}>Simulate</div>
+        </div>
         <p className={`status-pill mt-1 ${analyzing ? 'bot-thinking' : ''}`}>
-          {status}
+          {stepState} · {status}
         </p>
         <p className="mt-2 text-xs font-medium text-[var(--as-text-sub)]">{explanation}</p>
       </header>
@@ -68,14 +74,17 @@ export function BotPanel({ phase, counts, metrics, activeAiFte, status, explanat
         </div>
       </section>
 
-      <button
-        type="button"
-        onClick={onReplayBuild}
-        disabled={phase === 'simulating' || !replayEnabled}
-        className="control-btn mt-3 w-full"
-      >
-        Replay AI build
-      </button>
+      <section className="step-action mt-3">
+        <h3 className="panel-kicker mb-2 text-[0.7rem] uppercase">AI Action</h3>
+        <button
+          type="button"
+          onClick={onReplayBuild}
+          disabled={phase === 'simulating' || !replayEnabled}
+          className="control-btn w-full"
+        >
+          Replay AI Build
+        </button>
+      </section>
 
       <div className="mt-4">
         <MetricsStrip metrics={metrics} score={metrics.efficiencyScore} />

@@ -63,6 +63,7 @@ const FACILITY_WIDTH = PICK_ZONE_WIDTH * 2.5;
 const FACILITY_DEPTH = PICK_ZONE_DEPTH * 2.55;
 const STAGING_SLOT_HALF_WIDTH = 0.26;
 const STAGING_SLOT_HALF_DEPTH = 0.23;
+const OVERLAY_RENDER_ORDER = 24;
 
 type BoundsRect = {
   minX: number;
@@ -1086,24 +1087,25 @@ function StagingLaneMarkings({
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[(zoneBounds.minX + zoneBounds.maxX) / 2, 0.0565, (zoneBounds.minZ + zoneBounds.maxZ) / 2]}
+        renderOrder={OVERLAY_RENDER_ORDER}
       >
         <planeGeometry args={[zoneBounds.maxX - zoneBounds.minX, zoneBounds.maxZ - zoneBounds.minZ]} />
-        <meshBasicMaterial color={laneColor} transparent opacity={0.06} depthWrite={false} />
+        <meshBasicMaterial color={laneColor} transparent opacity={0.06} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-3} polygonOffsetUnits={-3} />
       </mesh>
 
       {laneRects.map((lane, index) => (
         <group key={`staging-lane-strip-${index}`}>
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[lane.x, 0.057, lane.z]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[lane.x, 0.057, lane.z]} renderOrder={OVERLAY_RENDER_ORDER + 1}>
             <planeGeometry args={[lane.width, 0.58]} />
-            <meshBasicMaterial color={laneColor} transparent opacity={0.14} depthWrite={false} />
+            <meshBasicMaterial color={laneColor} transparent opacity={0.14} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-3} polygonOffsetUnits={-3} />
           </mesh>
-          <mesh position={[lane.x, 0.059, lane.z - 0.29]}>
+          <mesh position={[lane.x, 0.059, lane.z - 0.29]} renderOrder={OVERLAY_RENDER_ORDER + 2}>
             <boxGeometry args={[lane.width, 0.004, 0.012]} />
-            <meshBasicMaterial color={slotColor} transparent opacity={0.54} />
+            <meshBasicMaterial color={slotColor} transparent opacity={0.54} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-4} polygonOffsetUnits={-4} />
           </mesh>
-          <mesh position={[lane.x, 0.059, lane.z + 0.29]}>
+          <mesh position={[lane.x, 0.059, lane.z + 0.29]} renderOrder={OVERLAY_RENDER_ORDER + 2}>
             <boxGeometry args={[lane.width, 0.004, 0.012]} />
-            <meshBasicMaterial color={slotColor} transparent opacity={0.54} />
+            <meshBasicMaterial color={slotColor} transparent opacity={0.54} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-4} polygonOffsetUnits={-4} />
           </mesh>
           {laneSlots[index]?.[0] ? (
             <sprite position={[laneSlots[index][0].x - 0.36, 0.09, lane.z]} scale={[0.22, 0.11, 1]}>
@@ -1115,24 +1117,24 @@ function StagingLaneMarkings({
 
       {laneSlots.map((lane, laneIndex) =>
         lane.map((slot, slotIndex) => (
-          <mesh key={`staging-slot-${laneIndex}-${slotIndex}`} rotation={[-Math.PI / 2, 0, 0]} position={[slot.x, 0.058, slot.z]}>
+          <mesh key={`staging-slot-${laneIndex}-${slotIndex}`} rotation={[-Math.PI / 2, 0, 0]} position={[slot.x, 0.058, slot.z]} renderOrder={OVERLAY_RENDER_ORDER + 3}>
             <planeGeometry args={[0.5, 0.42]} />
-            <meshBasicMaterial color={slotColor} transparent opacity={0.26} depthWrite={false} />
+            <meshBasicMaterial color={slotColor} transparent opacity={0.26} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-4} polygonOffsetUnits={-4} />
           </mesh>
         ))
       )}
 
       {overflowRect ? (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[overflowRect.x, 0.057, overflowRect.z]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[overflowRect.x, 0.057, overflowRect.z]} renderOrder={OVERLAY_RENDER_ORDER + 1}>
           <planeGeometry args={[overflowRect.width, overflowRect.depth]} />
-          <meshBasicMaterial color={overflowColor} transparent opacity={0.11} depthWrite={false} />
+          <meshBasicMaterial color={overflowColor} transparent opacity={0.11} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-3} polygonOffsetUnits={-3} />
         </mesh>
       ) : null}
 
       {overflowSlots.map((slot, index) => (
-        <mesh key={`staging-overflow-slot-${index}`} rotation={[-Math.PI / 2, 0, 0]} position={[slot.x, 0.058, slot.z]}>
+        <mesh key={`staging-overflow-slot-${index}`} rotation={[-Math.PI / 2, 0, 0]} position={[slot.x, 0.058, slot.z]} renderOrder={OVERLAY_RENDER_ORDER + 3}>
           <planeGeometry args={[0.5, 0.42]} />
-          <meshBasicMaterial color={overflowColor} transparent opacity={0.24} depthWrite={false} />
+          <meshBasicMaterial color={overflowColor} transparent opacity={0.24} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-4} polygonOffsetUnits={-4} />
         </mesh>
       ))}
     </>
@@ -1533,11 +1535,11 @@ function GeometricLetter({
       return (
         <group>
           {hBar(top)}
-          {hBar(mid, width * 0.9)}
+          {hBar(mid, width * 0.82)}
           {vBar(left, 0, height - stroke)}
-          {vBar(right, height * 0.24, upperHalf)}
-          <mesh position={[width * 0.13, -height * 0.22, 0]} rotation={[0, 0, -0.58]}>
-            <boxGeometry args={[stroke, height * 0.52, depth]} />
+          {vBar(right, height * 0.21, height * 0.46)}
+          <mesh position={[width * 0.09, -height * 0.23, 0]} rotation={[0, 0, -0.76]}>
+            <boxGeometry args={[stroke, height * 0.56, depth]} />
             <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={0.28} metalness={0.18} />
           </mesh>
         </group>
@@ -2177,9 +2179,9 @@ function SceneRig({
     const depth = (Math.abs(rowEnd - rowStart) + 1) * CELL_SIZE;
 
     return (
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={center}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={center} renderOrder={OVERLAY_RENDER_ORDER}>
         <planeGeometry args={[width - 0.08, depth - 0.08]} />
-        <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-3} polygonOffsetUnits={-3} />
       </mesh>
     );
   }
@@ -2653,31 +2655,31 @@ function SceneRig({
         <meshStandardMaterial color="#122033" emissive="#223b5b" emissiveIntensity={0.03} roughness={0.8} metalness={0.08} transparent opacity={0.13} depthWrite={false} />
       </mesh>
 
-      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={PICK_ZONE_ROW_RANGE.min} rowEnd={PICK_ZONE_ROW_RANGE.max} color="#dc6f6f" opacity={0.1} />
-      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={PICK_ZONE_ROW_RANGE.min} rowEnd={PICK_ZONE_ROW_RANGE.max} color="#cf6666" opacity={0.096} />
-      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={SAFETY_AISLE_ROW} rowEnd={SAFETY_AISLE_ROW} color="#efe2bf" opacity={0.08} />
-      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={SAFETY_AISLE_ROW} rowEnd={SAFETY_AISLE_ROW} color="#efe2bf" opacity={0.08} />
-      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={MACHINE_ZONE_ROW_RANGE.min} rowEnd={MACHINE_ZONE_ROW_RANGE.max} color="#cf9a67" opacity={0.085} />
-      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={MACHINE_ZONE_ROW_RANGE.min} rowEnd={MACHINE_ZONE_ROW_RANGE.max} color="#c88e5d" opacity={0.085} />
+      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={PICK_ZONE_ROW_RANGE.min} rowEnd={PICK_ZONE_ROW_RANGE.max} color={ASCENTRA_THEME.color.zoneHuman} opacity={0.11} />
+      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={PICK_ZONE_ROW_RANGE.min} rowEnd={PICK_ZONE_ROW_RANGE.max} color={ASCENTRA_THEME.color.zoneAi} opacity={0.106} />
+      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={SAFETY_AISLE_ROW} rowEnd={SAFETY_AISLE_ROW} color={ASCENTRA_THEME.color.zoneSafety} opacity={0.09} />
+      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={SAFETY_AISLE_ROW} rowEnd={SAFETY_AISLE_ROW} color={ASCENTRA_THEME.color.zoneSafety} opacity={0.09} />
+      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={MACHINE_ZONE_ROW_RANGE.min} rowEnd={MACHINE_ZONE_ROW_RANGE.max} color={ASCENTRA_THEME.color.zoneMachine} opacity={0.09} />
+      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={MACHINE_ZONE_ROW_RANGE.min} rowEnd={MACHINE_ZONE_ROW_RANGE.max} color={ASCENTRA_THEME.color.zoneMachine} opacity={0.09} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.052, 0]} receiveShadow>
         <planeGeometry args={[FACILITY_WIDTH - 0.5, FACILITY_DEPTH - 0.5]} />
         <meshBasicMaterial color="#f3e2cb" transparent opacity={0.03} depthWrite={false} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-11.6, 0.056, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-11.6, 0.056, 0]} receiveShadow renderOrder={OVERLAY_RENDER_ORDER - 1}>
         <planeGeometry args={[6.2, FACILITY_DEPTH - 1.2]} />
-        <meshBasicMaterial color="#6f9ad4" transparent opacity={0.018} />
+        <meshBasicMaterial color="#6f9ad4" transparent opacity={0.018} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[11.6, 0.056, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[11.6, 0.056, 0]} receiveShadow renderOrder={OVERLAY_RENDER_ORDER - 1}>
         <planeGeometry args={[6.2, FACILITY_DEPTH - 1.2]} />
-        <meshBasicMaterial color="#8ea8cc" transparent opacity={0.018} />
+        <meshBasicMaterial color="#8ea8cc" transparent opacity={0.018} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.056, -6.9]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.056, -6.9]} receiveShadow renderOrder={OVERLAY_RENDER_ORDER - 1}>
         <planeGeometry args={[PICK_ZONE_WIDTH - 0.5, 4.8]} />
-        <meshBasicMaterial color="#cf6a6a" transparent opacity={0.028} />
+        <meshBasicMaterial color={ASCENTRA_THEME.color.zoneHuman} transparent opacity={0.034} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
       </mesh>
 
       {[-4, 4].map((x, index) => (
@@ -2688,9 +2690,9 @@ function SceneRig({
       ))}
 
       {[6.0, 7.44, 8.88, 10.32].map((z, index) => (
-        <mesh key={`staging-green-line-${index}`} position={[0, 0.09, z]}>
+        <mesh key={`staging-green-line-${index}`} position={[0, 0.09, z]} renderOrder={OVERLAY_RENDER_ORDER + 2}>
           <boxGeometry args={[PICK_ZONE_WIDTH - 0.82, 0.01, 0.09]} />
-          <meshStandardMaterial color="#82d197" emissive="#70c88b" emissiveIntensity={0.46} roughness={0.2} metalness={0.2} transparent opacity={0.88} />
+          <meshStandardMaterial color={ASCENTRA_THEME.color.stagingLine} emissive={ASCENTRA_THEME.color.stagingLineEmissive} emissiveIntensity={0.48} roughness={0.2} metalness={0.2} transparent opacity={0.9} depthWrite={false} depthTest={false} polygonOffset polygonOffsetFactor={-4} polygonOffsetUnits={-4} />
         </mesh>
       ))}
 
@@ -2793,9 +2795,9 @@ function SceneRig({
         laneSlots={humanStagingSlots.laneSlots}
         overflowSlots={humanStagingSlots.overflowSlots}
         zoneBounds={humanStagingSlots.zoneBounds}
-        laneColor="#6bc081"
-        slotColor="#9be3ae"
-        overflowColor="#b8e9c2"
+        laneColor={ASCENTRA_THEME.color.stagingLane}
+        slotColor={ASCENTRA_THEME.color.stagingSlot}
+        overflowColor={ASCENTRA_THEME.color.stagingOverflow}
       />
 
       {logisticsForklifts.human.map((runtime) => (
@@ -2838,9 +2840,9 @@ function SceneRig({
         laneSlots={aiStagingSlots.laneSlots}
         overflowSlots={aiStagingSlots.overflowSlots}
         zoneBounds={aiStagingSlots.zoneBounds}
-        laneColor="#5fbc79"
-        slotColor="#95dfab"
-        overflowColor="#b4e7bf"
+        laneColor={ASCENTRA_THEME.color.stagingLane}
+        slotColor={ASCENTRA_THEME.color.stagingSlot}
+        overflowColor={ASCENTRA_THEME.color.stagingOverflow}
       />
 
       {logisticsForklifts.ai.map((runtime) => (
