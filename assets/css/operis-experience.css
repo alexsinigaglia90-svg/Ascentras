@@ -241,7 +241,7 @@ main {
   background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
   box-shadow: var(--shadow);
   padding: 0.95rem;
-  min-height: clamp(520px, calc(100vh - 108px), 680px);
+  min-height: auto;
   display: grid;
   grid-template-columns: 0.74fr 1fr auto;
   gap: 0.78rem;

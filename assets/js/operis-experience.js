@@ -178,11 +178,13 @@
       return;
     }
 
+    const stickyOffset = 92;
+
     function applyStageHeight() {
       const viewport = window.innerHeight || document.documentElement.clientHeight || 900;
       const largestScene = scenes.reduce((maxHeight, scene) => Math.max(maxHeight, scene.scrollHeight || 0), 0);
       const viewportBased = Math.round(viewport * 0.44);
-      const stageHeight = Math.max(340, Math.min(540, Math.max(viewportBased, Math.round(largestScene + 72))));
+      const stageHeight = Math.max(300, Math.min(460, Math.max(viewportBased, Math.round(largestScene + 56))));
       section.style.setProperty('--operis-cinematic-stage-height', `${stageHeight}px`);
       return stageHeight;
     }
@@ -190,10 +192,10 @@
     function applyDynamicHeight() {
       const viewport = window.innerHeight || document.documentElement.clientHeight || 900;
       const stageHeight = applyStageHeight();
-      const stickyHeight = Math.max(sticky.offsetHeight || 0, stageHeight + 240);
+      const stickyHeight = Math.max(sticky.scrollHeight || sticky.offsetHeight || 0, stageHeight + 180);
       const sceneSteps = Math.max(1, scenes.length - 1);
-      const scrollPerStep = Math.max(220, Math.round(viewport * 0.34));
-      const total = stickyHeight + sceneSteps * scrollPerStep + 64;
+      const scrollPerStep = Math.max(180, Math.round(viewport * 0.26));
+      const total = stickyHeight + stickyOffset + sceneSteps * scrollPerStep + 28;
       section.style.setProperty('--operis-cinematic-height', `${Math.round(total)}px`);
     }
 
@@ -220,10 +222,11 @@
 
     function calculateProgress() {
       const rect = section.getBoundingClientRect();
-      const viewport = window.innerHeight || document.documentElement.clientHeight;
-      const total = Math.max(1, rect.height - viewport);
-      const ratio = Math.max(0, Math.min(1, (-rect.top) / total));
-      const sceneIndex = Math.max(0, Math.min(scenes.length - 1, Math.round(ratio * (scenes.length - 1))));
+      const stickyHeight = Math.max(sticky.offsetHeight || 0, stage.offsetHeight || 0);
+      const total = Math.max(1, section.offsetHeight - stickyHeight - stickyOffset);
+      const scrolled = stickyOffset - rect.top;
+      const ratio = Math.max(0, Math.min(1, scrolled / total));
+      const sceneIndex = Math.max(0, Math.min(scenes.length - 1, Math.floor(ratio * scenes.length)));
       setScene(sceneIndex, ratio);
       return ratio;
     }
@@ -243,7 +246,9 @@
         const index = Number(dot.getAttribute('data-jump-scene')) || 0;
         const targetRatio = index / Math.max(1, scenes.length - 1);
         const sectionTop = window.scrollY + section.getBoundingClientRect().top;
-        const targetY = sectionTop + (section.offsetHeight - window.innerHeight) * targetRatio;
+        const stickyHeight = Math.max(sticky.offsetHeight || 0, stage.offsetHeight || 0);
+        const total = Math.max(1, section.offsetHeight - stickyHeight - stickyOffset);
+        const targetY = sectionTop - stickyOffset + total * targetRatio;
         window.scrollTo({ top: targetY, behavior: 'smooth' });
       });
     });
