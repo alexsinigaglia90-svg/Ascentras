@@ -34,6 +34,7 @@ export default function WarehouseSimulatorPage() {
 
     spawnHumanTile,
     removeHumanTile,
+    removeHumanTileById,
     consumeSpawnDragTile,
     commitHumanTile,
     markReady,
@@ -97,6 +98,7 @@ export default function WarehouseSimulatorPage() {
                   aiActiveTileId={aiActiveTileId}
                   visualState={visualState}
                   onCommitHumanTile={commitHumanTile}
+                  onRemoveHumanTileById={removeHumanTileById}
                   onConsumeSpawnDragTile={consumeSpawnDragTile}
                 />
               </Suspense>

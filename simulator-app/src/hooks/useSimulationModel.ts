@@ -811,6 +811,11 @@ export function useSimulationModel() {
     });
   };
 
+  const removeHumanTileById = (tileId: string) => {
+    if (!canEdit) return;
+    setHumanTiles((current) => current.filter((tile) => tile.id !== tileId));
+  };
+
   const consumeSpawnDragTile = () => {
     setSpawnDragTileId(null);
   };
@@ -964,6 +969,7 @@ export function useSimulationModel() {
 
     spawnHumanTile,
     removeHumanTile,
+    removeHumanTileById,
     consumeSpawnDragTile,
     commitHumanTile,
     markReady,

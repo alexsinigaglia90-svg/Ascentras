@@ -35,6 +35,7 @@ type ThreeSceneProps = {
     aiTargets: GridCell[];
   };
   onCommitHumanTile: (tileId: string, cell: GridCell) => void;
+  onRemoveHumanTileById: (tileId: string) => void;
   onConsumeSpawnDragTile: () => void;
 };
 
@@ -312,6 +313,7 @@ function SceneRig({
   aiActiveTileId,
   visualState,
   onCommitHumanTile,
+  onRemoveHumanTileById,
   onConsumeSpawnDragTile
 }: ThreeSceneProps) {
   const [draggingTileId, setDraggingTileId] = useState<string | null>(null);
@@ -351,6 +353,38 @@ function SceneRig({
     });
     return occupied;
   }, [humanTiles, draggingTileId]);
+
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (!canEdit) return;
+      if (event.key !== 'Backspace' && event.key !== 'Delete') return;
+
+      const activeElement = document.activeElement as HTMLElement | null;
+      if (
+        activeElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.isContentEditable)
+      ) {
+        return;
+      }
+
+      const hoveredHumanTile = humanTiles.find((tile) => tile.id === hoverTileId);
+      if (!hoveredHumanTile) return;
+
+      event.preventDefault();
+      onRemoveHumanTileById(hoveredHumanTile.id);
+      if (draggingTileId === hoveredHumanTile.id) {
+        setDraggingTileId(null);
+        setPreviewCell(null);
+      }
+      setHoverTileId(null);
+      setFocusCell(null);
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [canEdit, hoverTileId, humanTiles, onRemoveHumanTileById, draggingTileId]);
 
   const floorWidth = BOARD_COLS * CELL_SIZE + 4;
   const floorDepth = BOARD_ROWS * CELL_SIZE + 4;
