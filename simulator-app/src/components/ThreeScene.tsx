@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, ThreeEvent, useFrame } from '@react-three/fiber';
+import { Canvas, ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
@@ -117,7 +117,10 @@ function TileMesh({
   y,
   pulse,
   shakeOffset,
+  hovered,
   onPointerDown,
+  onPointerOver,
+  onPointerOut,
   dragPreviewCell,
   isDragging
 }: {
@@ -125,32 +128,58 @@ function TileMesh({
   y: number;
   pulse: number;
   shakeOffset: number;
+  hovered: boolean;
   onPointerDown?: (event: ThreeEvent<PointerEvent>) => void;
+  onPointerOver?: (event: ThreeEvent<PointerEvent>) => void;
+  onPointerOut?: (event: ThreeEvent<PointerEvent>) => void;
   dragPreviewCell?: GridCell | null;
   isDragging: boolean;
 }) {
   const [labelTexture] = useState(() => makeLabelTexture(tile.kind));
   const palette = kindColor(tile.kind);
+  const groupRef = useRef<THREE.Group | null>(null);
+  const smooth = useRef(new THREE.Vector3());
 
-  const position = useMemo(() => {
+  const targetPosition = useMemo(() => {
     const activeCell = isDragging && dragPreviewCell ? dragPreviewCell : tile.cell;
     const [x, baseY, z] = cellToWorld(activeCell, y);
-    return [x + shakeOffset, baseY, z] as [number, number, number];
+    return new THREE.Vector3(x + shakeOffset, baseY, z);
   }, [dragPreviewCell, isDragging, shakeOffset, tile.cell, y]);
 
+  useEffect(() => {
+    if (!groupRef.current) return;
+    if (smooth.current.lengthSq() === 0) {
+      smooth.current.copy(targetPosition);
+      groupRef.current.position.copy(targetPosition);
+    }
+  }, [targetPosition]);
+
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+    if (isDragging) {
+      smooth.current.copy(targetPosition);
+      groupRef.current.position.copy(targetPosition);
+      return;
+    }
+
+    const ease = 1 - Math.exp(-delta * 10.5);
+    smooth.current.lerp(targetPosition, ease);
+    groupRef.current.position.copy(smooth.current);
+  });
+
   return (
-    <group position={position} onPointerDown={onPointerDown}>
+    <group ref={groupRef} onPointerDown={onPointerDown} onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[0.82, 0.34, 0.82]} />
         <meshStandardMaterial
           color={palette.base}
           emissive={palette.emissive}
-          emissiveIntensity={0.25 + pulse}
+          emissiveIntensity={0.2 + pulse + (hovered ? 0.34 : 0)}
           roughness={0.42}
           metalness={0.28}
         />
       </mesh>
-      <sprite position={[0, 0.42, 0]} scale={[0.44, 0.44, 0.44]}>
+      <sprite position={[0, 0.42, 0]} scale={hovered ? [0.48, 0.48, 0.48] : [0.44, 0.44, 0.44]}>
         <spriteMaterial map={labelTexture} transparent depthWrite={false} />
       </sprite>
     </group>
@@ -167,11 +196,16 @@ function SceneRig({
   onCommitHumanTile,
   onConsumeSpawnDragTile
 }: ThreeSceneProps) {
+  const { camera } = useThree();
   const [draggingTileId, setDraggingTileId] = useState<string | null>(null);
+  const [hoveredTileId, setHoveredTileId] = useState<string | null>(null);
+  const [hoverCell, setHoverCell] = useState<GridCell | null>(null);
   const [dragPreviewCell, setDragPreviewCell] = useState<GridCell | null>(null);
   const [shakeState, setShakeState] = useState<{ tileId: string; until: number } | null>(null);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const aiPulse = useRef(0);
+  const dollyProgress = useRef(1);
+  const dollyLastOffset = useRef(0);
 
   useEffect(() => {
     if (spawnDragTileId) {
@@ -192,6 +226,25 @@ function SceneRig({
     if (aiPulse.current > 0) {
       aiPulse.current = Math.max(0, aiPulse.current - delta * 1.85);
     }
+
+    if (dollyProgress.current < 1) {
+      dollyProgress.current = Math.min(1, dollyProgress.current + delta * 3.2);
+      const wave = Math.sin(dollyProgress.current * Math.PI);
+      const currentOffset = wave * 0.22;
+      const deltaOffset = currentOffset - dollyLastOffset.current;
+      dollyLastOffset.current = currentOffset;
+
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
+      camera.position.addScaledVector(direction, deltaOffset);
+
+      if (dollyProgress.current >= 1) {
+        if (Math.abs(dollyLastOffset.current) > 0.0001) {
+          camera.position.addScaledVector(direction, -dollyLastOffset.current);
+        }
+        dollyLastOffset.current = 0;
+      }
+    }
   });
 
   const occupancy = useMemo(() => {
@@ -204,17 +257,19 @@ function SceneRig({
     return map;
   }, [humanTiles, draggingTileId]);
 
-  const tileById = useMemo(() => {
-    const map = new Map<string, CircuitTile>();
-    humanTiles.forEach((tile) => map.set(tile.id, tile));
-    return map;
-  }, [humanTiles]);
-
   const onBoardPointerMove = (event: ThreeEvent<PointerEvent>) => {
-    if (!draggingTileId) return;
     event.stopPropagation();
     const snapped = worldToCell(event.point);
-    setDragPreviewCell(snapped);
+    setHoverCell(snapped);
+    if (draggingTileId) {
+      setDragPreviewCell(snapped);
+    }
+  };
+
+  const onBoardPointerOut = () => {
+    if (!draggingTileId) {
+      setHoverCell(null);
+    }
   };
 
   const commitDrag = () => {
@@ -239,6 +294,8 @@ function SceneRig({
     }
 
     onCommitHumanTile(draggingTileId, dragPreviewCell);
+    dollyProgress.current = 0;
+    dollyLastOffset.current = 0;
     setDraggingTileId(null);
     setDragPreviewCell(null);
   };
@@ -247,6 +304,7 @@ function SceneRig({
   const floorDepth = BOARD_ROWS * CELL_SIZE + 4;
 
   const congestionGlow = THREE.MathUtils.lerp(0.15, 0.52, Math.min(1, metrics.congestionPenalty / 16));
+  const focusCell = dragPreviewCell ?? hoverCell;
 
   return (
     <>
@@ -269,12 +327,20 @@ function SceneRig({
           event.stopPropagation();
           commitDrag();
         }}
+        onPointerOut={onBoardPointerOut}
       >
         <planeGeometry args={[BOARD_COLS * CELL_SIZE, BOARD_ROWS * CELL_SIZE]} />
         <meshBasicMaterial visible={false} transparent opacity={0} depthWrite={false} />
       </mesh>
 
       <GridLines />
+
+      {focusCell ? (
+        <mesh position={cellToWorld(focusCell, 0.006)}>
+          <boxGeometry args={[0.98, 0.008, 0.98]} />
+          <meshStandardMaterial color="#9bb8e2" emissive="#7fa4da" emissiveIntensity={0.22} transparent opacity={0.18} />
+        </mesh>
+      ) : null}
 
       {draggingTileId && dragPreviewCell ? (
         <mesh position={cellToWorld(dragPreviewCell, 0.02)}>
@@ -306,12 +372,23 @@ function SceneRig({
             y={0.2}
             pulse={congestionGlow}
             shakeOffset={shakeOffset}
+            hovered={hoveredTileId === tile.id}
             isDragging={isDragging}
             dragPreviewCell={dragPreviewCell}
             onPointerDown={(event) => {
               event.stopPropagation();
               setDraggingTileId(tile.id);
               setDragPreviewCell(tile.cell);
+            }}
+            onPointerOver={(event) => {
+              event.stopPropagation();
+              setHoveredTileId(tile.id);
+              setHoverCell(tile.cell);
+            }}
+            onPointerOut={() => {
+              if (hoveredTileId === tile.id) {
+                setHoveredTileId(null);
+              }
             }}
           />
         );
@@ -328,7 +405,18 @@ function SceneRig({
             y={0.34}
             pulse={pulse}
             shakeOffset={0}
+            hovered={hoveredTileId === tile.id}
             isDragging={false}
+            onPointerOver={(event) => {
+              event.stopPropagation();
+              setHoveredTileId(tile.id);
+              setHoverCell(tile.cell);
+            }}
+            onPointerOut={() => {
+              if (hoveredTileId === tile.id) {
+                setHoveredTileId(null);
+              }
+            }}
           />
         );
       })}
