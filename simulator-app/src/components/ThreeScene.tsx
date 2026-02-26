@@ -547,8 +547,9 @@ type LogisticsForkliftRuntime = {
   from: THREE.Vector3;
   to: THREE.Vector3;
   progress: number;
-  state: 'idle' | 'to-stage' | 'to-pack-return';
+  state: 'idle' | 'to-corridor' | 'to-stage' | 'to-return-corridor' | 'to-pack-return';
   carrying: boolean;
+  targetSlot: THREE.Vector3 | null;
   trailPhase: number;
 };
 
@@ -640,6 +641,89 @@ function StagedPalletInstancedField({
         <boxGeometry args={[0.42, 0.125, 0.032]} />
         <meshStandardMaterial color={strapColor} emissive={strapColor} emissiveIntensity={0.16} roughness={0.24} metalness={0.12} />
       </instancedMesh>
+    </>
+  );
+}
+
+function StagingLaneMarkings({
+  laneSlots,
+  overflowSlots,
+  laneColor,
+  slotColor,
+  overflowColor
+}: {
+  laneSlots: THREE.Vector3[][];
+  overflowSlots: THREE.Vector3[];
+  laneColor: string;
+  slotColor: string;
+  overflowColor: string;
+}) {
+  const laneRects = useMemo(
+    () =>
+      laneSlots
+        .map((lane) => {
+          if (lane.length <= 0) return null;
+          const first = lane[0];
+          const last = lane[lane.length - 1];
+          const centerZ = (first.z + last.z) / 2;
+          const laneDepth = Math.abs(first.z - last.z) + 0.52;
+          return {
+            x: first.x,
+            z: centerZ,
+            depth: laneDepth
+          };
+        })
+        .filter((lane): lane is { x: number; z: number; depth: number } => lane !== null),
+    [laneSlots]
+  );
+
+  const overflowRect = useMemo(() => {
+    if (overflowSlots.length <= 0) return null;
+    const xs = overflowSlots.map((slot) => slot.x);
+    const zs = overflowSlots.map((slot) => slot.z);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minZ = Math.min(...zs);
+    const maxZ = Math.max(...zs);
+    return {
+      x: (minX + maxX) / 2,
+      z: (minZ + maxZ) / 2,
+      width: maxX - minX + 0.64,
+      depth: maxZ - minZ + 0.58
+    };
+  }, [overflowSlots]);
+
+  return (
+    <>
+      {laneRects.map((lane, index) => (
+        <mesh key={`staging-lane-strip-${index}`} rotation={[-Math.PI / 2, 0, 0]} position={[lane.x, 0.057, lane.z]}>
+          <planeGeometry args={[0.58, lane.depth]} />
+          <meshBasicMaterial color={laneColor} transparent opacity={0.14} depthWrite={false} />
+        </mesh>
+      ))}
+
+      {laneSlots.map((lane, laneIndex) =>
+        lane.map((slot, slotIndex) => (
+          <mesh key={`staging-slot-${laneIndex}-${slotIndex}`} rotation={[-Math.PI / 2, 0, 0]} position={[slot.x, 0.058, slot.z]}>
+            <planeGeometry args={[0.5, 0.42]} />
+            <meshBasicMaterial color={slotColor} transparent opacity={0.26} depthWrite={false} />
+          </mesh>
+        ))
+      )}
+
+      {overflowRect ? (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[overflowRect.x, 0.057, overflowRect.z]}>
+          <planeGeometry args={[overflowRect.width, overflowRect.depth]} />
+          <meshBasicMaterial color={overflowColor} transparent opacity={0.11} depthWrite={false} />
+        </mesh>
+      ) : null}
+
+      {overflowSlots.map((slot, index) => (
+        <mesh key={`staging-overflow-slot-${index}`} rotation={[-Math.PI / 2, 0, 0]} position={[slot.x, 0.058, slot.z]}>
+          <planeGeometry args={[0.5, 0.42]} />
+          <meshBasicMaterial color={overflowColor} transparent opacity={0.24} depthWrite={false} />
+        </mesh>
+      ))}
     </>
   );
 }
@@ -1222,35 +1306,81 @@ function SceneRig({
 
   const humanStagingSlots = useMemo(() => {
     const dock = humanStations.docks[1] ?? humanStations.docks[0] ?? humanStations.outbound;
-    const [x, y, z] = cellToWorld({ col: dock.col - 0.9, row: dock.row - 0.3 }, 0.1);
-    const slots: THREE.Vector3[] = [];
-    for (let lane = 0; lane < 4; lane += 1) {
-      for (let row = 0; row < 6; row += 1) {
-        for (let level = 0; level < 4; level += 1) {
-          slots.push(new THREE.Vector3(x - lane * 0.62, y + level * 0.14, z - row * 0.56 + (lane % 2) * 0.08));
-        }
+    const laneCount = 3;
+    const slotsPerLane = 7;
+    const laneGap = 0.74;
+    const slotGap = 0.56;
+    const leftBoundaryX = cellToWorld({ col: HUMAN_COL_RANGE.min, row: 0 }, 0)[0] - 0.16;
+    const laneStartX = leftBoundaryX + 0.54;
+    const laneStartZ = cellToWorld({ col: dock.col, row: dock.row + 1.15 }, 0.1)[2];
+    const laneSlots: THREE.Vector3[][] = [];
+
+    for (let lane = 0; lane < laneCount; lane += 1) {
+      const laneX = laneStartX + lane * laneGap;
+      const slots: THREE.Vector3[] = [];
+      for (let row = 0; row < slotsPerLane; row += 1) {
+        slots.push(new THREE.Vector3(laneX, 0.1, laneStartZ - row * slotGap));
+      }
+      laneSlots.push(slots);
+    }
+
+    const overflowAnchorX = laneStartX + laneCount * laneGap + 0.58;
+    const overflowAnchorZ = laneStartZ - 0.58;
+    const overflowSlots: THREE.Vector3[] = [];
+    for (let col = 0; col < 2; col += 1) {
+      for (let row = 0; row < 2; row += 1) {
+        overflowSlots.push(new THREE.Vector3(overflowAnchorX + col * 0.56, 0.1, overflowAnchorZ - row * 0.56));
       }
     }
-    return slots;
+
+    return {
+      laneSlots,
+      overflowSlots,
+      allSlots: [...laneSlots.flat(), ...overflowSlots],
+      corridorX: laneStartX + laneCount * laneGap + 0.2
+    };
   }, [humanStations.docks, humanStations.outbound]);
 
   const aiStagingSlots = useMemo(() => {
     const dock = aiStations.docks[1] ?? aiStations.docks[0] ?? aiStations.outbound;
-    const [x, y, z] = cellToWorld({ col: dock.col + 0.9, row: dock.row - 0.3 }, 0.1);
-    const slots: THREE.Vector3[] = [];
-    for (let lane = 0; lane < 4; lane += 1) {
-      for (let row = 0; row < 6; row += 1) {
-        for (let level = 0; level < 4; level += 1) {
-          slots.push(new THREE.Vector3(x + lane * 0.62, y + level * 0.14, z - row * 0.56 + (lane % 2) * 0.08));
-        }
+    const laneCount = 3;
+    const slotsPerLane = 7;
+    const laneGap = 0.74;
+    const slotGap = 0.56;
+    const leftBoundaryX = cellToWorld({ col: AI_COL_MIN, row: 0 }, 0)[0] + 0.08;
+    const laneStartX = leftBoundaryX + 0.5;
+    const laneStartZ = cellToWorld({ col: dock.col, row: dock.row + 1.15 }, 0.1)[2];
+    const laneSlots: THREE.Vector3[][] = [];
+
+    for (let lane = 0; lane < laneCount; lane += 1) {
+      const laneX = laneStartX + lane * laneGap;
+      const slots: THREE.Vector3[] = [];
+      for (let row = 0; row < slotsPerLane; row += 1) {
+        slots.push(new THREE.Vector3(laneX, 0.1, laneStartZ - row * slotGap));
+      }
+      laneSlots.push(slots);
+    }
+
+    const overflowAnchorX = laneStartX + laneCount * laneGap + 0.58;
+    const overflowAnchorZ = laneStartZ - 0.58;
+    const overflowSlots: THREE.Vector3[] = [];
+    for (let col = 0; col < 2; col += 1) {
+      for (let row = 0; row < 2; row += 1) {
+        overflowSlots.push(new THREE.Vector3(overflowAnchorX + col * 0.56, 0.1, overflowAnchorZ - row * 0.56));
       }
     }
-    return slots;
+
+    return {
+      laneSlots,
+      overflowSlots,
+      allSlots: [...laneSlots.flat(), ...overflowSlots],
+      corridorX: laneStartX + laneCount * laneGap + 0.2
+    };
   }, [aiStations.docks, aiStations.outbound]);
 
   const logisticsForklifts = useMemo(() => {
     const humanCount = 1;
-    const aiCount = performanceMode ? 1 : 2;
+    const aiCount = 1;
 
     const humanRuntimes: LogisticsForkliftRuntime[] = new Array(humanCount).fill(0).map((_, index) => ({
       id: `human-logistics-forklift-${index}`,
@@ -1260,6 +1390,7 @@ function SceneRig({
       progress: 1,
       state: 'idle',
       carrying: false,
+      targetSlot: null,
       trailPhase: index * 0.9 + 0.2
     }));
 
@@ -1271,11 +1402,12 @@ function SceneRig({
       progress: 1,
       state: 'idle',
       carrying: false,
+      targetSlot: null,
       trailPhase: index * 1.1 + 0.7
     }));
 
     return { human: humanRuntimes, ai: aiRuntimes };
-  }, [humanPackingOutput, aiPackingOutput, performanceMode]);
+  }, [humanPackingOutput, aiPackingOutput]);
 
   const floorTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -1676,7 +1808,9 @@ function SceneRig({
       (['human', 'ai'] as LogisticsSide[]).forEach((side) => {
         const runtimes = side === 'human' ? logisticsForklifts.human : logisticsForklifts.ai;
         const packingPoint = side === 'human' ? humanPackingOutput : aiPackingOutput;
-        const stagingSlots = side === 'human' ? humanStagingSlots : aiStagingSlots;
+        const staging = side === 'human' ? humanStagingSlots : aiStagingSlots;
+        const stagingSlots = staging.allSlots;
+        const corridorX = staging.corridorX;
         const speed = side === 'ai' ? (performanceMode ? 1.12 : 1.28) : (performanceMode ? 0.9 : 1.02);
         let reservedDrops = 0;
 
@@ -1686,22 +1820,35 @@ function SceneRig({
             runtime.progress = clamp(runtime.progress + (delta * speed) / distance, 0, 1);
           }
 
-          if (runtime.state === 'to-stage' && runtime.progress >= 1) {
+          if (runtime.state === 'to-corridor' && runtime.progress >= 1) {
+            if (runtime.targetSlot) {
+              runtime.state = 'to-stage';
+              runtime.from = runtime.to.clone();
+              runtime.to = runtime.targetSlot.clone();
+              runtime.progress = 0;
+            }
+          } else if (runtime.state === 'to-stage' && runtime.progress >= 1) {
             runtime.carrying = false;
+            runtime.state = 'to-return-corridor';
+            runtime.from = runtime.to.clone();
+            runtime.to = new THREE.Vector3(corridorX, packingPoint.y, runtime.to.z);
+            runtime.progress = 0;
+            if (side === 'human') {
+              stagedHuman = clamp(stagedHuman + 1, 0, humanStagingSlots.allSlots.length);
+            } else {
+              stagedAi = clamp(stagedAi + 1, 0, aiStagingSlots.allSlots.length);
+            }
+          } else if (runtime.state === 'to-return-corridor' && runtime.progress >= 1) {
             runtime.state = 'to-pack-return';
             runtime.from = runtime.to.clone();
             runtime.to = packingPoint.clone();
             runtime.progress = 0;
-            if (side === 'human') {
-              stagedHuman = clamp(stagedHuman + 1, 0, humanStagingSlots.length);
-            } else {
-              stagedAi = clamp(stagedAi + 1, 0, aiStagingSlots.length);
-            }
           } else if (runtime.state === 'to-pack-return' && runtime.progress >= 1) {
             runtime.state = 'idle';
             runtime.from = packingPoint.clone();
             runtime.to = packingPoint.clone();
             runtime.progress = 1;
+            runtime.targetSlot = null;
           }
 
           const currentQueue = side === 'human' ? queueHuman : queueAi;
@@ -1718,9 +1865,10 @@ function SceneRig({
             const targetSlot = stagingSlots[slotIndex];
 
             runtime.carrying = true;
-            runtime.state = 'to-stage';
+            runtime.state = 'to-corridor';
+            runtime.targetSlot = targetSlot.clone();
             runtime.from = packingPoint.clone();
-            runtime.to = targetSlot.clone();
+            runtime.to = new THREE.Vector3(corridorX, packingPoint.y, packingPoint.z);
             runtime.progress = 0;
           }
         });
@@ -1927,10 +2075,18 @@ function SceneRig({
       })}
 
       <StagedPalletInstancedField
-        slots={humanStagingSlots}
+        slots={humanStagingSlots.allSlots}
         count={stagedFinished.human}
         wrappedColor="#e7f2ff"
         strapColor="#8ab6ea"
+      />
+
+      <StagingLaneMarkings
+        laneSlots={humanStagingSlots.laneSlots}
+        overflowSlots={humanStagingSlots.overflowSlots}
+        laneColor="#7ea8dc"
+        slotColor="#b6cff0"
+        overflowColor="#c5d6ef"
       />
 
       {logisticsForklifts.human.map((runtime) => (
@@ -1963,10 +2119,18 @@ function SceneRig({
       })}
 
       <StagedPalletInstancedField
-        slots={aiStagingSlots}
+        slots={aiStagingSlots.allSlots}
         count={stagedFinished.ai}
         wrappedColor="#e1efff"
         strapColor="#79a7e0"
+      />
+
+      <StagingLaneMarkings
+        laneSlots={aiStagingSlots.laneSlots}
+        overflowSlots={aiStagingSlots.overflowSlots}
+        laneColor="#7a9fd1"
+        slotColor="#afc8e8"
+        overflowColor="#bed2ec"
       />
 
       {logisticsForklifts.ai.map((runtime) => (
