@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Metrics } from '../hooks/useSimulationModel';
+import type { BuildMetrics } from '../hooks/useSimulationModel';
 
 type MetricsStripProps = {
-  metrics: Metrics;
+  metrics: BuildMetrics;
   score: number;
 };
 

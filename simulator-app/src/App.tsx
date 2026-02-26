@@ -11,20 +11,35 @@ const LazyThreeScene = lazy(async () => {
 
 export default function WarehouseSimulatorPage() {
   const {
+    mission,
+    phase,
+    canEdit,
+    humanReady,
+    simSpeed,
+    simClockLabel,
+
     humanTiles,
     aiTiles,
     humanCounts,
     aiCounts,
     humanMetrics,
     botMetrics,
-    botStatus,
-    botThinking,
-    botPulseKey,
     spawnDragTileId,
     aiActiveTileId,
+    humanStations,
+    aiStations,
+    visualState,
+    results,
+    activeAiFte,
+
     spawnHumanTile,
+    removeHumanTile,
     consumeSpawnDragTile,
     commitHumanTile,
+    markReady,
+    startSimulation,
+    pauseSimulation,
+    setAiBuildReplayPulse,
     reset
   } = useSimulationModel();
 
@@ -34,21 +49,32 @@ export default function WarehouseSimulatorPage() {
         <header className="rounded-2xl border border-borderline bg-panel px-4 py-3 shadow-panel backdrop-blur-md">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl font-semibold text-slate-50">Warehouse Strategy Simulator</h1>
-              <p className="mt-1 text-sm text-slate-300">Human vs Ascentra Engine</p>
+              <h1 className="text-xl font-semibold text-slate-50">Build → Ready → Simulate</h1>
+              <p className="mt-1 text-sm text-slate-300">Pick Circuit Builder · Human vs Ascentra Engine</p>
             </div>
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded-full border border-blue-200/50 bg-blue-700/35 px-4 py-2 text-sm text-slate-50 transition hover:-translate-y-[1px] hover:border-blue-100/80 hover:bg-blue-600/45"
-            >
-              Reset
-            </button>
+            <div className="rounded-full border border-borderline bg-slate-900/45 px-4 py-2 text-sm text-slate-200">
+              Clock {simClockLabel}
+            </div>
           </div>
         </header>
 
         <section className="grid min-h-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(340px,420px)_1fr_minmax(340px,420px)] xl:items-stretch">
-          <HumanPanel metrics={humanMetrics} counts={humanCounts} onAddTile={spawnHumanTile} />
+          <HumanPanel
+            mission={mission}
+            phase={phase}
+            canEdit={canEdit}
+            counts={humanCounts}
+            metrics={humanMetrics}
+            humanReady={humanReady}
+            simClockLabel={simClockLabel}
+            simSpeed={simSpeed}
+            onAddTile={spawnHumanTile}
+            onRemoveTile={removeHumanTile}
+            onReady={markReady}
+            onStart={startSimulation}
+            onPause={pauseSimulation}
+            onReset={reset}
+          />
 
           <div className="relative min-h-[420px] rounded-2xl border border-borderline/60 bg-slate-900/20 backdrop-blur-[2px]">
             <ErrorBoundary
@@ -61,24 +87,48 @@ export default function WarehouseSimulatorPage() {
             >
               <Suspense fallback={null}>
                 <LazyThreeScene
+                  phase={phase}
+                  canEdit={canEdit}
                   humanTiles={humanTiles}
                   aiTiles={aiTiles}
-                  metrics={humanMetrics}
-                  botPulseKey={botPulseKey}
+                  humanStations={humanStations}
+                  aiStations={aiStations}
                   spawnDragTileId={spawnDragTileId}
                   aiActiveTileId={aiActiveTileId}
+                  visualState={visualState}
                   onCommitHumanTile={commitHumanTile}
                   onConsumeSpawnDragTile={consumeSpawnDragTile}
                 />
               </Suspense>
             </ErrorBoundary>
+
+            {results ? (
+              <div className="pointer-events-none absolute inset-x-6 bottom-6 z-20 rounded-xl border border-blue-200/45 bg-panel/90 p-4 shadow-panel backdrop-blur-md">
+                <div className="grid gap-2 text-sm text-slate-100 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase tracking-[0.14em] text-slate-300">Human Result</p>
+                    <p>Orders: {results.human.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
+                    <p>Avg cycle: {results.human.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
+                    <p>FTE: {results.human.requiredFte.pickers} pickers + {results.human.requiredFte.runners} runners = {results.human.requiredFte.total}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase tracking-[0.14em] text-slate-300">Ascentra Result</p>
+                    <p>Orders: {results.ai.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
+                    <p>Avg cycle: {results.ai.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
+                    <p>FTE: {results.ai.requiredFte.pickers} pickers + {results.ai.requiredFte.runners} runners = {results.ai.requiredFte.total}</p>
+                  </div>
+                </div>
+                <p className="mt-2 text-sm font-medium text-blue-100">{results.conclusion}</p>
+              </div>
+            ) : null}
           </div>
 
           <BotPanel
-            botMetrics={botMetrics}
-            status={botStatus}
-            thinking={botThinking}
+            phase={phase}
             counts={aiCounts}
+            metrics={botMetrics}
+            activeAiFte={activeAiFte}
+            onReplayBuild={setAiBuildReplayPulse}
           />
         </section>
       </main>
