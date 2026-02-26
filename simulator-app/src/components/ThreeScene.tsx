@@ -989,8 +989,13 @@ function SceneRig({
   visualState,
   onCommitHumanTile,
   onRemoveHumanTileById,
-  onConsumeSpawnDragTile
-}: ThreeSceneProps) {
+  onConsumeSpawnDragTile,
+  performanceMode,
+  onAutoPerformanceMode
+}: ThreeSceneProps & {
+  performanceMode: boolean;
+  onAutoPerformanceMode: () => void;
+}) {
   const { camera } = useThree();
   const [draggingTileId, setDraggingTileId] = useState<string | null>(null);
   const [previewCell, setPreviewCell] = useState<GridCell | null>(null);
@@ -1005,6 +1010,8 @@ function SceneRig({
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const deliveredBoxRefs = useRef<Set<string>>(new Set());
   const deliveredDockRefs = useRef<Set<string>>(new Set());
+  const lowFpsStreakRef = useRef(0);
+  const fpsWindowRef = useRef({ elapsed: 0, frames: 0 });
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const controlsLockedByDrag = canEdit && draggingTileId !== null;
 
@@ -1100,7 +1107,7 @@ function SceneRig({
           <cylinderGeometry args={[0.21, 0.11, 0.12, 18]} />
           <meshStandardMaterial color="#dcecff" emissive="#9ac0ee" emissiveIntensity={0.24} roughness={0.18} metalness={0.08} />
         </mesh>
-        <pointLight castShadow color="#dbeaff" intensity={1.28} distance={13} decay={1.9} position={[0, -0.04, 0]} />
+        <pointLight color="#dbeaff" intensity={performanceMode ? 1.12 : 1.28} distance={performanceMode ? 10.5 : 13} decay={1.9} position={[0, -0.04, 0]} />
       </group>
     );
   }
@@ -1358,6 +1365,37 @@ function SceneRig({
     deliveredDockRefs.current = nextDockDelivered;
   }, [phase, visualState.humanBoxes, visualState.aiBoxes, humanStations.outbound, aiStations.outbound, humanStations.docks, aiStations.docks]);
 
+  useFrame((_, delta) => {
+    if (performanceMode) {
+      fpsWindowRef.current.elapsed = 0;
+      fpsWindowRef.current.frames = 0;
+      lowFpsStreakRef.current = 0;
+      return;
+    }
+
+    fpsWindowRef.current.elapsed += delta;
+    fpsWindowRef.current.frames += 1;
+
+    if (fpsWindowRef.current.elapsed < 1) {
+      return;
+    }
+
+    const averageFps = fpsWindowRef.current.frames / fpsWindowRef.current.elapsed;
+    if (averageFps < 42) {
+      lowFpsStreakRef.current += 1;
+      if (lowFpsStreakRef.current >= 2) {
+        onAutoPerformanceMode();
+      }
+    } else {
+      lowFpsStreakRef.current = 0;
+    }
+
+    fpsWindowRef.current.elapsed = 0;
+    fpsWindowRef.current.frames = 0;
+  });
+
+  const overheadLampPositions = performanceMode ? [-14.8, -8.8, 0, 8.8, 14.8] : [-14.8, -11.8, -8.8, 8.8, 11.8, 14.8];
+
   return (
     <>
       <fog attach="fog" args={['#1d1511', 78, 168]} />
@@ -1367,15 +1405,15 @@ function SceneRig({
         position={[12.2, 18.6, 10.4]}
         intensity={1.22}
         color="#f2d2a5"
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-near={2}
-        shadow-camera-far={68}
-        shadow-camera-left={-20}
-        shadow-camera-right={20}
-        shadow-camera-top={16}
-        shadow-camera-bottom={-16}
-        shadow-radius={5.8}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-camera-near={6}
+        shadow-camera-far={48}
+        shadow-camera-left={-12}
+        shadow-camera-right={12}
+        shadow-camera-top={10}
+        shadow-camera-bottom={-10}
+        shadow-radius={performanceMode ? 4.2 : 5.2}
         shadow-bias={-0.00012}
       />
       <pointLight position={[-9.6, 6.2, -6]} color="#8ea2c3" intensity={0.6} distance={26} decay={2.2} />
@@ -1479,7 +1517,7 @@ function SceneRig({
 
       <StorageRackField />
       <StoragePallets />
-      {[-14.8, -11.8, -8.8, 8.8, 11.8, 14.8].map((x, index) => (
+      {overheadLampPositions.map((x, index) => (
         <OverheadLamp key={`lamp-${index}`} position={[x, 3.3, 0.6]} />
       ))}
 
@@ -1625,7 +1663,7 @@ function SceneRig({
         target={[0, 0.24, 0]}
       />
 
-      {effectsEnabled ? (
+      {effectsEnabled && !performanceMode ? (
         <ErrorBoundary
           onError={(error) => {
             console.error('[ThreeScene] Postprocessing failed, disabling effects.', error);
@@ -1666,6 +1704,8 @@ function BackgroundFallback({ reason }: { reason: string }) {
 export function ThreeScene(props: ThreeSceneProps) {
   const [webglAvailable, setWebglAvailable] = useState(true);
   const [canvasFailed, setCanvasFailed] = useState(false);
+  const [performanceMode, setPerformanceMode] = useState(false);
+  const [autoPerformanceMode, setAutoPerformanceMode] = useState(false);
 
   useEffect(() => {
     const supported = supportsWebGL();
@@ -1692,11 +1732,32 @@ export function ThreeScene(props: ThreeSceneProps) {
       fallbackRender={() => <BackgroundFallback reason="Canvas runtime error" />}
     >
       <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl border border-borderline/70 bg-slate-950/35">
+        <div className="pointer-events-auto absolute right-3 top-3 z-20 flex items-center gap-2 rounded-md border border-borderline/70 bg-panel/75 px-2 py-1 text-[11px] text-slate-200 backdrop-blur-sm">
+          <span className="opacity-85">Performance</span>
+          <button
+            type="button"
+            className="rounded border border-borderline/70 bg-slate-900/70 px-2 py-0.5 text-[11px] font-medium text-slate-100 transition hover:bg-slate-800/80"
+            onClick={() => {
+              setPerformanceMode((current) => {
+                const next = !current;
+                if (!next) {
+                  setAutoPerformanceMode(false);
+                }
+                return next;
+              });
+            }}
+            aria-pressed={performanceMode}
+            aria-label="Toggle performance mode"
+          >
+            {performanceMode ? (autoPerformanceMode ? 'AUTO ON' : 'ON') : 'OFF'}
+          </button>
+        </div>
         <Canvas
+          key={performanceMode ? 'performance' : 'quality'}
           shadows
-          dpr={[1.25, 2]}
+          dpr={performanceMode ? [1, 1.2] : [1, 1.5]}
           camera={{ position: [18.6, 14.8, 18.6], fov: 30 }}
-          gl={{ antialias: true, powerPreference: 'high-performance' }}
+          gl={{ antialias: !performanceMode, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
             try {
               if (!gl || typeof gl.getContextAttributes !== 'function') {
@@ -1713,7 +1774,14 @@ export function ThreeScene(props: ThreeSceneProps) {
           }}
         >
           <color attach="background" args={[ASCENTRA_THEME.color.neutral0]} />
-          <SceneRig {...props} />
+          <SceneRig
+            {...props}
+            performanceMode={performanceMode}
+            onAutoPerformanceMode={() => {
+              setPerformanceMode(true);
+              setAutoPerformanceMode(true);
+            }}
+          />
         </Canvas>
       </div>
     </ErrorBoundary>
