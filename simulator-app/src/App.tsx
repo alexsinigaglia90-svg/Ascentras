@@ -1,7 +1,13 @@
+import { lazy, Suspense } from 'react';
 import { BotPanel } from './components/BotPanel';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { HumanPanel } from './components/HumanPanel';
-import { ThreeScene } from './components/ThreeScene';
 import { useSimulationModel } from './hooks/useSimulationModel';
+
+const LazyThreeScene = lazy(async () => {
+  const module = await import('./components/ThreeScene');
+  return { default: module.ThreeScene };
+});
 
 export default function WarehouseSimulatorPage() {
   const {
@@ -18,11 +24,22 @@ export default function WarehouseSimulatorPage() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-ink text-slate-100">
-      <ThreeScene
-        metrics={humanMetrics}
-        automationLevel={humanDesign.automationLevel}
-        botPulseKey={botPulseKey}
-      />
+      <ErrorBoundary
+        fallbackRender={(error) => {
+          console.error('[Simulator] 3D background crashed; rendering fallback background.', error);
+          return (
+            <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_16%_18%,rgba(104,142,202,0.16),transparent_44%),radial-gradient(circle_at_86%_82%,rgba(108,140,197,0.12),transparent_46%),linear-gradient(180deg,#060b12,#080d15)]" />
+          );
+        }}
+      >
+        <Suspense fallback={null}>
+          <LazyThreeScene
+            metrics={humanMetrics}
+            automationLevel={humanDesign.automationLevel}
+            botPulseKey={botPulseKey}
+          />
+        </Suspense>
+      </ErrorBoundary>
 
       <main className="relative z-10 grid h-screen grid-rows-[auto_1fr] gap-3 p-3">
         <header className="rounded-2xl border border-borderline bg-panel px-4 py-3 shadow-panel backdrop-blur-md">

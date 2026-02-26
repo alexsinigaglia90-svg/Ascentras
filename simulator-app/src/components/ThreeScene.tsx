@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Metrics, AutomationLevel } from '../hooks/useSimulationModel';
+import { ErrorBoundary } from './ErrorBoundary';
 
 type ThreeSceneProps = {
   metrics: Metrics;
@@ -19,6 +20,7 @@ function SceneRig({ metrics, automationLevel, botPulseKey }: ThreeSceneProps) {
   const flowOffset = useRef(0);
   const { camera } = useThree();
   const cameraTarget = useRef(new THREE.Vector3(20, 14, 20));
+  const [effectsEnabled, setEffectsEnabled] = useState(true);
 
   const paths = useMemo(
     () => [
@@ -152,22 +154,96 @@ function SceneRig({ metrics, automationLevel, botPulseKey }: ThreeSceneProps) {
       ))}
 
       <Environment preset="city" />
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.6} intensity={0.45} />
-        <Vignette eskil offset={0.18} darkness={0.9} />
-      </EffectComposer>
+
+      {effectsEnabled ? (
+        <ErrorBoundary
+          onError={(error) => {
+            console.error('[ThreeScene] Postprocessing failed, disabling effects.', error);
+            setEffectsEnabled(false);
+          }}
+          fallbackRender={() => null}
+        >
+          <EffectComposer>
+            <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.6} intensity={0.45} />
+            <Vignette eskil offset={0.18} darkness={0.9} />
+          </EffectComposer>
+        </ErrorBoundary>
+      ) : null}
     </>
   );
 }
 
-export function ThreeScene(props: ThreeSceneProps) {
+function supportsWebGL(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    const webgl2 = canvas.getContext('webgl2');
+    const webgl = canvas.getContext('webgl');
+    return Boolean(webgl2 || webgl);
+  } catch (error) {
+    console.error('[ThreeScene] WebGL detection failed.', error);
+    return false;
+  }
+}
+
+function BackgroundFallback({ reason }: { reason: string }) {
   return (
-    <div className="fixed inset-0 z-0">
-      <Canvas camera={{ position: [20, 14, 20], fov: 45 }} gl={{ antialias: true }}>
-        <color attach="background" args={['#060b12']} />
-        <SceneRig {...props} />
-      </Canvas>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(107,145,206,0.16),transparent_44%),radial-gradient(circle_at_85%_80%,rgba(117,146,199,0.12),transparent_46%),linear-gradient(180deg,rgba(6,10,18,0.26),rgba(6,10,18,0.74))]" />
+    <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_18%,rgba(107,145,206,0.16),transparent_44%),radial-gradient(circle_at_85%_80%,rgba(117,146,199,0.12),transparent_46%),linear-gradient(180deg,rgba(6,10,18,0.42),rgba(6,10,18,0.84))]">
+      <div className="absolute bottom-3 right-3 rounded-md border border-borderline bg-panel/70 px-3 py-1 text-xs text-slate-300 backdrop-blur-sm">
+        3D fallback active: {reason}
+      </div>
     </div>
+  );
+}
+
+export function ThreeScene(props: ThreeSceneProps) {
+  const [webglAvailable, setWebglAvailable] = useState(true);
+  const [canvasFailed, setCanvasFailed] = useState(false);
+
+  useEffect(() => {
+    const supported = supportsWebGL();
+    setWebglAvailable(supported);
+
+    if (!supported) {
+      console.error('[ThreeScene] WebGL is unavailable. Rendering fallback background.');
+    }
+  }, []);
+
+  if (!webglAvailable) {
+    return <BackgroundFallback reason="WebGL unavailable" />;
+  }
+
+  if (canvasFailed) {
+    return <BackgroundFallback reason="Canvas initialization failed" />;
+  }
+
+  return (
+    <ErrorBoundary
+      onError={(error) => {
+        console.error('[ThreeScene] Canvas runtime failed. Using fallback background.', error);
+        setCanvasFailed(true);
+      }}
+      fallbackRender={() => <BackgroundFallback reason="Canvas runtime error" />}
+    >
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <Canvas
+          camera={{ position: [20, 14, 20], fov: 45 }}
+          gl={{ antialias: true }}
+          onCreated={({ gl }) => {
+            try {
+              if (!gl || typeof gl.getContextAttributes !== 'function') {
+                throw new Error('WebGL renderer context unavailable');
+              }
+            } catch (error) {
+              console.error('[ThreeScene] Canvas creation check failed.', error);
+              setCanvasFailed(true);
+            }
+          }}
+        >
+          <color attach="background" args={['#060b12']} />
+          <SceneRig {...props} />
+        </Canvas>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(107,145,206,0.16),transparent_44%),radial-gradient(circle_at_85%_80%,rgba(117,146,199,0.12),transparent_46%),linear-gradient(180deg,rgba(6,10,18,0.26),rgba(6,10,18,0.74))]" />
+      </div>
+    </ErrorBoundary>
   );
 }
