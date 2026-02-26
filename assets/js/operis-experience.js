@@ -1,8 +1,4 @@
 (function initOperisExperience() {
-  function enableEnhancedMode() {
-    document.body.classList.add('operis-enhanced');
-  }
-
   function markPageEntered() {
     document.body.classList.add('page-enter');
     requestAnimationFrame(() => {
@@ -359,7 +355,6 @@
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    enableEnhancedMode();
     markPageEntered();
     setupReveals();
     setupCinematicStory();

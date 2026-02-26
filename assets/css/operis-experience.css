@@ -679,17 +679,6 @@ main {
   transform: translateY(0);
 }
 
-body.operis-enhanced .reveal {
-  opacity: 0;
-  transform: translateY(22px);
-  transition: opacity 620ms cubic-bezier(0.22, 0.61, 0.36, 1), transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-body.operis-enhanced .reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .hero-control-card.is-interactive {
   transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
