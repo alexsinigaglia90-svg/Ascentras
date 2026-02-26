@@ -192,14 +192,13 @@
     function applyDynamicHeight() {
       const viewport = window.innerHeight || document.documentElement.clientHeight || 900;
       const stageHeight = applyStageHeight();
-      const stickyHeight = Math.max(sticky.scrollHeight || sticky.offsetHeight || 0, stageHeight + 180);
+      const stickyHeight = Math.max(sticky.offsetHeight || 0, stageHeight + 180);
       const sceneSteps = Math.max(1, scenes.length - 1);
       const scrollPerStep = Math.max(180, Math.round(viewport * 0.26));
       const total = stickyHeight + stickyOffset + sceneSteps * scrollPerStep + 28;
       section.style.setProperty('--operis-cinematic-height', `${Math.round(total)}px`);
     }
 
-    applyDynamicHeight();
     section.classList.add('operis-cinematic-ready');
     let currentSceneIndex = -1;
 
@@ -253,10 +252,18 @@
       });
     });
 
-    calculateProgress();
+    function refreshCinematicLayout() {
+      applyDynamicHeight();
+      calculateProgress();
+    }
+
+    refreshCinematicLayout();
+    window.requestAnimationFrame(refreshCinematicLayout);
+    window.setTimeout(refreshCinematicLayout, 140);
+
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', () => {
-      applyDynamicHeight();
+      refreshCinematicLayout();
       onScroll();
     });
 
