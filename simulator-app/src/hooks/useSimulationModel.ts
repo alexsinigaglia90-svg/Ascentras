@@ -1616,7 +1616,7 @@ function buildVisualState(
     const kind = order.kinds.length > 0 ? order.kinds[Math.floor(minute * 0.8 + index * 1.7) % order.kinds.length] : 'M';
     const lineTarget = sampleLineCell(kind, pools, rng);
 
-    const phase = phaseClock % 3;
+    const phase = phaseClock % 5;
     const progress = (minute * 0.92 + index * 0.16) % 1;
     const eventStamp = Math.floor(phaseClock);
 
@@ -1627,14 +1627,20 @@ function buildVisualState(
       target = lineTarget;
       cell = interpolateGridPath(stations.depot, lineTarget, progress);
     } else if (phase < 2) {
-      target = stations.dropoff;
-      cell = interpolateGridPath(lineTarget, stations.dropoff, progress);
+      target = stations.packingTable;
+      cell = interpolateGridPath(lineTarget, stations.packingTable, progress);
+    } else if (phase < 3) {
+      target = stations.machine;
+      cell = interpolateGridPath(stations.packingTable, stations.machine, progress);
+    } else if (phase < 4) {
+      target = stations.outbound;
+      cell = interpolateGridPath(stations.machine, stations.outbound, progress);
     } else {
       target = stations.depot;
-      cell = interpolateGridPath(stations.dropoff, stations.depot, progress);
+      cell = interpolateGridPath(stations.outbound, stations.depot, progress);
     }
 
-    if (phase < 1 && progress >= 0.88) {
+    if (phase < 1 && progress >= 0.86) {
       pickerEvents.push({
         pickerId: `${side}-picker-${index}`,
         kind,
@@ -1686,12 +1692,12 @@ function buildVisualState(
     });
   }
 
-  for (let index = 0; index < 4; index += 1) {
+  for (let index = 0; index < 6; index += 1) {
     const dock = stations.docks[index % stations.docks.length];
-    const wave = (minute * 0.36 + index * 0.31) % 2;
-    const progress = wave < 1 ? wave : wave - 1;
-    const from = wave < 1 ? stations.dropoff : stations.outbound;
-    const to = wave < 1 ? stations.machine : dock;
+    const wave = (minute * 0.38 + index * 0.29) % 3;
+    const progress = wave < 1 ? wave : wave < 2 ? wave - 1 : wave - 2;
+    const from = wave < 1 ? stations.packingTable : wave < 2 ? stations.machine : stations.outbound;
+    const to = wave < 1 ? stations.machine : wave < 2 ? stations.outbound : dock;
 
     boxes.push({
       id: `${side}-box-${index}`,

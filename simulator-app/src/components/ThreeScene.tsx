@@ -53,6 +53,7 @@ const GRID_MIN_X = ORIGIN_X - CELL_SIZE / 2;
 const GRID_MIN_Z = ORIGIN_Z - CELL_SIZE / 2;
 const GRID_MAX_X = GRID_MIN_X + BOARD_COLS * CELL_SIZE;
 const GRID_MAX_Z = GRID_MIN_Z + BOARD_ROWS * CELL_SIZE;
+const AI_COL_MIN = HUMAN_COL_RANGE.max + 1;
 const PICK_ZONE_WIDTH = BOARD_COLS * CELL_SIZE;
 const PICK_ZONE_DEPTH = BOARD_ROWS * CELL_SIZE;
 const FACILITY_WIDTH = PICK_ZONE_WIDTH * 2.5;
@@ -361,7 +362,7 @@ function StationObject({ cell, title, accent, scale = [0.88, 0.42, 0.88] as [num
   );
 }
 
-function DockGroup({ docks }: { docks: GridCell[] }) {
+function DockGroup({ docks, loadCounts }: { docks: GridCell[]; loadCounts?: number[] }) {
   const textures = useMemo(() => docks.map((_, index) => labelTexture(`${index + 1}`)), [docks]);
 
   useEffect(() => {
@@ -391,6 +392,20 @@ function DockGroup({ docks }: { docks: GridCell[] }) {
             <planeGeometry args={[0.34, 0.18]} />
             <meshBasicMaterial color="#dce9ff" />
           </mesh>
+          {new Array(Math.min(8, loadCounts?.[index] ?? 0)).fill(0).map((_, stackIndex) => (
+            <mesh
+              key={`dock-load-${index}-${stackIndex}`}
+              position={[
+                stackIndex % 2 === 0 ? -0.13 : 0.13,
+                0.23 + Math.floor(stackIndex / 2) * 0.08,
+                stackIndex % 4 < 2 ? -0.08 : 0.08
+              ]}
+              castShadow
+            >
+              <boxGeometry args={[0.12, 0.07, 0.1]} />
+              <meshStandardMaterial color="#d9e9ff" emissive="#86b4ea" emissiveIntensity={0.16} roughness={0.28} metalness={0.14} />
+            </mesh>
+          ))}
           <sprite position={[0, 0.36, 0]} scale={[0.5, 0.22, 1]}>
             <spriteMaterial map={textures[index]} transparent depthWrite={false} />
           </sprite>
@@ -434,6 +449,12 @@ function StorageRackField() {
 
   return (
     <group>
+      {[-14.6, -12.2, 12.2, 14.6].map((x, index) => (
+        <mesh key={`rack-lane-${index}`} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.054, -1.2]}>
+          <planeGeometry args={[1.2, 16.8]} />
+          <meshBasicMaterial color="#86addd" transparent opacity={0.055} depthWrite={false} />
+        </mesh>
+      ))}
       {leftRightColumns.map((x) =>
         sideRows.map((z) => (
           <StorageRackUnit key={`side-rack-${x}-${z}`} position={[x, 0.29, z]} />
@@ -759,14 +780,22 @@ function OutboundBuffer({ cell, count, accent }: { cell: GridCell; count: number
   );
 }
 
-function AgentOrb({ agent }: { agent: AgentVisual }) {
-  const ref = useRef<THREE.Mesh | null>(null);
+function WorkerAgent({ agent, stations }: { agent: AgentVisual; stations: StationSet }) {
+  const ref = useRef<THREE.Group | null>(null);
   const smooth = useRef(new THREE.Vector3());
+  const beaconRef = useRef<THREE.MeshStandardMaterial | null>(null);
 
   const target = useMemo(() => {
-    const [x, y, z] = cellToWorld(agent.cell, 0.22);
+    const [x, y, z] = cellToWorld(agent.cell, 0.18);
     return new THREE.Vector3(x, y, z);
   }, [agent.cell]);
+
+  const hasCarry = useMemo(() => {
+    if (agent.role === 'picker') {
+      return manhattan(agent.cell, stations.packingTable) <= 2 || manhattan(agent.cell, stations.machine) <= 2;
+    }
+    return manhattan(agent.cell, stations.outbound) <= 2 || stations.docks.some((dock) => manhattan(agent.cell, dock) <= 2);
+  }, [agent, stations]);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -782,19 +811,77 @@ function AgentOrb({ agent }: { agent: AgentVisual }) {
     smooth.current.lerp(target, ease);
     const bob = 0.01 * Math.sin(clock.elapsedTime * 4.6 + agent.cell.col * 0.31 + agent.cell.row * 0.22);
     ref.current.position.set(smooth.current.x, smooth.current.y + bob, smooth.current.z);
+
+    const look = new THREE.Vector3(target.x - smooth.current.x, 0, target.z - smooth.current.z);
+    if (look.lengthSq() > 0.0004) {
+      ref.current.rotation.y = Math.atan2(look.x, look.z);
+    }
+
+    if (beaconRef.current) {
+      const pulse = 0.5 + 0.5 * Math.sin(clock.elapsedTime * 3.2 + agent.cell.col * 0.22);
+      beaconRef.current.emissiveIntensity = 0.22 + pulse * 0.22;
+    }
   });
 
   return (
-    <mesh ref={ref} castShadow>
-      <sphereGeometry args={[agent.role === 'picker' ? 0.16 : 0.14, 16, 16]} />
-      <meshStandardMaterial
-        color={agent.role === 'picker' ? '#7cb3ff' : '#b8d3ff'}
-        emissive={agent.role === 'picker' ? '#5e95e7' : '#8db0e2'}
-        emissiveIntensity={agent.role === 'picker' ? 0.46 : 0.32}
-        roughness={0.3}
-        metalness={0.2}
-      />
-    </mesh>
+    <group ref={ref}>
+      <mesh position={[0, 0.12, 0]} castShadow>
+        <capsuleGeometry args={[0.08, 0.2, 6, 10]} />
+        <meshStandardMaterial
+          color={agent.role === 'picker' ? '#8ec1ff' : '#a9c9f2'}
+          emissive={agent.role === 'picker' ? '#6b9ce0' : '#7fa6d7'}
+          emissiveIntensity={0.2}
+          roughness={0.36}
+          metalness={0.14}
+        />
+      </mesh>
+      <mesh position={[0, 0.3, 0]} castShadow>
+        <sphereGeometry args={[0.065, 14, 14]} />
+        <meshStandardMaterial color="#f2dfc5" roughness={0.58} metalness={0.04} />
+      </mesh>
+      <mesh position={[0, 0.22, -0.1]} castShadow>
+        <boxGeometry args={[0.14, 0.1, 0.04]} />
+        <meshStandardMaterial color="#20324a" emissive="#3d5f88" emissiveIntensity={0.12} roughness={0.34} metalness={0.18} />
+      </mesh>
+      {hasCarry ? (
+        <mesh position={[0.12, 0.16, 0]} castShadow>
+          <boxGeometry args={[0.11, 0.08, 0.1]} />
+          <meshStandardMaterial color="#dcecff" emissive="#8fb9ed" emissiveIntensity={0.18} roughness={0.32} metalness={0.12} />
+        </mesh>
+      ) : null}
+      <mesh position={[0, 0.4, 0]}>
+        <sphereGeometry args={[0.04, 12, 12]} />
+        <meshStandardMaterial ref={beaconRef} color="#9fc3f0" emissive="#88b3e8" emissiveIntensity={0.24} roughness={0.22} metalness={0.16} />
+      </mesh>
+    </group>
+  );
+}
+
+function MovingBox({ box, stations }: { box: BoxVisual; stations: StationSet }) {
+  const nearMachine = manhattan(box.cell, stations.machine) <= 1;
+  const nearOutbound = manhattan(box.cell, stations.outbound) <= 1;
+  const atDock = stations.docks.some((dock) => manhattan(box.cell, dock) <= 0);
+  const nearPacking = manhattan(box.cell, stations.packingTable) <= 1;
+
+  const palette = nearPacking
+    ? { color: '#adc9ec', emissive: '#7ea8df', intensity: 0.16 }
+    : nearMachine
+      ? { color: '#c0d8f6', emissive: '#8cb2e6', intensity: 0.22 }
+      : nearOutbound || atDock
+        ? { color: '#deedff', emissive: '#99c0ef', intensity: 0.28 }
+        : { color: '#c8ddfb', emissive: '#8fb3e6', intensity: 0.18 };
+
+  return (
+    <group position={cellToWorld(box.cell, 0.16)}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[0.22, 0.16, 0.2]} />
+        <meshStandardMaterial color={palette.color} emissive={palette.emissive} emissiveIntensity={palette.intensity} roughness={0.32} metalness={0.14} />
+      </mesh>
+      <mesh position={[0, 0.09, 0]}>
+        <boxGeometry args={[0.2, 0.02, 0.18]} />
+        <meshStandardMaterial color="#f2f7ff" emissive="#c1daf8" emissiveIntensity={0.1} roughness={0.26} metalness={0.08} />
+      </mesh>
+    </group>
   );
 }
 
@@ -921,10 +1008,16 @@ function SceneRig({
   const [focusCell, setFocusCell] = useState<GridCell | null>(null);
   const [lastPlacement, setLastPlacement] = useState<{ tileId: string; at: number } | null>(null);
   const [outboundFill, setOutboundFill] = useState({ human: 0, ai: 0 });
+  const [dockFill, setDockFill] = useState<{ human: number[]; ai: number[] }>(() => ({
+    human: humanStations.docks.map(() => 0),
+    ai: aiStations.docks.map(() => 0)
+  }));
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const deliveredBoxRefs = useRef<Set<string>>(new Set());
+  const deliveredDockRefs = useRef<Set<string>>(new Set());
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const controlsLockedByDrag = canEdit && draggingTileId !== null;
+  const buildCameraEnabled = phase === 'build' && canEdit && !controlsLockedByDrag;
 
   const floorTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -968,6 +1061,106 @@ function SceneRig({
       floorTexture.dispose();
     };
   }, [floorTexture]);
+
+  function ZoneOverlay({
+    colStart,
+    colEnd,
+    rowStart,
+    rowEnd,
+    color,
+    opacity = 0.08,
+    y = 0.056
+  }: {
+    colStart: number;
+    colEnd: number;
+    rowStart: number;
+    rowEnd: number;
+    color: string;
+    opacity?: number;
+    y?: number;
+  }) {
+    const center = useMemo(() => {
+      const [ax, , az] = cellToWorld({ col: colStart, row: rowStart });
+      const [bx, , bz] = cellToWorld({ col: colEnd, row: rowEnd });
+      return [(ax + bx) / 2, y, (az + bz) / 2] as [number, number, number];
+    }, [colStart, colEnd, rowStart, rowEnd, y]);
+
+    const width = (Math.abs(colEnd - colStart) + 1) * CELL_SIZE;
+    const depth = (Math.abs(rowEnd - rowStart) + 1) * CELL_SIZE;
+
+    return (
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={center}>
+        <planeGeometry args={[width - 0.08, depth - 0.08]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
+      </mesh>
+    );
+  }
+
+  function OverheadLamp({ position }: { position: [number, number, number] }) {
+    return (
+      <group position={position}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.12, 0.16, 0.12, 18]} />
+          <meshStandardMaterial color="#334b6a" emissive="#4f719f" emissiveIntensity={0.12} roughness={0.34} metalness={0.24} />
+        </mesh>
+        <mesh position={[0, -0.12, 0]}>
+          <cylinderGeometry args={[0.21, 0.11, 0.12, 18]} />
+          <meshStandardMaterial color="#dcecff" emissive="#9ac0ee" emissiveIntensity={0.24} roughness={0.18} metalness={0.08} />
+        </mesh>
+        <pointLight castShadow color="#dbeaff" intensity={1.28} distance={13} decay={1.9} position={[0, -0.04, 0]} />
+      </group>
+    );
+  }
+
+  function MachineProcessor({ stations, phaseOffset }: { stations: StationSet; phaseOffset: number }) {
+    const [mx, , mz] = cellToWorld(stations.machine, 0.28);
+    const [px, , pz] = cellToWorld(stations.packingTable, 0.28);
+    const [ox, , oz] = cellToWorld(stations.outbound, 0.28);
+    const inCrateRef = useRef<THREE.Group | null>(null);
+    const outCrateRef = useRef<THREE.Group | null>(null);
+
+    useFrame(({ clock }) => {
+      const cycle = (clock.elapsedTime * 0.42 + phaseOffset) % 1;
+      const toMachine = Math.min(1, cycle / 0.52);
+
+      if (inCrateRef.current) {
+        inCrateRef.current.position.set(
+          THREE.MathUtils.lerp(px, mx, toMachine),
+          0.2,
+          THREE.MathUtils.lerp(pz, mz, toMachine)
+        );
+        inCrateRef.current.visible = cycle < 0.7;
+      }
+
+      if (outCrateRef.current) {
+        const fromMachine = clamp((cycle - 0.56) / 0.4, 0, 1);
+        outCrateRef.current.position.set(
+          THREE.MathUtils.lerp(mx, ox, fromMachine),
+          0.2,
+          THREE.MathUtils.lerp(mz, oz, fromMachine)
+        );
+        outCrateRef.current.visible = cycle > 0.55;
+      }
+    });
+
+    return (
+      <>
+        <group ref={inCrateRef}>
+          <mesh castShadow>
+            <boxGeometry args={[0.14, 0.1, 0.12]} />
+            <meshStandardMaterial color="#afcdef" emissive="#7ea8de" emissiveIntensity={0.18} roughness={0.32} metalness={0.12} />
+          </mesh>
+        </group>
+        <group ref={outCrateRef}>
+          <mesh castShadow>
+            <boxGeometry args={[0.16, 0.11, 0.14]} />
+            <meshStandardMaterial color="#dcebff" emissive="#90b9ec" emissiveIntensity={0.26} roughness={0.26} metalness={0.1} />
+          </mesh>
+        </group>
+      </>
+    );
+  }
+
 
   const blockedHuman = useMemo(() => {
     const blocked = new Set<string>([
@@ -1081,7 +1274,7 @@ function SceneRig({
   }, [visualState.humanPallets, visualState.aiPallets]);
 
   useEffect(() => {
-    camera.position.set(15.8, 12.6, 15.8);
+    camera.position.set(17.2, 13.7, 17.2);
     const controls = controlsRef.current;
     if (controls) {
       controls.target.set(0, 0.24, 0);
@@ -1092,9 +1285,14 @@ function SceneRig({
   useEffect(() => {
     if (phase === 'build') {
       setOutboundFill({ human: 0, ai: 0 });
+      setDockFill({
+        human: humanStations.docks.map(() => 0),
+        ai: aiStations.docks.map(() => 0)
+      });
       deliveredBoxRefs.current.clear();
+      deliveredDockRefs.current.clear();
     }
-  }, [phase]);
+  }, [phase, humanStations.docks, aiStations.docks]);
 
   useEffect(() => {
     if (phase !== 'simulating') {
@@ -1103,8 +1301,11 @@ function SceneRig({
     }
 
     const nextDelivered = new Set<string>();
+    const nextDockDelivered = new Set<string>();
     let humanIncrement = 0;
     let aiIncrement = 0;
+    const humanDockIncrements = humanStations.docks.map(() => 0);
+    const aiDockIncrements = aiStations.docks.map(() => 0);
 
     visualState.humanBoxes.forEach((box, index) => {
       const key = `h:${box.id}:${index}`;
@@ -1113,6 +1314,15 @@ function SceneRig({
         nextDelivered.add(key);
         if (!deliveredBoxRefs.current.has(key)) {
           humanIncrement += 1;
+        }
+      }
+
+      const dockIndex = humanStations.docks.findIndex((dock) => manhattan(box.cell, dock) <= 0);
+      if (dockIndex >= 0) {
+        const dockKey = `h:${box.id}:${dockIndex}`;
+        nextDockDelivered.add(dockKey);
+        if (!deliveredDockRefs.current.has(dockKey)) {
+          humanDockIncrements[dockIndex] += 1;
         }
       }
     });
@@ -1126,6 +1336,15 @@ function SceneRig({
           aiIncrement += 1;
         }
       }
+
+      const dockIndex = aiStations.docks.findIndex((dock) => manhattan(box.cell, dock) <= 0);
+      if (dockIndex >= 0) {
+        const dockKey = `a:${box.id}:${dockIndex}`;
+        nextDockDelivered.add(dockKey);
+        if (!deliveredDockRefs.current.has(dockKey)) {
+          aiDockIncrements[dockIndex] += 1;
+        }
+      }
     });
 
     if (humanIncrement > 0 || aiIncrement > 0) {
@@ -1135,8 +1354,16 @@ function SceneRig({
       }));
     }
 
+    if (humanDockIncrements.some((value) => value > 0) || aiDockIncrements.some((value) => value > 0)) {
+      setDockFill((current) => ({
+        human: current.human.map((value, index) => clamp(value + (humanDockIncrements[index] ?? 0), 0, 28)),
+        ai: current.ai.map((value, index) => clamp(value + (aiDockIncrements[index] ?? 0), 0, 28))
+      }));
+    }
+
     deliveredBoxRefs.current = nextDelivered;
-  }, [phase, visualState.humanBoxes, visualState.aiBoxes, humanStations.outbound, aiStations.outbound]);
+    deliveredDockRefs.current = nextDockDelivered;
+  }, [phase, visualState.humanBoxes, visualState.aiBoxes, humanStations.outbound, aiStations.outbound, humanStations.docks, aiStations.docks]);
 
   return (
     <>
@@ -1196,6 +1423,13 @@ function SceneRig({
         <planeGeometry args={[PICK_ZONE_WIDTH - 0.1, PICK_ZONE_DEPTH - 0.1]} />
         <meshStandardMaterial color="#122033" emissive="#223b5b" emissiveIntensity={0.03} roughness={0.8} metalness={0.08} transparent opacity={0.13} depthWrite={false} />
       </mesh>
+
+      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={0} rowEnd={6} color="#6ea4df" opacity={0.065} />
+      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={0} rowEnd={6} color="#9bb7dc" opacity={0.058} />
+      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={7} rowEnd={7} color="#d29267" opacity={0.08} />
+      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={7} rowEnd={7} color="#d29267" opacity={0.08} />
+      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={8} rowEnd={9} color="#84b1e7" opacity={0.075} />
+      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={8} rowEnd={9} color="#84b1e7" opacity={0.075} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.052, 0]} receiveShadow>
         <planeGeometry args={[FACILITY_WIDTH - 0.5, FACILITY_DEPTH - 0.5]} />
@@ -1257,6 +1491,9 @@ function SceneRig({
 
       <StorageRackField />
       <StoragePallets />
+      {[-14.8, -11.8, -8.8, 8.8, 11.8, 14.8].map((x, index) => (
+        <OverheadLamp key={`lamp-${index}`} position={[x, 3.3, 0.6]} />
+      ))}
 
       {phase === 'build' ? (
         <>
@@ -1290,18 +1527,20 @@ function SceneRig({
       <StationObject cell={humanStations.packingTable} title="Packing" accent="#e69b63" />
       <StationObject cell={humanStations.machine} title="Machine" accent="#6d9add" />
       <StationObject cell={humanStations.outbound} title="Outbound" accent="#6f94c9" />
+      <MachineProcessor stations={humanStations} phaseOffset={0.08} />
       <OutboundBuffer cell={humanStations.outbound} count={outboundFill.human} accent="#8cb8ef" />
-      <DockGroup docks={humanStations.docks} />
-      <Conveyor from={humanStations.dropoff} to={humanStations.machine} />
+      <DockGroup docks={humanStations.docks} loadCounts={dockFill.human} />
+      <Conveyor from={humanStations.packingTable} to={humanStations.machine} />
 
       <StationObject cell={aiStations.depot} title="Depot" accent="#6f9ed8" />
       <StationObject cell={aiStations.dropoff} title="Drop" accent="#79a5dd" />
       <StationObject cell={aiStations.packingTable} title="Packing" accent="#e69b63" />
       <StationObject cell={aiStations.machine} title="Machine" accent="#6d9add" />
       <StationObject cell={aiStations.outbound} title="Outbound" accent="#6f94c9" />
+      <MachineProcessor stations={aiStations} phaseOffset={0.42} />
       <OutboundBuffer cell={aiStations.outbound} count={outboundFill.ai} accent="#8cb8ef" />
-      <DockGroup docks={aiStations.docks} />
-      <Conveyor from={aiStations.dropoff} to={aiStations.machine} />
+      <DockGroup docks={aiStations.docks} loadCounts={dockFill.ai} />
+      <Conveyor from={aiStations.packingTable} to={aiStations.machine} />
 
       {humanTiles.map((tile) => (
         <Tile
@@ -1359,15 +1598,20 @@ function SceneRig({
         <ActiveTarget key={`target-${index}-${target.col}-${target.row}`} target={target} index={index} />
       ))}
 
-      {[...visualState.humanBoxes, ...visualState.aiBoxes].map((box) => (
-        <mesh key={box.id} position={cellToWorld(box.cell, 0.16)} castShadow receiveShadow>
-          <boxGeometry args={[0.22, 0.22, 0.22]} />
-          <meshStandardMaterial color="#d8e9ff" emissive="#89b0e8" emissiveIntensity={0.35} roughness={0.34} metalness={0.22} />
-        </mesh>
+      {visualState.humanBoxes.map((box) => (
+        <MovingBox key={`h-${box.id}`} box={box} stations={humanStations} />
       ))}
 
-      {[...visualState.humanAgents, ...visualState.aiAgents].map((agent) => (
-        <AgentOrb key={agent.id} agent={agent} />
+      {visualState.aiBoxes.map((box) => (
+        <MovingBox key={`a-${box.id}`} box={box} stations={aiStations} />
+      ))}
+
+      {visualState.humanAgents.map((agent) => (
+        <WorkerAgent key={`h-agent-${agent.id}`} agent={agent} stations={humanStations} />
+      ))}
+
+      {visualState.aiAgents.map((agent) => (
+        <WorkerAgent key={`a-agent-${agent.id}`} agent={agent} stations={aiStations} />
       ))}
 
       {[...visualState.humanReachTrucks, ...visualState.aiReachTrucks].map((truck) => (
@@ -1377,19 +1621,19 @@ function SceneRig({
       <OrbitControls
         ref={controlsRef}
         makeDefault
-        enabled={!controlsLockedByDrag}
-        enableRotate={false}
-        enablePan={false}
-        panSpeed={0}
-        enableZoom={!controlsLockedByDrag}
+        enabled={buildCameraEnabled}
+        enableRotate={buildCameraEnabled}
+        enablePan={buildCameraEnabled}
+        panSpeed={0.26}
+        enableZoom={buildCameraEnabled}
         enableDamping
-        dampingFactor={controlsLockedByDrag ? 0 : 0.08}
-        minDistance={18.4}
-        maxDistance={24.2}
-        minPolarAngle={0.96}
-        maxPolarAngle={0.96}
-        minAzimuthAngle={Math.PI / 4}
-        maxAzimuthAngle={Math.PI / 4}
+        dampingFactor={buildCameraEnabled ? 0.08 : 0}
+        minDistance={16.8}
+        maxDistance={28.6}
+        minPolarAngle={0.74}
+        maxPolarAngle={1.12}
+        minAzimuthAngle={Math.PI / 4 - 0.35}
+        maxAzimuthAngle={Math.PI / 4 + 0.35}
         target={[0, 0.24, 0]}
       />
 
@@ -1463,7 +1707,7 @@ export function ThreeScene(props: ThreeSceneProps) {
         <Canvas
           shadows
           dpr={[1.25, 2]}
-          camera={{ position: [15.8, 12.6, 15.8], fov: 31 }}
+          camera={{ position: [17.2, 13.7, 17.2], fov: 31 }}
           gl={{ antialias: true, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
             try {
