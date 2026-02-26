@@ -1324,6 +1324,168 @@ function OutboundBuffer({ cell, count, accent }: { cell: GridCell; count: number
   );
 }
 
+function GeometricLetter({
+  char,
+  width,
+  height,
+  depth,
+  stroke,
+  color,
+  emissive,
+  emissiveIntensity
+}: {
+  char: string;
+  width: number;
+  height: number;
+  depth: number;
+  stroke: number;
+  color: string;
+  emissive: string;
+  emissiveIntensity: number;
+}) {
+  const hBar = (y: number, barWidth = width) => (
+    <mesh key={`h-${char}-${y}-${barWidth}`} position={[0, y, 0]}>
+      <boxGeometry args={[barWidth, stroke, depth]} />
+      <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={0.28} metalness={0.18} />
+    </mesh>
+  );
+
+  const vBar = (x: number, y: number, barHeight: number) => (
+    <mesh key={`v-${char}-${x}-${y}-${barHeight}`} position={[x, y, 0]}>
+      <boxGeometry args={[stroke, barHeight, depth]} />
+      <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={0.28} metalness={0.18} />
+    </mesh>
+  );
+
+  const top = height / 2 - stroke / 2;
+  const mid = 0;
+  const bottom = -height / 2 + stroke / 2;
+  const left = -width / 2 + stroke / 2;
+  const right = width / 2 - stroke / 2;
+  const upperHalf = height * 0.5 - stroke * 0.5;
+  const lowerHalf = height * 0.5 - stroke * 0.5;
+
+  switch (char) {
+    case 'A':
+      return (
+        <group>
+          {hBar(top)}
+          {hBar(mid, width * 0.92)}
+          {vBar(left, -stroke * 0.02, height - stroke * 1.05)}
+          {vBar(right, -stroke * 0.02, height - stroke * 1.05)}
+        </group>
+      );
+    case 'S':
+      return (
+        <group>
+          {hBar(top)}
+          {hBar(mid)}
+          {hBar(bottom)}
+          {vBar(left, height * 0.24, upperHalf)}
+          {vBar(right, -height * 0.24, lowerHalf)}
+        </group>
+      );
+    case 'C':
+      return (
+        <group>
+          {hBar(top, width * 0.94)}
+          {hBar(bottom, width * 0.94)}
+          {vBar(left, 0, height - stroke)}
+        </group>
+      );
+    case 'E':
+      return (
+        <group>
+          {hBar(top)}
+          {hBar(mid, width * 0.88)}
+          {hBar(bottom)}
+          {vBar(left, 0, height - stroke)}
+        </group>
+      );
+    case 'N':
+      return (
+        <group>
+          {vBar(left, 0, height - stroke)}
+          {vBar(right, 0, height - stroke)}
+          <mesh position={[0, 0, 0]} rotation={[0, 0, -0.42]}>
+            <boxGeometry args={[stroke, height + stroke * 0.2, depth]} />
+            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={0.28} metalness={0.18} />
+          </mesh>
+        </group>
+      );
+    case 'T':
+      return (
+        <group>
+          {hBar(top)}
+          {vBar(0, -stroke * 0.06, height - stroke * 1.02)}
+        </group>
+      );
+    case 'R':
+      return (
+        <group>
+          {hBar(top)}
+          {hBar(mid, width * 0.9)}
+          {vBar(left, 0, height - stroke)}
+          {vBar(right, height * 0.24, upperHalf)}
+          <mesh position={[width * 0.13, -height * 0.22, 0]} rotation={[0, 0, -0.58]}>
+            <boxGeometry args={[stroke, height * 0.52, depth]} />
+            <meshStandardMaterial color={color} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={0.28} metalness={0.18} />
+          </mesh>
+        </group>
+      );
+    default:
+      return null;
+  }
+}
+
+function AscentraWallSign({ position }: { position: [number, number, number] }) {
+  const letters = 'ASCENTRA'.split('');
+  const letterWidth = 0.45;
+  const letterSpacing = 0.08;
+  const totalWidth = letters.length * letterWidth + (letters.length - 1) * letterSpacing;
+
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.55, -0.08]}>
+        <boxGeometry args={[5.4, 1.72, 0.14]} />
+        <meshStandardMaterial color="#3a2b1f" emissive="#4f3a2a" emissiveIntensity={0.08} roughness={0.56} metalness={0.18} />
+      </mesh>
+      <mesh position={[0, 0.55, -0.004]}>
+        <boxGeometry args={[5.12, 1.44, 0.05]} />
+        <meshStandardMaterial color="#b18858" emissive="#d0a870" emissiveIntensity={0.24} roughness={0.26} metalness={0.14} />
+      </mesh>
+      <mesh position={[0, 0.55, 0.015]}>
+        <boxGeometry args={[5.18, 1.5, 0.01]} />
+        <meshBasicMaterial color="#f0ca94" transparent opacity={0.22} depthWrite={false} />
+      </mesh>
+
+      <group position={[0, 0.55, 0.078]}>
+        {letters.map((char, index) => {
+          const x = -totalWidth / 2 + letterWidth / 2 + index * (letterWidth + letterSpacing);
+          return (
+            <group key={`ascentra-letter-${char}-${index}`} position={[x, 0, 0]}>
+              <GeometricLetter
+                char={char}
+                width={letterWidth}
+                height={0.72}
+                depth={0.065}
+                stroke={0.072}
+                color="#f3e5cf"
+                emissive="#cda06a"
+                emissiveIntensity={0.2}
+              />
+              <mesh position={[0, 0, -0.028]}>
+                <boxGeometry args={[letterWidth * 0.98, 0.76, 0.012]} />
+                <meshBasicMaterial color="#c08f5f" transparent opacity={0.12} depthWrite={false} />
+              </mesh>
+            </group>
+          );
+        })}
+      </group>
+    </group>
+  );
+}
+
 function WorkerAgent({ agent, stations }: { agent: AgentVisual; stations: StationSet }) {
   const ref = useRef<THREE.Group | null>(null);
   const smooth = useRef(new THREE.Vector3());
@@ -2327,6 +2489,13 @@ function SceneRig({
         <planeGeometry args={[PICK_ZONE_WIDTH - 0.25, PICK_ZONE_DEPTH - 0.25]} />
         <meshBasicMaterial color="#9dbfe9" transparent opacity={0.014} depthWrite={false} />
       </mesh>
+
+      <mesh position={[0, 0.96, -FACILITY_DEPTH / 2 + 0.34]}>
+        <boxGeometry args={[FACILITY_WIDTH - 0.9, 1.96, 0.16]} />
+        <meshStandardMaterial color="#2f241c" emissive="#3c2d22" emissiveIntensity={0.08} roughness={0.64} metalness={0.12} />
+      </mesh>
+
+      <AscentraWallSign position={[0, 0.62, -FACILITY_DEPTH / 2 + 0.43]} />
 
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
