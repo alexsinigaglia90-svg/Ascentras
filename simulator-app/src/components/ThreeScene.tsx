@@ -211,6 +211,30 @@ function tagTexture(label: string, accent = '#a7c5ea'): THREE.CanvasTexture {
   return texture;
 }
 
+function glowDiscTexture(color = '#f4fbff'): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 192;
+  canvas.height = 192;
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  const gradient = context.createRadialGradient(96, 96, 8, 96, 96, 96);
+  gradient.addColorStop(0, color);
+  gradient.addColorStop(0.32, 'rgba(242,250,255,0.78)');
+  gradient.addColorStop(0.64, 'rgba(226,241,255,0.28)');
+  gradient.addColorStop(1, 'rgba(210,232,255,0)');
+
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 192, 192);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
 function BeveledBlock({
   size,
   radius = 0.08,
@@ -376,6 +400,38 @@ function Conveyor({ from, to }: { from: GridCell; to: GridCell }) {
           </mesh>
         </group>
       ))}
+      {new Array(6).fill(0).map((_, index) => (
+        <mesh key={`belt-vent-${index}`} position={[(-length * 0.4) + index * (length * 0.16), 0.115, -0.335]}>
+          <boxGeometry args={[0.08, 0.008, 0.032]} />
+          <meshStandardMaterial color="#6b7d93" emissive="#6880a0" emissiveIntensity={0.1} roughness={0.34} metalness={0.2} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.2, 0.36]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.016, 0.016, length * 0.88, 12]} />
+        <meshStandardMaterial color="#b8cee9" emissive="#9fbbe2" emissiveIntensity={0.16} roughness={0.24} metalness={0.22} />
+      </mesh>
+      <mesh position={[0, 0.26, 0.36]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.016, 0.016, length * 0.88, 12]} />
+        <meshStandardMaterial color="#b8cee9" emissive="#9fbbe2" emissiveIntensity={0.14} roughness={0.24} metalness={0.22} />
+      </mesh>
+      {[-0.42, -0.14, 0.14, 0.42].map((offset, index) => (
+        <mesh key={`belt-rail-post-${index}`} position={[offset * length, 0.2, 0.36]}>
+          <boxGeometry args={[0.02, 0.12, 0.02]} />
+          <meshStandardMaterial color="#a7c0de" emissive="#8fb1dc" emissiveIntensity={0.12} roughness={0.28} metalness={0.2} />
+        </mesh>
+      ))}
+      <mesh position={[-length * 0.3, 0.16, -0.34]} rotation={[0, 0, Math.PI / 2]}>
+        <torusGeometry args={[0.07, 0.014, 10, 24]} />
+        <meshStandardMaterial color="#5f6f85" emissive="#5d7696" emissiveIntensity={0.12} roughness={0.36} metalness={0.24} />
+      </mesh>
+      <mesh position={[length * 0.22, 0.16, -0.34]} rotation={[0, 0, Math.PI / 2]}>
+        <torusGeometry args={[0.07, 0.014, 10, 24]} />
+        <meshStandardMaterial color="#5f6f85" emissive="#5d7696" emissiveIntensity={0.12} roughness={0.36} metalness={0.24} />
+      </mesh>
+      <mesh position={[0, 0.152, -0.36]}>
+        <boxGeometry args={[0.16, 0.06, 0.014]} />
+        <meshStandardMaterial color="#efe1ce" emissive="#d9b08a" emissiveIntensity={0.16} roughness={0.34} metalness={0.1} />
+      </mesh>
       <mesh position={[0, 0.048, -0.35]}>
         <boxGeometry args={[length * 0.86, 0.028, 0.08]} />
         <meshStandardMaterial color="#5f6f86" emissive="#4f6686" emissiveIntensity={0.12} roughness={0.42} metalness={0.2} />
@@ -474,6 +530,54 @@ function DioramaStation({ cell, title, accent, scale = [0.9, 0.46, 0.9] as [numb
       <mesh position={[-scale[0] * 0.34, 0.11, 0]}>
         <boxGeometry args={[0.05, 0.06, scale[2] * 0.76]} />
         <meshStandardMaterial color="#6f7f95" emissive="#617691" emissiveIntensity={0.09} roughness={0.4} metalness={0.22} />
+      </mesh>
+      <mesh position={[-scale[0] * 0.12, 0.18, scale[2] * 0.33]}>
+        <boxGeometry args={[scale[0] * 0.46, 0.18, 0.02]} />
+        <meshStandardMaterial color="#233145" emissive="#344b68" emissiveIntensity={0.14} roughness={0.36} metalness={0.2} />
+      </mesh>
+      <mesh position={[-scale[0] * 0.12, 0.18, scale[2] * 0.344]}>
+        <boxGeometry args={[scale[0] * 0.36, 0.1, 0.006]} />
+        <meshStandardMaterial color="#9fc4f2" emissive="#8bb5eb" emissiveIntensity={0.28} roughness={0.2} metalness={0.16} />
+      </mesh>
+      {[-0.2, -0.12, -0.04, 0.04, 0.12].map((slot, index) => (
+        <mesh key={`station-vent-${index}`} position={[slot, 0.31, scale[2] * 0.33]}>
+          <boxGeometry args={[0.028, 0.007, 0.028]} />
+          <meshStandardMaterial color="#4f6076" emissive="#5d7693" emissiveIntensity={0.08} roughness={0.44} metalness={0.18} />
+        </mesh>
+      ))}
+      <mesh position={[scale[0] * 0.03, 0.16, -scale[2] * 0.33]}>
+        <boxGeometry args={[scale[0] * 0.52, 0.15, 0.02]} />
+        <meshStandardMaterial color="#6d5541" emissive="#7a614b" emissiveIntensity={0.09} roughness={0.52} metalness={0.1} />
+      </mesh>
+      <mesh position={[scale[0] * 0.03, 0.16, -scale[2] * 0.34]}>
+        <boxGeometry args={[scale[0] * 0.4, 0.015, 0.006]} />
+        <meshStandardMaterial color="#d6b186" emissive="#c99763" emissiveIntensity={0.18} roughness={0.3} metalness={0.12} />
+      </mesh>
+      <mesh position={[scale[0] * 0.03, 0.11, -scale[2] * 0.34]}>
+        <boxGeometry args={[0.12, 0.05, 0.006]} />
+        <meshStandardMaterial color="#f0f6ff" emissive="#bdd9ff" emissiveIntensity={0.22} roughness={0.24} metalness={0.12} />
+      </mesh>
+      <mesh position={[scale[0] * 0.42, 0.28, -scale[2] * 0.08]} rotation={[0, 0, Math.PI / 2]}>
+        <torusGeometry args={[0.09, 0.016, 10, 28]} />
+        <meshStandardMaterial color="#5f6f85" emissive="#5a7393" emissiveIntensity={0.12} roughness={0.36} metalness={0.24} />
+      </mesh>
+      <mesh position={[-scale[0] * 0.39, 0.26, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.02, 0.02, scale[2] * 0.76, 12]} />
+        <meshStandardMaterial color="#afc6e8" emissive="#9cb8df" emissiveIntensity={0.16} roughness={0.26} metalness={0.22} />
+      </mesh>
+      <mesh position={[-scale[0] * 0.39, 0.31, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.02, 0.02, scale[2] * 0.76, 12]} />
+        <meshStandardMaterial color="#afc6e8" emissive="#9cb8df" emissiveIntensity={0.16} roughness={0.26} metalness={0.22} />
+      </mesh>
+      {[-0.24, 0, 0.24].map((slot, index) => (
+        <mesh key={`station-guard-post-${index}`} position={[-scale[0] * 0.39, 0.24, slot]}>
+          <boxGeometry args={[0.03, 0.14, 0.03]} />
+          <meshStandardMaterial color="#a7bfe1" emissive="#8fb0dc" emissiveIntensity={0.14} roughness={0.28} metalness={0.22} />
+        </mesh>
+      ))}
+      <mesh position={[scale[0] * 0.22, 0.48, -scale[2] * 0.18]}>
+        <boxGeometry args={[0.06, 0.06, 0.01]} />
+        <meshStandardMaterial color="#f0f6ff" emissive="#cde3ff" emissiveIntensity={0.44} roughness={0.16} metalness={0.12} />
       </mesh>
       <mesh position={[0, 0.5, -scale[2] * 0.24]}>
         <boxGeometry args={[scale[0] * 0.46, 0.024, 0.028]} />
@@ -949,15 +1053,15 @@ function StagingLaneMarkings({
           if (lane.length <= 0) return null;
           const first = lane[0];
           const last = lane[lane.length - 1];
-          const centerZ = (first.z + last.z) / 2;
-          const laneDepth = Math.abs(first.z - last.z) + 0.52;
+          const centerX = (first.x + last.x) / 2;
+          const laneWidth = Math.abs(first.x - last.x) + 0.58;
           return {
-            x: first.x,
-            z: centerZ,
-            depth: laneDepth
+            x: centerX,
+            z: first.z,
+            width: laneWidth
           };
         })
-        .filter((lane): lane is { x: number; z: number; depth: number } => lane !== null),
+        .filter((lane): lane is { x: number; z: number; width: number } => lane !== null),
     [laneSlots]
   );
 
@@ -990,19 +1094,19 @@ function StagingLaneMarkings({
       {laneRects.map((lane, index) => (
         <group key={`staging-lane-strip-${index}`}>
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[lane.x, 0.057, lane.z]}>
-            <planeGeometry args={[0.58, lane.depth]} />
+            <planeGeometry args={[lane.width, 0.58]} />
             <meshBasicMaterial color={laneColor} transparent opacity={0.14} depthWrite={false} />
           </mesh>
-          <mesh position={[lane.x - 0.29, 0.059, lane.z]}>
-            <boxGeometry args={[0.012, 0.004, lane.depth]} />
+          <mesh position={[lane.x, 0.059, lane.z - 0.29]}>
+            <boxGeometry args={[lane.width, 0.004, 0.012]} />
             <meshBasicMaterial color={slotColor} transparent opacity={0.54} />
           </mesh>
-          <mesh position={[lane.x + 0.29, 0.059, lane.z]}>
-            <boxGeometry args={[0.012, 0.004, lane.depth]} />
+          <mesh position={[lane.x, 0.059, lane.z + 0.29]}>
+            <boxGeometry args={[lane.width, 0.004, 0.012]} />
             <meshBasicMaterial color={slotColor} transparent opacity={0.54} />
           </mesh>
           {laneSlots[index]?.[0] ? (
-            <sprite position={[lane.x, 0.09, laneSlots[index][0].z + 0.34]} scale={[0.22, 0.11, 1]}>
+            <sprite position={[laneSlots[index][0].x - 0.36, 0.09, lane.z]} scale={[0.22, 0.11, 1]}>
               <spriteMaterial map={laneTextures[index]} transparent depthWrite={false} />
             </sprite>
           ) : null}
@@ -1445,46 +1549,56 @@ function GeometricLetter({
 
 function AscentraWallSign({ position }: { position: [number, number, number] }) {
   const letters = 'ASCENTRA'.split('');
-  const letterWidth = 0.45;
-  const letterSpacing = 0.08;
+  const letterWidth = 0.44;
+  const letterSpacing = 0.09;
   const totalWidth = letters.length * letterWidth + (letters.length - 1) * letterSpacing;
+  const [glowMap] = useState(() => glowDiscTexture('#f8fdff'));
+
+  useEffect(() => {
+    return () => {
+      glowMap.dispose();
+    };
+  }, [glowMap]);
 
   return (
     <group position={position}>
-      <mesh position={[0, 0.55, -0.09]}>
-        <boxGeometry args={[5.7, 1.96, 0.16]} />
-        <meshStandardMaterial color="#203145" emissive="#2f4a68" emissiveIntensity={0.2} roughness={0.34} metalness={0.28} />
+      <mesh position={[0, 0.55, -0.11]}>
+        <boxGeometry args={[5.8, 2.02, 0.18]} />
+        <meshStandardMaterial color="#0f151f" emissive="#111a25" emissiveIntensity={0.08} roughness={0.82} metalness={0.06} />
       </mesh>
-      <mesh position={[0, 0.55, -0.008]}>
-        <boxGeometry args={[5.36, 1.62, 0.05]} />
-        <meshStandardMaterial color="#eaf2ff" emissive="#f5f9ff" emissiveIntensity={0.78} roughness={0.16} metalness={0.18} />
+      <mesh position={[0, 0.55, -0.035]}>
+        <boxGeometry args={[5.45, 1.7, 0.028]} />
+        <meshStandardMaterial color="#151c29" emissive="#1c2738" emissiveIntensity={0.07} roughness={0.76} metalness={0.12} />
       </mesh>
-      <mesh position={[0, 0.55, 0.012]}>
-        <boxGeometry args={[5.42, 1.68, 0.012]} />
-        <meshBasicMaterial color="#f6fbff" transparent opacity={0.34} depthWrite={false} />
+      <mesh position={[0, 0.55, -0.018]}>
+        <boxGeometry args={[5.5, 1.76, 0.01]} />
+        <meshBasicMaterial color="#0a0f17" transparent opacity={0.65} depthWrite={false} />
       </mesh>
-      <pointLight position={[0, 0.68, 0.22]} color="#f7fbff" intensity={0.9} distance={9} decay={1.5} />
-      <pointLight position={[-1.7, 0.6, 0.2]} color="#edf7ff" intensity={0.58} distance={6.3} decay={1.65} />
-      <pointLight position={[1.7, 0.6, 0.2]} color="#edf7ff" intensity={0.58} distance={6.3} decay={1.65} />
+      <pointLight position={[0, 0.7, 0.26]} color="#f7fdff" intensity={1.08} distance={10.5} decay={1.52} />
+      <pointLight position={[-1.8, 0.58, 0.2]} color="#eef8ff" intensity={0.58} distance={6.9} decay={1.68} />
+      <pointLight position={[1.8, 0.58, 0.2]} color="#eef8ff" intensity={0.58} distance={6.9} decay={1.68} />
 
       <group position={[0, 0.55, 0.078]}>
         {letters.map((char, index) => {
           const x = -totalWidth / 2 + letterWidth / 2 + index * (letterWidth + letterSpacing);
           return (
             <group key={`ascentra-letter-${char}-${index}`} position={[x, 0, 0]}>
+              <sprite position={[0, 0, -0.02]} scale={[0.6, 0.5, 1]}>
+                <spriteMaterial map={glowMap} color="#f4fbff" transparent opacity={0.52} depthWrite={false} />
+              </sprite>
               <GeometricLetter
                 char={char}
                 width={letterWidth}
-                height={0.72}
-                depth={0.065}
-                stroke={0.072}
-                color="#f8fcff"
+                height={0.74}
+                depth={0.092}
+                stroke={0.074}
+                color="#fbfeff"
                 emissive="#ffffff"
-                emissiveIntensity={0.7}
+                emissiveIntensity={1.05}
               />
-              <mesh position={[0, 0, -0.028]}>
-                <boxGeometry args={[letterWidth * 0.98, 0.76, 0.012]} />
-                <meshBasicMaterial color="#ffffff" transparent opacity={0.2} depthWrite={false} />
+              <mesh position={[0, 0, -0.052]}>
+                <boxGeometry args={[letterWidth * 0.95, 0.72, 0.02]} />
+                <meshStandardMaterial color="#0f1621" emissive="#182434" emissiveIntensity={0.1} roughness={0.72} metalness={0.08} />
               </mesh>
             </group>
           );
@@ -1842,29 +1956,31 @@ function SceneRig({
 
   const humanStagingSlots = useMemo(() => {
     const laneCount = 3;
-    const slotsPerLane = 6;
-    const laneGap = 0.86;
-    const slotGap = 0.58;
     const frontEdgeZ = cellToWorld({ col: 0, row: BOARD_ROWS - 1 }, 0.1)[2] + CELL_SIZE / 2;
-    const laneStartX = humanPickBounds.minX + 0.75;
-    const laneStartZ = frontEdgeZ + 1.3;
     const stagingZone: BoundsRect = {
-      minX: humanPickBounds.minX + 0.5,
-      maxX: humanPickBounds.maxX - 0.5,
-      minZ: frontEdgeZ + 0.55,
-      maxZ: frontEdgeZ + 4.7
+      minX: humanPickBounds.minX + 0.42,
+      maxX: humanPickBounds.maxX - 0.42,
+      minZ: frontEdgeZ + 0.75,
+      maxZ: frontEdgeZ + 5.05
     };
     const forbidden = [
       humanPickBounds,
       cellRect(HUMAN_COL_RANGE.min, HUMAN_COL_RANGE.max, MACHINE_ZONE_ROW_RANGE.min, MACHINE_ZONE_ROW_RANGE.max)
     ];
     const laneSlots: THREE.Vector3[][] = [];
+    const laneDepth = (stagingZone.maxZ - stagingZone.minZ) / laneCount;
+    const slotInsetX = 0.52;
+    const usableWidth = Math.max(0.8, stagingZone.maxX - stagingZone.minX - slotInsetX * 2);
+    const targetPitch = 0.62;
+    const slotsPerLane = Math.max(2, Math.floor(usableWidth / targetPitch) + 1);
+    const slotStepX = slotsPerLane > 1 ? usableWidth / (slotsPerLane - 1) : 0;
+    const laneStartX = stagingZone.minX + slotInsetX;
 
     for (let lane = 0; lane < laneCount; lane += 1) {
-      const laneX = laneStartX + lane * laneGap;
+      const laneZ = stagingZone.minZ + laneDepth * (lane + 0.5);
       const slots: THREE.Vector3[] = [];
-      for (let row = 0; row < slotsPerLane; row += 1) {
-        const candidate = new THREE.Vector3(laneX, 0.1, laneStartZ - row * slotGap);
+      for (let slot = 0; slot < slotsPerLane; slot += 1) {
+        const candidate = new THREE.Vector3(laneStartX + slot * slotStepX, 0.1, laneZ);
         if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
           slots.push(candidate);
         }
@@ -1872,12 +1988,12 @@ function SceneRig({
       laneSlots.push(slots);
     }
 
-    const overflowAnchorX = stagingZone.maxX - 0.88;
-    const overflowAnchorZ = frontEdgeZ + 1.2;
+    const overflowAnchorX = stagingZone.maxX - 1.12;
+    const overflowAnchorZ = stagingZone.maxZ - 0.62;
     const overflowSlots: THREE.Vector3[] = [];
     for (let col = 0; col < 2; col += 1) {
       for (let row = 0; row < 2; row += 1) {
-        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.52, 0.1, overflowAnchorZ + row * 0.58);
+        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.58, 0.1, overflowAnchorZ - row * 0.62);
         if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
           overflowSlots.push(candidate);
         }
@@ -1892,36 +2008,38 @@ function SceneRig({
       laneSlots: validLaneSlots,
       overflowSlots,
       allSlots,
-      corridorX: corridorAnchorX - 0.36,
+      corridorX: corridorAnchorX - 0.52,
       zoneBounds: stagingZone
     };
   }, [humanPickBounds]);
 
   const aiStagingSlots = useMemo(() => {
     const laneCount = 3;
-    const slotsPerLane = 6;
-    const laneGap = 0.86;
-    const slotGap = 0.58;
     const frontEdgeZ = cellToWorld({ col: 0, row: BOARD_ROWS - 1 }, 0.1)[2] + CELL_SIZE / 2;
-    const laneStartX = aiPickBounds.minX + 0.75;
-    const laneStartZ = frontEdgeZ + 1.3;
     const stagingZone: BoundsRect = {
-      minX: aiPickBounds.minX + 0.5,
-      maxX: aiPickBounds.maxX - 0.5,
-      minZ: frontEdgeZ + 0.55,
-      maxZ: frontEdgeZ + 4.7
+      minX: aiPickBounds.minX + 0.42,
+      maxX: aiPickBounds.maxX - 0.42,
+      minZ: frontEdgeZ + 0.75,
+      maxZ: frontEdgeZ + 5.05
     };
     const forbidden = [
       aiPickBounds,
       cellRect(AI_COL_MIN, BOARD_COLS - 1, MACHINE_ZONE_ROW_RANGE.min, MACHINE_ZONE_ROW_RANGE.max)
     ];
     const laneSlots: THREE.Vector3[][] = [];
+    const laneDepth = (stagingZone.maxZ - stagingZone.minZ) / laneCount;
+    const slotInsetX = 0.52;
+    const usableWidth = Math.max(0.8, stagingZone.maxX - stagingZone.minX - slotInsetX * 2);
+    const targetPitch = 0.62;
+    const slotsPerLane = Math.max(2, Math.floor(usableWidth / targetPitch) + 1);
+    const slotStepX = slotsPerLane > 1 ? usableWidth / (slotsPerLane - 1) : 0;
+    const laneStartX = stagingZone.minX + slotInsetX;
 
     for (let lane = 0; lane < laneCount; lane += 1) {
-      const laneX = laneStartX + lane * laneGap;
+      const laneZ = stagingZone.minZ + laneDepth * (lane + 0.5);
       const slots: THREE.Vector3[] = [];
-      for (let row = 0; row < slotsPerLane; row += 1) {
-        const candidate = new THREE.Vector3(laneX, 0.1, laneStartZ - row * slotGap);
+      for (let slot = 0; slot < slotsPerLane; slot += 1) {
+        const candidate = new THREE.Vector3(laneStartX + slot * slotStepX, 0.1, laneZ);
         if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
           slots.push(candidate);
         }
@@ -1929,12 +2047,12 @@ function SceneRig({
       laneSlots.push(slots);
     }
 
-    const overflowAnchorX = stagingZone.maxX - 0.88;
-    const overflowAnchorZ = frontEdgeZ + 1.2;
+    const overflowAnchorX = stagingZone.maxX - 1.12;
+    const overflowAnchorZ = stagingZone.maxZ - 0.62;
     const overflowSlots: THREE.Vector3[] = [];
     for (let col = 0; col < 2; col += 1) {
       for (let row = 0; row < 2; row += 1) {
-        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.52, 0.1, overflowAnchorZ + row * 0.58);
+        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.58, 0.1, overflowAnchorZ - row * 0.62);
         if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
           overflowSlots.push(candidate);
         }
@@ -1949,7 +2067,7 @@ function SceneRig({
       laneSlots: validLaneSlots,
       overflowSlots,
       allSlots,
-      corridorX: corridorAnchorX - 0.36,
+      corridorX: corridorAnchorX - 0.52,
       zoneBounds: stagingZone
     };
   }, [aiPickBounds]);
@@ -2291,8 +2409,8 @@ function SceneRig({
     if (humanPackedIncrement > 0 || aiPackedIncrement > 0) {
       setFinishedQueue((current) => {
         const next = {
-          human: clamp(current.human + humanPackedIncrement, 0, 220),
-          ai: clamp(current.ai + aiPackedIncrement, 0, 220)
+          human: clamp(current.human + humanPackedIncrement, 0, 2400),
+          ai: clamp(current.ai + aiPackedIncrement, 0, 2400)
         };
         finishedQueueRef.current = next;
         return next;
@@ -2429,13 +2547,17 @@ function SceneRig({
 
           const currentQueue = side === 'human' ? queueHuman : queueAi;
           if (runtime.state === 'idle' && currentQueue > 0 && stagingSlots.length > 0) {
+            const currentStaged = side === 'human' ? stagedHuman : stagedAi;
+            if (currentStaged + reservedDrops >= stagingSlots.length) {
+              return;
+            }
+
             if (side === 'human') {
               queueHuman -= 1;
             } else {
               queueAi -= 1;
             }
 
-            const currentStaged = side === 'human' ? stagedHuman : stagedAi;
             const slotIndex = clamp(currentStaged + reservedDrops, 0, stagingSlots.length - 1);
             reservedDrops += 1;
             const targetSlot = stagingSlots[slotIndex];
@@ -2565,9 +2687,9 @@ function SceneRig({
         </mesh>
       ))}
 
-      {[-7.5, -0.5, 0.5, 7.5].map((x, index) => (
-        <mesh key={`staging-green-line-${index}`} position={[x, 0.09, 8.65]}>
-          <boxGeometry args={[0.09, 0.01, 4.7]} />
+      {[6.0, 7.44, 8.88, 10.32].map((z, index) => (
+        <mesh key={`staging-green-line-${index}`} position={[0, 0.09, z]}>
+          <boxGeometry args={[PICK_ZONE_WIDTH - 0.82, 0.01, 0.09]} />
           <meshStandardMaterial color="#82d197" emissive="#70c88b" emissiveIntensity={0.46} roughness={0.2} metalness={0.2} transparent opacity={0.88} />
         </mesh>
       ))}
