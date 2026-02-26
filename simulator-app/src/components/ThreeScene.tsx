@@ -291,77 +291,68 @@ function Conveyor({ from, to }: { from: GridCell; to: GridCell }) {
   );
 }
 
-function StationObject({ cell, title, accent, scale = [0.88, 0.42, 0.88] as [number, number, number] }: {
+function DioramaStation({ cell, title, accent, scale = [0.9, 0.46, 0.9] as [number, number, number] }: {
   cell: GridCell;
   title: string;
   accent: string;
   scale?: [number, number, number];
 }) {
   const labelWarm = title === 'Packing';
-  const [texture] = useState(() => labelTexture(title, labelWarm ? '#f0b47f' : '#9cc4ee', labelWarm));
-  const [x, y, z] = cellToWorld(cell, 0.24);
+  const [texture] = useState(() => labelTexture(title, labelWarm ? '#efc08f' : '#d0ae83', true));
+  const [x, y, z] = cellToWorld(cell, 0.26);
   const ledRef = useRef<THREE.MeshStandardMaterial | null>(null);
 
   useFrame(({ clock }) => {
     if (!ledRef.current) return;
-    const pulse = 0.35 + (Math.sin(clock.elapsedTime * 2.1 + x * 0.12 + z * 0.08) + 1) * 0.26;
+    const pulse = 0.28 + (Math.sin(clock.elapsedTime * 2.6 + x * 0.13 + z * 0.1) + 1) * 0.22;
     ledRef.current.emissiveIntensity = pulse;
   });
 
   return (
     <group position={[x, y, z]}>
-      <BeveledBlock
-        size={[scale[0] * 1.06, scale[1] * 0.58, scale[2] * 1.06]}
-        radius={ASCENTRA_THEME.radius.machine}
-        color={STATION_THEME.base}
-        emissive={accent}
-        emissiveIntensity={0.1}
-        stripColor={STATION_THEME.strip}
-        stripOpacity={0.34}
-      />
-      <mesh position={[0, 0.18, 0]} castShadow receiveShadow>
-        <boxGeometry args={[scale[0] * 0.9, scale[1] * 0.76, scale[2] * 0.9]} />
-        <meshStandardMaterial color="#6b5647" emissive={accent} emissiveIntensity={0.08} roughness={0.56} metalness={0.1} />
+      <mesh castShadow receiveShadow>
+        <cylinderGeometry args={[scale[0] * 0.56, scale[0] * 0.6, scale[1] * 0.44, 22]} />
+        <meshStandardMaterial color="#645042" emissive="#7b604e" emissiveIntensity={0.05} roughness={0.64} metalness={0.1} />
       </mesh>
-      <mesh position={[0, 0.24, scale[2] * 0.36]}>
-        <boxGeometry args={[scale[0] * 0.52, 0.05, 0.06]} />
-        <meshStandardMaterial color="#edd6b8" emissive="#cfa77a" emissiveIntensity={0.16} roughness={0.34} metalness={0.08} />
+      <mesh position={[0, 0.13, 0]} castShadow receiveShadow>
+        <boxGeometry args={[scale[0] * 0.94, scale[1] * 0.52, scale[2] * 0.94]} />
+        <meshStandardMaterial color="#8f745c" emissive="#a58466" emissiveIntensity={0.06} roughness={0.58} metalness={0.08} />
       </mesh>
-      <mesh position={[scale[0] * 0.36, 0.19, 0]} castShadow receiveShadow>
-        <boxGeometry args={[0.06, scale[1] * 0.48, scale[2] * 0.4]} />
-        <meshStandardMaterial color="#344d6d" emissive={accent} emissiveIntensity={0.12} roughness={0.34} metalness={0.26} />
+      <mesh position={[0, 0.25, 0]} castShadow>
+        <boxGeometry args={[scale[0] * 0.62, scale[1] * 0.62, scale[2] * 0.62]} />
+        <meshStandardMaterial color="#c19a6e" emissive="#cda777" emissiveIntensity={0.08} roughness={0.5} metalness={0.1} />
       </mesh>
-      <mesh position={[-scale[0] * 0.36, 0.19, 0]} castShadow receiveShadow>
-        <boxGeometry args={[0.06, scale[1] * 0.48, scale[2] * 0.4]} />
-        <meshStandardMaterial color="#2f4663" emissive={accent} emissiveIntensity={0.12} roughness={0.34} metalness={0.26} />
+      <mesh position={[0, 0.33, scale[2] * 0.2]} castShadow>
+        <boxGeometry args={[scale[0] * 0.4, 0.09, 0.03]} />
+        <meshStandardMaterial color="#f0ddc5" emissive="#d4af7f" emissiveIntensity={0.12} roughness={0.32} metalness={0.08} />
       </mesh>
-      <mesh position={[0, 0.36, 0]} castShadow receiveShadow>
-        <boxGeometry args={[scale[0] * 0.8, 0.05, scale[2] * 0.8]} />
-        <meshStandardMaterial color="#b89468" emissive="#cb9f69" emissiveIntensity={0.14} roughness={0.38} metalness={0.1} />
+      <mesh position={[0, 0.33, -scale[2] * 0.2]} castShadow>
+        <boxGeometry args={[scale[0] * 0.4, 0.09, 0.03]} />
+        <meshStandardMaterial color="#f0ddc5" emissive="#d4af7f" emissiveIntensity={0.12} roughness={0.32} metalness={0.08} />
       </mesh>
-      <mesh position={[0, 0.366, 0]}>
-        <boxGeometry args={[scale[0] * 0.82, 0.012, scale[2] * 0.82]} />
-        <meshStandardMaterial color="#f1e5d4" emissive="#f3dfc2" emissiveIntensity={0.06} roughness={0.24} metalness={0.04} />
+      <mesh position={[scale[0] * 0.3, 0.3, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.03, 0.22, 12]} />
+        <meshStandardMaterial color="#4f3f34" emissive="#634e3f" emissiveIntensity={0.08} roughness={0.46} metalness={0.12} />
       </mesh>
-      <mesh position={[0, 0.34, scale[2] * 0.38]}>
-        <boxGeometry args={[scale[0] * 0.62, 0.02, 0.03]} />
-        <meshStandardMaterial color={STATION_THEME.strip} emissive={STATION_THEME.strip} emissiveIntensity={0.24} transparent opacity={0.72} roughness={0.24} metalness={0.16} />
+      <mesh position={[-scale[0] * 0.3, 0.3, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.03, 0.22, 12]} />
+        <meshStandardMaterial color="#4f3f34" emissive="#634e3f" emissiveIntensity={0.08} roughness={0.46} metalness={0.12} />
       </mesh>
-      <mesh position={[0, 0.2, -scale[2] * 0.37]}>
-        <boxGeometry args={[scale[0] * 0.5, 0.06, 0.05]} />
-        <meshStandardMaterial color={labelWarm ? '#f2b88e' : '#a6c7ed'} emissive={labelWarm ? '#e9aa79' : '#8eb5e6'} emissiveIntensity={0.24} roughness={0.2} metalness={0.24} />
+      <mesh position={[0, 0.42, 0]} castShadow>
+        <boxGeometry args={[scale[0] * 0.52, 0.06, scale[2] * 0.52]} />
+        <meshStandardMaterial color="#dbc19e" emissive="#e1c39f" emissiveIntensity={0.1} roughness={0.4} metalness={0.08} />
       </mesh>
-      <mesh position={[scale[0] * 0.31, 0.38, scale[2] * 0.31]} castShadow>
-        <cylinderGeometry args={[0.03, 0.03, 0.02, 14]} />
-        <meshStandardMaterial ref={ledRef} color={STATION_THEME.led} emissive={STATION_THEME.led} emissiveIntensity={0.28} roughness={0.24} metalness={0.16} />
+      <mesh position={[0, 0.43, 0]}>
+        <boxGeometry args={[scale[0] * 0.54, 0.01, scale[2] * 0.54]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.22} roughness={0.26} metalness={0.12} transparent opacity={0.66} />
       </mesh>
-      <mesh position={[0, 0.22, 0.31]}>
-        <boxGeometry args={[scale[0] * 0.38, 0.04, 0.03]} />
-        <meshStandardMaterial color="#d0e4ff" emissive="#9abde7" emissiveIntensity={0.24} roughness={0.18} metalness={0.2} />
+      <mesh position={[scale[0] * 0.25, 0.45, scale[2] * 0.25]} castShadow>
+        <sphereGeometry args={[0.035, 12, 12]} />
+        <meshStandardMaterial ref={ledRef} color="#f3e0c3" emissive="#e3ba84" emissiveIntensity={0.2} roughness={0.22} metalness={0.1} />
       </mesh>
-      <mesh position={[0, 0.22, -0.31]}>
-        <boxGeometry args={[scale[0] * 0.38, 0.04, 0.03]} />
-        <meshStandardMaterial color="#d0e4ff" emissive="#9abde7" emissiveIntensity={0.24} roughness={0.18} metalness={0.2} />
+      <mesh position={[0, 0.24, -scale[2] * 0.3]}>
+        <boxGeometry args={[scale[0] * 0.32, 0.07, 0.03]} />
+        <meshStandardMaterial color={labelWarm ? '#e5b485' : '#d2b086'} emissive={labelWarm ? '#c88b58' : '#b58f63'} emissiveIntensity={0.14} roughness={0.3} metalness={0.08} />
       </mesh>
       <sprite position={[0, 0.55, 0]} scale={[1.2, 0.48, 1]}>
         <spriteMaterial map={texture} transparent depthWrite={false} />
@@ -548,7 +539,7 @@ function Forklift({ cell, heading }: { cell: GridCell; heading: number }) {
   );
 }
 
-function Tile({
+function DioramaPallet({
   tile,
   pallet,
   y,
@@ -578,7 +569,7 @@ function Tile({
   const groupRef = useRef<THREE.Group | null>(null);
   const smooth = useRef(new THREE.Vector3());
   const fillRatio = clamp((pallet?.fillLevel ?? 100) / 100, 0, 1);
-  const stackHeight = 0.04 + fillRatio * 0.28;
+  const stackHeight = 0.05 + fillRatio * 0.24;
   const isEmpty = pallet?.isEmpty ?? false;
   const isReplenishing = pallet?.replenishing ?? false;
   const requested = pallet?.replenishmentRequested ?? false;
@@ -622,48 +613,50 @@ function Tile({
   return (
     <group ref={groupRef} onPointerDown={onPointerDown} onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
       <group>
-        <mesh position={[0, 0.03, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.78, 0.06, 0.74]} />
-          <meshStandardMaterial color="#7c5e43" emissive="#8a694d" emissiveIntensity={0.06} roughness={0.66} metalness={0.05} />
+        {[[-0.26, -0.2], [0, -0.2], [0.26, -0.2], [-0.26, 0], [0, 0], [0.26, 0], [-0.26, 0.2], [0, 0.2], [0.26, 0.2]].map((slot, index) => (
+          <mesh key={`pallet-slat-${index}`} position={[slot[0], 0.03, slot[1]]} castShadow>
+            <boxGeometry args={[0.2, 0.024, 0.11]} />
+            <meshStandardMaterial color="#806145" emissive="#8f6d4e" emissiveIntensity={0.04} roughness={0.72} metalness={0.03} />
+          </mesh>
+        ))}
+        <mesh position={[0, 0.056, 0]} castShadow>
+          <boxGeometry args={[0.82, 0.018, 0.78]} />
+          <meshStandardMaterial color={moverTone.tileColor} emissive={moverTone.tileEmissive} emissiveIntensity={0.08 + (active ? 0.05 : 0)} roughness={0.56} metalness={0.08} />
         </mesh>
-        <mesh position={[0, 0.065, 0]} castShadow>
-          <boxGeometry args={[0.8, 0.02, 0.76]} />
-          <meshStandardMaterial color={moverTone.tileColor} emissive={moverTone.tileEmissive} emissiveIntensity={0.1 + (active ? 0.05 : 0)} roughness={0.5} metalness={0.1} />
+        <mesh position={[0, 0.068, 0.33]}>
+          <boxGeometry args={[0.54, 0.01, 0.03]} />
+          <meshStandardMaterial color={moverTone.tileStrip} emissive={moverTone.tileStrip} emissiveIntensity={0.12} roughness={0.26} metalness={0.08} transparent opacity={0.8} />
         </mesh>
-        <mesh position={[0, 0.083, 0.32]}>
-          <boxGeometry args={[0.48, 0.012, 0.03]} />
-          <meshStandardMaterial color={moverTone.tileStrip} emissive={moverTone.tileStrip} emissiveIntensity={0.14} roughness={0.24} metalness={0.08} transparent opacity={0.74} />
+        <mesh position={[0, 0.068, -0.33]}>
+          <boxGeometry args={[0.54, 0.01, 0.03]} />
+          <meshStandardMaterial color={moverTone.tileStrip} emissive={moverTone.tileStrip} emissiveIntensity={0.12} roughness={0.26} metalness={0.08} transparent opacity={0.8} />
         </mesh>
-        <mesh position={[0, 0.083, -0.32]}>
-          <boxGeometry args={[0.48, 0.012, 0.03]} />
-          <meshStandardMaterial color={moverTone.tileStrip} emissive={moverTone.tileStrip} emissiveIntensity={0.14} roughness={0.24} metalness={0.08} transparent opacity={0.74} />
-        </mesh>
-        <mesh position={[0, 0.095 + stackHeight / 2, 0]} castShadow>
-          <boxGeometry args={[0.58, stackHeight, 0.56]} />
+        <mesh position={[0, 0.09 + stackHeight / 2, 0]} castShadow>
+          <boxGeometry args={[0.6, stackHeight, 0.58]} />
           <meshStandardMaterial
-            color={isEmpty ? '#4b4f58' : '#e9dbc8'}
-            emissive={isReplenishing ? '#d4aa78' : requested ? '#c58a6a' : '#8e7152'}
-            emissiveIntensity={(active ? 0.08 : 0.03) + (isReplenishing ? 0.1 : requested ? 0.07 : 0.03)}
-            roughness={0.56}
-            metalness={0.06}
+            color={isEmpty ? '#565962' : '#e7d7c2'}
+            emissive={isReplenishing ? '#cc9e68' : requested ? '#bd7f60' : '#8d6a4b'}
+            emissiveIntensity={(active ? 0.08 : 0.03) + (isReplenishing ? 0.08 : requested ? 0.06 : 0.03)}
+            roughness={0.6}
+            metalness={0.04}
           />
         </mesh>
         {new Array(Math.max(2, Math.ceil(fillRatio * 8))).fill(0).map((_, index) => {
           const layer = Math.floor(index / 4);
           const slot = index % 4;
-          const jitterX = (seed * 0.04 + (index % 2) * 0.01) - 0.02;
-          const jitterZ = (((seed * 13 + index) % 9) / 9 - 0.5) * 0.02;
-          const xBase = slot % 2 === 0 ? -0.13 : 0.13;
-          const zBase = slot < 2 ? -0.11 : 0.11;
+          const jitterX = (seed * 0.06 + (index % 2) * 0.012) - 0.03;
+          const jitterZ = (((seed * 17 + index) % 11) / 11 - 0.5) * 0.03;
+          const xBase = slot % 2 === 0 ? -0.14 : 0.14;
+          const zBase = slot < 2 ? -0.12 : 0.12;
           return (
             <mesh
               key={`tile-box-${tile.id}-${index}`}
-              position={[xBase + jitterX, 0.1 + layer * 0.072, zBase + jitterZ]}
-              rotation={[0, (seed * 0.2 + index * 0.03) - 0.08, 0]}
+              position={[xBase + jitterX, 0.1 + layer * 0.068, zBase + jitterZ]}
+              rotation={[0, (seed * 0.28 + index * 0.05) - 0.1, 0]}
               castShadow
             >
-              <boxGeometry args={[0.12, 0.07, 0.1]} />
-              <meshStandardMaterial color="#efe2d1" emissive="#9c7b58" emissiveIntensity={0.05} roughness={0.5} metalness={0.05} />
+              <boxGeometry args={[0.125, 0.068, 0.102]} />
+              <meshStandardMaterial color="#efe1cf" emissive="#9e7753" emissiveIntensity={0.04} roughness={0.56} metalness={0.04} />
             </mesh>
           );
         })}
@@ -1517,28 +1510,28 @@ function SceneRig({
         </mesh>
       ) : null}
 
-      <StationObject cell={humanStations.depot} title="Depot" accent="#6f9ed8" />
-      <StationObject cell={humanStations.dropoff} title="Drop" accent="#79a5dd" />
-      <StationObject cell={humanStations.packingTable} title="Packing" accent="#e69b63" />
-      <StationObject cell={humanStations.machine} title="Machine" accent="#6d9add" />
-      <StationObject cell={humanStations.outbound} title="Outbound" accent="#6f94c9" />
+      <DioramaStation cell={humanStations.depot} title="Depot" accent="#b88f63" />
+      <DioramaStation cell={humanStations.dropoff} title="Drop" accent="#b88f63" />
+      <DioramaStation cell={humanStations.packingTable} title="Packing" accent="#cf9d67" />
+      <DioramaStation cell={humanStations.machine} title="Machine" accent="#b68a5f" />
+      <DioramaStation cell={humanStations.outbound} title="Outbound" accent="#b88f63" />
       <MachineProcessor stations={humanStations} phaseOffset={0.08} />
       <OutboundBuffer cell={humanStations.outbound} count={outboundFill.human} accent="#8cb8ef" />
       <DockGroup docks={humanStations.docks} loadCounts={dockFill.human} />
       <Conveyor from={humanStations.packingTable} to={humanStations.machine} />
 
-      <StationObject cell={aiStations.depot} title="Depot" accent="#6f9ed8" />
-      <StationObject cell={aiStations.dropoff} title="Drop" accent="#79a5dd" />
-      <StationObject cell={aiStations.packingTable} title="Packing" accent="#e69b63" />
-      <StationObject cell={aiStations.machine} title="Machine" accent="#6d9add" />
-      <StationObject cell={aiStations.outbound} title="Outbound" accent="#6f94c9" />
+      <DioramaStation cell={aiStations.depot} title="Depot" accent="#b88f63" />
+      <DioramaStation cell={aiStations.dropoff} title="Drop" accent="#b88f63" />
+      <DioramaStation cell={aiStations.packingTable} title="Packing" accent="#cf9d67" />
+      <DioramaStation cell={aiStations.machine} title="Machine" accent="#b68a5f" />
+      <DioramaStation cell={aiStations.outbound} title="Outbound" accent="#b88f63" />
       <MachineProcessor stations={aiStations} phaseOffset={0.42} />
       <OutboundBuffer cell={aiStations.outbound} count={outboundFill.ai} accent="#8cb8ef" />
       <DockGroup docks={aiStations.docks} loadCounts={dockFill.ai} />
       <Conveyor from={aiStations.packingTable} to={aiStations.machine} />
 
       {humanTiles.map((tile) => (
-        <Tile
+        <DioramaPallet
           key={tile.id}
           tile={tile}
           pallet={palletLookup.get(tile.id)}
@@ -1568,7 +1561,7 @@ function SceneRig({
       ))}
 
       {aiTiles.map((tile) => (
-        <Tile
+        <DioramaPallet
           key={tile.id}
           tile={tile}
           pallet={palletLookup.get(tile.id)}
