@@ -501,6 +501,8 @@ function SceneRig({
   const [focusCell, setFocusCell] = useState<GridCell | null>(null);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const controlsRef = useRef<THREE.EventDispatcher | null>(null);
+  const isBuildMode = phase === 'build';
+  const controlsLockedByDrag = canEdit && draggingTileId !== null;
 
   const floorTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -648,10 +650,13 @@ function SceneRig({
   const aiPulse = aiActiveTileId ? 0.35 : 0;
 
   useFrame(({ clock }, delta) => {
-    const focusBoost = phase === 'simulating' ? 0.5 : 0;
-    const desiredTarget = new THREE.Vector3(0, 0.25 + focusBoost * 0.08, 0);
-    const activeDrift = aiActiveTileId ? Math.sin(clock.elapsedTime * 1.5) * 0.14 : 0;
-    const desiredPosition = new THREE.Vector3(13.2 + activeDrift, 10.0 + focusBoost * 0.5, 13.2 + activeDrift * 0.6);
+    const isSimulating = phase === 'simulating';
+    const focusBoost = isSimulating ? 0.5 : 0;
+    const desiredTarget = new THREE.Vector3(0, 0.26 + focusBoost * 0.08, 0);
+    const activeDrift = isSimulating && aiActiveTileId ? Math.sin(clock.elapsedTime * 1.5) * 0.14 : 0;
+    const desiredPosition = isBuildMode
+      ? new THREE.Vector3(13.4, 10.8, 13.4)
+      : new THREE.Vector3(13.2 + activeDrift, 10.0 + focusBoost * 0.5, 13.2 + activeDrift * 0.6);
     const ease = 1 - Math.exp(-delta * 1.7);
 
     camera.position.lerp(desiredPosition, ease * 0.18);
@@ -832,16 +837,20 @@ function SceneRig({
       <OrbitControls
         ref={controlsRef}
         makeDefault
-        enablePan={false}
+        enabled={!controlsLockedByDrag}
+        enableRotate={!controlsLockedByDrag && !isBuildMode}
+        enablePan={!controlsLockedByDrag}
+        panSpeed={0.2}
+        enableZoom={!controlsLockedByDrag}
         enableDamping
         dampingFactor={0.09}
-        minDistance={14.5}
-        maxDistance={19.6}
-        minPolarAngle={0.9}
-        maxPolarAngle={1.12}
-        minAzimuthAngle={0.42}
-        maxAzimuthAngle={0.92}
-        target={[0, 0.32, 0]}
+        minDistance={isBuildMode ? 14.9 : 14.5}
+        maxDistance={isBuildMode ? 18.6 : 19.6}
+        minPolarAngle={isBuildMode ? 0.98 : 0.9}
+        maxPolarAngle={isBuildMode ? 0.98 : 1.12}
+        minAzimuthAngle={isBuildMode ? 0.785 : 0.42}
+        maxAzimuthAngle={isBuildMode ? 0.785 : 0.92}
+        target={[0, 0.26, 0]}
       />
 
       {effectsEnabled ? (
