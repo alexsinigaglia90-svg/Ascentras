@@ -21,11 +21,11 @@ export function BotPanel({ phase, counts, metrics, activeAiFte, status, explanat
   return (
     <aside className="glass-panel">
       <header className="mb-4">
-        <h2 className="panel-title text-lg font-semibold">Ascentra Engine</h2>
+        <h2 className="panel-title text-lg font-semibold tracking-[0.02em]">Ascentra Engine</h2>
         <p className={`status-pill mt-1 ${analyzing ? 'bot-thinking' : ''}`}>
           {status}
         </p>
-        <p className="mt-2 text-xs text-slate-300">{explanation}</p>
+        <p className="mt-2 text-xs font-medium text-slate-300">{explanation}</p>
       </header>
 
       <section className="subpanel">

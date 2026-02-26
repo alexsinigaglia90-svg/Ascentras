@@ -36,23 +36,23 @@ export const MOVER_THEME: Record<TileKind, {
   F: {
     label: 'Fast',
     uiClass: 'mover-chip-fast',
-    tileColor: '#4aa2ff',
-    tileEmissive: '#2b86f0',
-    tileStrip: '#8dc8ff'
+    tileColor: '#3ea2ff',
+    tileEmissive: '#2d85e8',
+    tileStrip: '#90d2ff'
   },
   M: {
     label: 'Mid',
     uiClass: 'mover-chip-mid',
-    tileColor: '#82b8d7',
-    tileEmissive: '#5f99bc',
-    tileStrip: '#b4dbef'
+    tileColor: '#6ea3e4',
+    tileEmissive: '#4f85c7',
+    tileStrip: '#a8c9ef'
   },
   S: {
     label: 'Slow',
     uiClass: 'mover-chip-slow',
-    tileColor: '#c7b8a4',
-    tileEmissive: '#a18f74',
-    tileStrip: '#ecdfcd'
+    tileColor: '#7f95b3',
+    tileEmissive: '#5f7390',
+    tileStrip: '#b6c4d7'
   }
 };
 

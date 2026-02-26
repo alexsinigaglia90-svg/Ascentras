@@ -56,8 +56,8 @@ export function HumanPanel({
   return (
     <aside className="glass-panel">
       <header className="mb-4">
-        <h2 className="panel-title text-lg font-semibold tracking-[0.01em]">Human Mission</h2>
-        <p className="mt-1 text-sm text-slate-300/95">Build your pick circuit on the left half and prepare for the 09:00–17:00 run.</p>
+        <h2 className="panel-title text-lg font-semibold tracking-[0.02em]">Human Mission</h2>
+        <p className="mt-1 text-sm font-medium text-slate-300/95">Build your pick circuit on the left half and prepare for the 09:00–17:00 run.</p>
       </header>
 
       <section className="subpanel">

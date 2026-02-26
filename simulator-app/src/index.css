@@ -4,28 +4,29 @@
 
 :root {
   color-scheme: dark;
-  --as-accent: #86afe8;
-  --as-accent-strong: #5f91da;
+  --as-accent: #8bb8ec;
+  --as-accent-strong: #5f96e2;
   --as-neutral-1: #070d16;
   --as-neutral-2: #0d1725;
-  --as-neutral-3: #162335;
-  --as-border: rgba(162, 195, 236, 0.26);
-  --as-border-strong: rgba(181, 213, 248, 0.5);
+  --as-neutral-3: #17283d;
+  --as-border: rgba(162, 195, 236, 0.24);
+  --as-border-strong: rgba(181, 213, 248, 0.54);
   --as-text-main: #e8f1ff;
   --as-text-sub: #aebed7;
 
-  --as-fast: #4aa2ff;
-  --as-fast-emissive: #2b86f0;
-  --as-mid: #82b8d7;
-  --as-mid-emissive: #5f99bc;
-  --as-slow: #c7b8a4;
-  --as-slow-emissive: #a18f74;
+  --as-fast: #3ea2ff;
+  --as-fast-emissive: #2d85e8;
+  --as-mid: #6ea3e4;
+  --as-mid-emissive: #4f85c7;
+  --as-slow: #7f95b3;
+  --as-slow-emissive: #5f7390;
 
-  --as-radius-panel: 1.05rem;
-  --as-radius-control: 0.72rem;
+  --as-radius-panel: 1.1rem;
+  --as-radius-control: 9999px;
   --as-shadow-soft: 0 16px 34px rgba(3, 8, 14, 0.5);
   --as-shadow-panel: 0 24px 54px rgba(2, 7, 14, 0.62);
   --as-glow: 0 0 0 1px rgba(166, 200, 238, 0.16), 0 0 28px rgba(114, 156, 222, 0.2);
+  --as-glow-strong: 0 0 0 1px rgba(188, 215, 248, 0.28), 0 0 32px rgba(116, 166, 236, 0.28);
 }
 
 html,
@@ -46,50 +47,68 @@ body {
 
 @layer components {
   .glass-panel {
-    @apply min-h-0 overflow-auto p-4 backdrop-blur-xl;
+    @apply relative min-h-0 overflow-auto p-4 backdrop-blur-xl;
     border-radius: var(--as-radius-panel);
     border: 1px solid var(--as-border);
     background:
-      linear-gradient(158deg, rgba(24, 36, 54, 0.62) 0%, rgba(14, 22, 35, 0.62) 55%, rgba(10, 16, 27, 0.66) 100%);
-    box-shadow: var(--as-shadow-panel), inset 0 1px 0 rgba(223, 236, 255, 0.12), var(--as-glow);
+      linear-gradient(158deg, rgba(24, 36, 54, 0.62) 0%, rgba(14, 22, 35, 0.66) 55%, rgba(10, 16, 27, 0.74) 100%);
+    box-shadow: var(--as-shadow-panel), inset 0 1px 0 rgba(223, 236, 255, 0.12), inset 0 0 0 1px rgba(177, 206, 241, 0.1), var(--as-glow);
+  }
+
+  .glass-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(220, 236, 255, 0.08), rgba(220, 236, 255, 0));
+    opacity: 0.8;
   }
 
   .subpanel {
-    @apply rounded-xl p-3 backdrop-blur-lg;
+    @apply relative rounded-xl p-3 backdrop-blur-lg;
     border: 1px solid var(--as-border);
     background:
-      linear-gradient(165deg, rgba(19, 30, 45, 0.68), rgba(12, 19, 31, 0.72));
-    box-shadow: var(--as-shadow-soft), inset 0 1px 0 rgba(221, 235, 255, 0.08);
+      linear-gradient(165deg, rgba(20, 31, 47, 0.72), rgba(12, 19, 31, 0.78));
+    box-shadow: var(--as-shadow-soft), inset 0 1px 0 rgba(221, 235, 255, 0.08), inset 0 0 0 1px rgba(167, 197, 236, 0.08);
   }
 
   .panel-title {
     color: var(--as-text-main);
     text-shadow: 0 0 18px rgba(121, 166, 232, 0.16);
+    letter-spacing: 0.01em;
   }
 
   .panel-kicker {
-    color: #c4d6ef;
-    letter-spacing: 0.14em;
+    color: #c9dcf6;
+    letter-spacing: 0.16em;
+    font-weight: 600;
   }
 
   .control-btn {
     @apply px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-45;
     border-radius: var(--as-radius-control);
     border: 1px solid var(--as-border);
-    background: linear-gradient(170deg, rgba(20, 30, 44, 0.82), rgba(12, 20, 32, 0.84));
+    background: linear-gradient(170deg, rgba(20, 30, 44, 0.84), rgba(12, 20, 32, 0.88));
     color: var(--as-text-main);
-    box-shadow: inset 0 1px 0 rgba(220, 235, 255, 0.08);
+    box-shadow: inset 0 1px 0 rgba(220, 235, 255, 0.08), 0 6px 12px rgba(3, 8, 15, 0.28);
   }
 
   .control-btn:hover {
     border-color: var(--as-border-strong);
-    box-shadow: inset 0 1px 0 rgba(220, 235, 255, 0.11), var(--as-glow);
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 rgba(220, 235, 255, 0.11), var(--as-glow-strong);
+  }
+
+  .control-btn:active {
+    transform: translateY(0);
+    box-shadow: inset 0 2px 6px rgba(4, 8, 14, 0.32), var(--as-glow);
   }
 
   .control-btn-active {
     border-color: rgba(151, 191, 242, 0.64);
-    background: linear-gradient(170deg, rgba(70, 114, 176, 0.45), rgba(23, 39, 64, 0.84));
-    box-shadow: inset 0 1px 0 rgba(234, 244, 255, 0.14), var(--as-glow);
+    background: linear-gradient(170deg, rgba(72, 121, 191, 0.52), rgba(23, 39, 64, 0.9));
+    box-shadow: inset 0 1px 0 rgba(234, 244, 255, 0.14), var(--as-glow-strong);
   }
 
   .control-btn-kind-fast {
@@ -111,7 +130,8 @@ body {
   }
 
   .mover-chip {
-    @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.7rem] font-medium tracking-[0.08em] uppercase;
+    @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold tracking-[0.12em] uppercase;
+    box-shadow: inset 0 1px 0 rgba(233, 243, 255, 0.08);
   }
 
   .mover-chip-fast {
@@ -133,7 +153,7 @@ body {
   }
 
   .mover-count-pill {
-    @apply inline-flex min-w-[3.5rem] items-center justify-center rounded-lg border px-2 py-1 text-sm font-semibold;
+    @apply inline-flex min-w-[3.5rem] items-center justify-center rounded-full border px-2 py-1 text-sm font-semibold;
     box-shadow: inset 0 1px 0 rgba(229, 240, 255, 0.08);
   }
 
@@ -158,6 +178,13 @@ body {
   .metric-row {
     @apply flex items-center justify-between text-sm;
     color: var(--as-text-main);
+    border-bottom: 1px solid rgba(163, 192, 231, 0.12);
+    padding-bottom: 0.2rem;
+  }
+
+  .metric-row:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
   }
 
   .metric-label {
@@ -176,7 +203,7 @@ body {
   }
 
   .status-pill {
-    @apply inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs tracking-[0.08em];
+    @apply inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.1em];
     border-color: rgba(167, 200, 240, 0.5);
     background: linear-gradient(168deg, rgba(42, 65, 99, 0.56), rgba(26, 41, 66, 0.6));
     color: #d9e9ff;

@@ -58,10 +58,10 @@ export default function WarehouseSimulatorPage() {
         <header className="glass-panel px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl font-semibold text-slate-50">Build → Ready → Simulate</h1>
-              <p className="mt-1 text-sm text-slate-300/95">Pick Circuit Builder · Human vs Ascentra Engine</p>
+              <h1 className="text-xl font-semibold tracking-[0.015em] text-slate-50">Build → Ready → Simulate</h1>
+              <p className="mt-1 text-sm font-medium text-slate-300/95">Pick Circuit Builder · Human vs Ascentra Engine</p>
             </div>
-            <div className="rounded-full border border-borderline/80 bg-slate-900/48 px-4 py-2 text-sm text-slate-200 shadow-[0_0_20px_rgba(120,156,218,0.18)]">
+            <div className="rounded-full border border-borderline/80 bg-slate-900/56 px-4 py-2 text-sm font-semibold text-slate-200 shadow-[0_0_24px_rgba(120,156,218,0.24)]">
               Clock {simClockLabel}
             </div>
           </div>
@@ -86,7 +86,7 @@ export default function WarehouseSimulatorPage() {
             onReset={reset}
           />
 
-          <div className="relative min-h-[420px] rounded-2xl border border-borderline/60 bg-slate-900/24 shadow-[0_0_28px_rgba(108,150,218,0.12)] backdrop-blur-[2px]">
+          <div className="relative min-h-[420px] rounded-2xl border border-borderline/60 bg-slate-900/24 shadow-[0_0_28px_rgba(108,150,218,0.16)] backdrop-blur-[2px]">
             <ErrorBoundary
               fallbackRender={(error) => {
                 console.error('[Simulator] 3D board crashed; rendering center fallback.', error);
@@ -114,16 +114,16 @@ export default function WarehouseSimulatorPage() {
             </ErrorBoundary>
 
             {results ? (
-              <div className="pointer-events-none absolute inset-x-6 bottom-6 z-20 rounded-xl border border-blue-200/45 bg-panel/90 p-4 shadow-panel shadow-[0_0_30px_rgba(114,160,230,0.24)] backdrop-blur-md">
+              <div className="pointer-events-none absolute inset-x-6 bottom-6 z-20 rounded-xl border border-blue-200/45 bg-panel/90 p-4 shadow-panel shadow-[0_0_34px_rgba(114,160,230,0.28)] backdrop-blur-md">
                 <div className="grid gap-2 text-sm text-slate-100 md:grid-cols-2">
                   <div className="space-y-1">
-                    <p className="text-xs uppercase tracking-[0.14em] text-slate-300">Human Result</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Human Result</p>
                     <p>Orders: {results.human.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
                     <p>Avg cycle: {results.human.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
                     <p>FTE: {results.human.requiredFte.pickers} pickers + {results.human.requiredFte.runners} runners = {humanTotalFte}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs uppercase tracking-[0.14em] text-slate-300">Ascentra Result</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Ascentra Result</p>
                     <p>Orders: {results.ai.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
                     <p>Avg cycle: {results.ai.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
                     <p>FTE: {results.ai.requiredFte.pickers} pickers + {results.ai.requiredFte.runners} runners = {aiTotalFte}</p>
