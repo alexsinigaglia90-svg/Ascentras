@@ -60,6 +60,7 @@
     }
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const laneNavigatorFactory = window.AscentraLaneNavigator && window.AscentraLaneNavigator.createLaneNavigator;
 
     try {
       root.classList.add('pj-enhanced');
@@ -68,6 +69,14 @@
         root.classList.add('pj-cinematic-ready');
         setRuntimeState(root, 'cinematic');
       });
+
+      const laneNavigator = typeof laneNavigatorFactory === 'function'
+        ? laneNavigatorFactory(root)
+        : null;
+
+      if (laneNavigator) {
+        setRuntimeState(root, 'cinematic', 'lanes-ready');
+      }
 
       const hasGsap = Boolean(window.gsap && window.ScrollTrigger);
       const gsap = hasGsap ? window.gsap : null;
@@ -130,6 +139,7 @@
 
       root.addEventListener('mousemove', (event) => {
         if (!gsap || prefersReducedMotion) return;
+        if (root.dataset.lane && root.dataset.lane !== 'center') return;
         const active = root.querySelector('.pj-world.is-active .pj-preview');
         if (!active) return;
         const rect = stage.getBoundingClientRect();
@@ -140,6 +150,7 @@
 
       root.addEventListener('mouseleave', () => {
         if (!gsap || prefersReducedMotion) return;
+        if (root.dataset.lane && root.dataset.lane !== 'center') return;
         const active = root.querySelector('.pj-world.is-active .pj-preview');
         if (!active) return;
         gsap.to(active, { x: 0, y: 0, duration: 0.3, overwrite: true, ease: 'power3.out' });

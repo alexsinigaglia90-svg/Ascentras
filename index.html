@@ -15,11 +15,12 @@
   <meta name="twitter:description" content="Operational excellence, engineered with elegance.">
   <meta name="twitter:image" content="/assets/og-image.png">
   <link rel="preload" href="/assets/styles.css?v=20260225k" as="style">
-  <link rel="preload" href="/assets/css/platform-journey.css?v=20260225k" as="style">
+  <link rel="preload" href="/assets/css/platform-journey.css?v=20260226a" as="style">
+  <link rel="preload" href="/assets/js/lane-navigator.js?v=20260226a" as="script">
   <link rel="preload" href="/assets/app.js?v=20260225k" as="script">
-  <link rel="preload" href="/assets/js/platform-journey.js?v=20260225k" as="script">
+  <link rel="preload" href="/assets/js/platform-journey.js?v=20260226a" as="script">
   <link rel="stylesheet" href="/assets/styles.css?v=20260225k">
-  <link rel="stylesheet" href="/assets/css/platform-journey.css?v=20260225k">
+  <link rel="stylesheet" href="/assets/css/platform-journey.css?v=20260226a">
 </head>
 <body>
   <header class="topnav" id="topnav">
@@ -99,8 +100,8 @@
                 <header class="app-head">Ascentra Orchestration</header>
                 <div class="panel-grid">
                   <div class="panel-card">Strategy</div>
-                  <div class="panel-card">Mechanization</div>
-                  <div class="panel-card">Software</div>
+                  <button class="panel-card pj-branch-chip" type="button" data-lane-target="operis" aria-label="Open Operis lane">Operis</button>
+                  <button class="panel-card pj-branch-chip" type="button" data-lane-target="astra" aria-label="Open Astra lane">Astra</button>
                 </div>
                 <div class="kpi-strip">
                   <span>ROI +18%</span><span>Lead Time -23%</span><span>Uptime 99.4%</span>
@@ -119,7 +120,7 @@
                 <li>Live control panels without implementation burden</li>
                 <li>Performance uplift backed by Ascentra standards</li>
               </ul>
-              <a class="pj-cta" href="/operis/" aria-label="Explore Operis">Explore Operis</a>
+              <a class="pj-cta" href="/operis/" data-lane-target="operis" aria-label="Explore Operis">Explore Operis</a>
             </div>
             <div class="pj-preview">
               <div class="app-window glass operis-mini-window">
@@ -208,7 +209,7 @@
                 <li>Coverage and battery telemetry in real time</li>
                 <li>Future-ready infrastructure with measurable ROI</li>
               </ul>
-              <a class="pj-cta" href="/astra/" aria-label="Explore Astra">Explore Astra</a>
+              <a class="pj-cta" href="/astra/" data-lane-target="astra" aria-label="Explore Astra">Explore Astra</a>
             </div>
             <div class="pj-preview">
               <div class="app-window glass">
@@ -225,6 +226,47 @@
         </div>
 
         <div class="pj-build-indicator" aria-label="Build runtime indicator">Build: LIVE</div>
+      </div>
+
+      <div class="pj-lane-overlay" id="pj-lane-overlay" aria-live="polite">
+        <div class="pj-lane-parallax" aria-hidden="true"></div>
+        <div class="pj-lane-track" id="pj-lane-track">
+          <section class="pj-lane pj-lane-operis" id="pj-lane-operis" data-lane="operis" role="dialog" aria-modal="false" aria-labelledby="pj-lane-operis-title" tabindex="-1" inert>
+            <div class="pj-lane-shell">
+              <button class="pj-lane-back" type="button" data-lane-close aria-label="Back to Ascentra center">
+                <span aria-hidden="true">←</span>
+              </button>
+              <p class="pj-kicker">Platform Journey</p>
+              <h2 class="pj-title pj-lane-title" id="pj-lane-operis-title" tabindex="-1">Operis</h2>
+              <p class="pj-subtitle">Execution-led operations with measurable labor and throughput accountability.</p>
+              <div class="pj-lane-shell-grid" aria-label="Operis lane highlights">
+                <article class="pj-lane-tile"><h3>Floor Cadence</h3><p>Shift orchestration with station-level accountability.</p></article>
+                <article class="pj-lane-tile"><h3>Control Surface</h3><p>Live operational visibility without implementation drag.</p></article>
+                <article class="pj-lane-tile"><h3>Measured Uplift</h3><p>Governed performance trajectory backed by Ascentra standards.</p></article>
+              </div>
+              <a class="pj-cta" href="/operis/" aria-label="Open Operis destination">Open Operis</a>
+            </div>
+          </section>
+
+          <section class="pj-lane pj-lane-center" data-lane="center" aria-hidden="true" inert></section>
+
+          <section class="pj-lane pj-lane-astra" id="pj-lane-astra" data-lane="astra" role="dialog" aria-modal="false" aria-labelledby="pj-lane-astra-title" tabindex="-1" inert>
+            <div class="pj-lane-shell">
+              <button class="pj-lane-back" type="button" data-lane-close aria-label="Back to Ascentra center">
+                <span aria-hidden="true">←</span>
+              </button>
+              <p class="pj-kicker">Platform Journey</p>
+              <h2 class="pj-title pj-lane-title" id="pj-lane-astra-title" tabindex="-1">Astra</h2>
+              <p class="pj-subtitle">Autonomous inventory continuity with mission telemetry and resilient coverage.</p>
+              <div class="pj-lane-shell-grid" aria-label="Astra lane highlights">
+                <article class="pj-lane-tile"><h3>Autonomy</h3><p>Mission-based routes tuned for recurring counting cycles.</p></article>
+                <article class="pj-lane-tile"><h3>Signal Clarity</h3><p>Battery, coverage and mission health in a single layer.</p></article>
+                <article class="pj-lane-tile"><h3>Future Capacity</h3><p>Infrastructure-ready architecture for scaling warehouse networks.</p></article>
+              </div>
+              <a class="pj-cta" href="/astra/" aria-label="Open Astra destination">Open Astra</a>
+            </div>
+          </section>
+        </div>
       </div>
     </section>
 
@@ -313,7 +355,8 @@
   <div class="ambient-bg"></div>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script src="/assets/js/platform-journey.js?v=20260225k" defer></script>
+  <script src="/assets/js/lane-navigator.js?v=20260226a" defer></script>
+  <script src="/assets/js/platform-journey.js?v=20260226a" defer></script>
   <script src="/assets/app.js?v=20260225k" defer></script>
 </body>
 </html>
