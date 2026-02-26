@@ -86,6 +86,62 @@ export type BoxVisual = {
   cell: GridCell;
 };
 
+export type PalletVisual = {
+  id: string;
+  side: Side;
+  kind: TileKind;
+  cell: GridCell;
+  fillLevel: number;
+  isEmpty: boolean;
+  replenishmentRequested: boolean;
+  replenishing: boolean;
+};
+
+export type ReachTruckVisual = {
+  id: string;
+  side: Side;
+  cell: GridCell;
+  target: GridCell;
+  carrying: boolean;
+};
+
+type PickerEvent = {
+  pickerId: string;
+  kind: TileKind;
+  cell: GridCell;
+  eventStamp: number;
+};
+
+type PalletRuntime = {
+  id: string;
+  kind: TileKind;
+  cell: GridCell;
+  fillLevel: number;
+  replenishmentRequested: boolean;
+  replenishing: boolean;
+};
+
+type ReachTruckRuntime = {
+  id: string;
+  side: Side;
+  homeCell: GridCell;
+  cell: GridCell;
+  target: GridCell;
+  carrying: boolean;
+  mode: 'idle' | 'to-pallet' | 'refill' | 'to-storage';
+  taskPalletId: string | null;
+  modeStartMinute: number;
+  modeDurationMinutes: number;
+  fromCell: GridCell;
+};
+
+type SideRuntime = {
+  pallets: Record<string, PalletRuntime>;
+  replenishQueue: string[];
+  pickerEventStamps: Record<string, number>;
+  reachTruck: ReachTruckRuntime;
+};
+
 type DemandOrder = {
   createdMinute: number;
   kinds: TileKind[];
@@ -96,8 +152,14 @@ type VisualState = {
   aiAgents: AgentVisual[];
   humanBoxes: BoxVisual[];
   aiBoxes: BoxVisual[];
+  humanPallets: PalletVisual[];
+  aiPallets: PalletVisual[];
+  humanReachTrucks: ReachTruckVisual[];
+  aiReachTrucks: ReachTruckVisual[];
   humanTargets: GridCell[];
   aiTargets: GridCell[];
+  humanRuntime: SideRuntime;
+  aiRuntime: SideRuntime;
 };
 
 type ObjectiveResult = {
@@ -115,6 +177,15 @@ const REQUIRED_COUNTS: BuildCounts = { F: 6, M: 6, S: 6 };
 const AI_MAIN_AISLE_COL = 12;
 const AI_SECONDARY_AISLE_COL = 10;
 const AI_CORRIDOR_ROWS = [2, 5, 8] as const;
+const PALLET_MAX_FILL = 100;
+const REPLENISH_MOVE_CELLS_PER_MIN = 2.6;
+const REPLENISH_REFILL_MINUTES = 1.2;
+
+const DEPLETION_PER_PICK: Record<TileKind, number> = {
+  F: 4.6,
+  M: 3.6,
+  S: 2.8
+};
 
 const MISSION: Mission = {
   startLabel: '09:00',
@@ -170,6 +241,10 @@ function getCounts(tiles: CircuitTile[]): BuildCounts {
 
 function sideStations(side: Side): StationSet {
   return side === 'human' ? HUMAN_STATIONS : AI_STATIONS;
+}
+
+function sideStorageCell(side: Side): GridCell {
+  return side === 'human' ? { col: 0, row: 0 } : { col: BOARD_COLS - 1, row: 0 };
 }
 
 function sideCols(side: Side): { min: number; max: number } {
@@ -981,7 +1056,7 @@ function optimizeAiLayout(
   const cells = aiCandidateCells();
 
   const strategyStarts = generateAiStrategyCandidates(objectiveSeed + 7).map((candidate) => cloneTiles(candidate.layout));
-  const starts: CircuitTile[] = [];
+  const starts: CircuitTile[][] = [];
 
   if (isAiLayoutValid(initial)) {
     starts.push(cloneTiles(initial));
@@ -1133,37 +1208,54 @@ function interpolateGridPath(from: GridCell, to: GridCell, progress: number): Gr
 function buildVisualState(
   side: Side,
   stations: StationSet,
+  tiles: CircuitTile[],
   demandOrders: DemandOrder[],
   minute: number,
   fte: FteResult
-): { agents: AgentVisual[]; boxes: BoxVisual[]; targets: GridCell[] } {
+): { agents: AgentVisual[]; boxes: BoxVisual[]; targets: GridCell[]; pickerEvents: PickerEvent[] } {
   if (demandOrders.length === 0) {
-    return { agents: [], boxes: [], targets: [] };
+    return { agents: [], boxes: [], targets: [], pickerEvents: [] };
   }
 
   const agents: AgentVisual[] = [];
   const boxes: BoxVisual[] = [];
   const targets: GridCell[] = [];
+  const pickerEvents: PickerEvent[] = [];
+  const pools = createKindPools(tiles);
 
   for (let index = 0; index < fte.pickers; index += 1) {
     const order = demandOrders[Math.floor(minute * 0.76 + index * 3) % demandOrders.length];
-    const lineTarget = stations.depot;
+    const phaseClock = minute * 0.24 + index * 0.37;
+    const phaseSeed = Math.floor(minute * 10) + index * 97 + (side === 'ai' ? 911 : 131);
+    const rng = mulberry32(phaseSeed);
+    const kind = order.kinds.length > 0 ? order.kinds[Math.floor(minute * 0.8 + index * 1.7) % order.kinds.length] : 'M';
+    const lineTarget = sampleLineCell(kind, pools, rng);
 
-    const phase = (minute * 0.24 + index * 0.37) % 3;
+    const phase = phaseClock % 3;
     const progress = (minute * 0.92 + index * 0.16) % 1;
+    const eventStamp = Math.floor(phaseClock);
 
     let cell = stations.depot;
     let target = lineTarget;
 
     if (phase < 1) {
-      target = stations.dropoff;
-      cell = interpolateGridPath(stations.depot, stations.dropoff, progress);
+      target = lineTarget;
+      cell = interpolateGridPath(stations.depot, lineTarget, progress);
     } else if (phase < 2) {
       target = stations.dropoff;
-      cell = interpolateGridPath(stations.dropoff, stations.packingTable, progress);
+      cell = interpolateGridPath(lineTarget, stations.dropoff, progress);
     } else {
       target = stations.depot;
-      cell = interpolateGridPath(stations.packingTable, stations.depot, progress);
+      cell = interpolateGridPath(stations.dropoff, stations.depot, progress);
+    }
+
+    if (phase < 1 && progress >= 0.88) {
+      pickerEvents.push({
+        pickerId: `${side}-picker-${index}`,
+        kind,
+        cell: lineTarget,
+        eventStamp
+      });
     }
 
     if (order.kinds.length > 0) {
@@ -1223,7 +1315,232 @@ function buildVisualState(
     });
   }
 
-  return { agents, boxes, targets };
+  return { agents, boxes, targets, pickerEvents };
+}
+
+function createSideRuntime(side: Side, tiles: CircuitTile[]): SideRuntime {
+  const storage = sideStorageCell(side);
+  const pallets: Record<string, PalletRuntime> = {};
+
+  tiles.forEach((tile) => {
+    pallets[tile.id] = {
+      id: tile.id,
+      kind: tile.kind,
+      cell: { ...tile.cell },
+      fillLevel: PALLET_MAX_FILL,
+      replenishmentRequested: false,
+      replenishing: false
+    };
+  });
+
+  return {
+    pallets,
+    replenishQueue: [],
+    pickerEventStamps: {},
+    reachTruck: {
+      id: `${side}-reach-truck-0`,
+      side,
+      homeCell: storage,
+      cell: { ...storage },
+      target: { ...storage },
+      carrying: true,
+      mode: 'idle',
+      taskPalletId: null,
+      modeStartMinute: 0,
+      modeDurationMinutes: 0,
+      fromCell: { ...storage }
+    }
+  };
+}
+
+function ensureRuntime(side: Side, tiles: CircuitTile[], previous?: SideRuntime): SideRuntime {
+  if (!previous) {
+    return createSideRuntime(side, tiles);
+  }
+
+  const pallets: Record<string, PalletRuntime> = {};
+  tiles.forEach((tile) => {
+    const existing = previous.pallets[tile.id];
+    pallets[tile.id] = {
+      id: tile.id,
+      kind: tile.kind,
+      cell: { ...tile.cell },
+      fillLevel: existing ? existing.fillLevel : PALLET_MAX_FILL,
+      replenishmentRequested: existing ? existing.replenishmentRequested : false,
+      replenishing: existing ? existing.replenishing : false
+    };
+  });
+
+  const queue = previous.replenishQueue.filter((id) => Boolean(pallets[id]));
+  const truck = { ...previous.reachTruck };
+
+  if (truck.taskPalletId && !pallets[truck.taskPalletId]) {
+    truck.taskPalletId = null;
+    truck.mode = 'idle';
+    truck.target = { ...truck.homeCell };
+    truck.fromCell = { ...truck.cell };
+    truck.modeDurationMinutes = 0;
+  }
+
+  return {
+    pallets,
+    replenishQueue: queue,
+    pickerEventStamps: { ...previous.pickerEventStamps },
+    reachTruck: truck
+  };
+}
+
+function choosePalletForPick(runtime: SideRuntime, event: PickerEvent): PalletRuntime | null {
+  const candidates = Object.values(runtime.pallets).filter(
+    (pallet) => pallet.kind === event.kind && pallet.fillLevel > 0
+  );
+  const fallback = Object.values(runtime.pallets).filter((pallet) => pallet.fillLevel > 0);
+  const pool = candidates.length > 0 ? candidates : fallback;
+  if (pool.length === 0) return null;
+
+  return pool.reduce((best, current) => {
+    return manhattan(current.cell, event.cell) < manhattan(best.cell, event.cell) ? current : best;
+  }, pool[0]);
+}
+
+function moveTruck(truck: ReachTruckRuntime, minute: number) {
+  if (truck.modeDurationMinutes <= 0) {
+    return;
+  }
+
+  const progress = clamp((minute - truck.modeStartMinute) / truck.modeDurationMinutes, 0, 1);
+  truck.cell = interpolateGridPath(truck.fromCell, truck.target, progress);
+}
+
+function advanceSideRuntime(
+  side: Side,
+  tiles: CircuitTile[],
+  pickerEvents: PickerEvent[],
+  minute: number,
+  previous?: SideRuntime
+): SideRuntime {
+  const runtime = ensureRuntime(side, tiles, previous);
+
+  pickerEvents.forEach((event) => {
+    const lastStamp = runtime.pickerEventStamps[event.pickerId];
+    if (lastStamp === event.eventStamp) {
+      return;
+    }
+
+    runtime.pickerEventStamps[event.pickerId] = event.eventStamp;
+
+    const pallet = choosePalletForPick(runtime, event);
+    if (!pallet) return;
+
+    pallet.fillLevel = clamp(pallet.fillLevel - DEPLETION_PER_PICK[event.kind], 0, PALLET_MAX_FILL);
+    if (pallet.fillLevel <= 0) {
+      pallet.fillLevel = 0;
+      pallet.replenishmentRequested = true;
+      pallet.replenishing = false;
+      const alreadyQueued = runtime.replenishQueue.includes(pallet.id) || runtime.reachTruck.taskPalletId === pallet.id;
+      if (!alreadyQueued) {
+        runtime.replenishQueue.push(pallet.id);
+      }
+    }
+  });
+
+  const truck = runtime.reachTruck;
+
+  if (truck.mode === 'idle') {
+    const nextPalletId = runtime.replenishQueue.shift() ?? null;
+    if (nextPalletId) {
+      const pallet = runtime.pallets[nextPalletId];
+      if (pallet) {
+        pallet.replenishing = true;
+        truck.taskPalletId = pallet.id;
+        truck.mode = 'to-pallet';
+        truck.carrying = true;
+        truck.fromCell = { ...truck.cell };
+        truck.target = { ...pallet.cell };
+        truck.modeStartMinute = minute;
+        truck.modeDurationMinutes = Math.max(0.25, manhattan(truck.fromCell, truck.target) / REPLENISH_MOVE_CELLS_PER_MIN);
+      }
+    }
+  }
+
+  if (truck.mode === 'to-pallet') {
+    moveTruck(truck, minute);
+    const done = minute - truck.modeStartMinute >= truck.modeDurationMinutes;
+    if (done) {
+      truck.cell = { ...truck.target };
+      truck.mode = 'refill';
+      truck.modeStartMinute = minute;
+      truck.modeDurationMinutes = REPLENISH_REFILL_MINUTES;
+      truck.carrying = true;
+    }
+  }
+
+  if (truck.mode === 'refill') {
+    const pallet = truck.taskPalletId ? runtime.pallets[truck.taskPalletId] : null;
+    const progress = clamp((minute - truck.modeStartMinute) / REPLENISH_REFILL_MINUTES, 0, 1);
+
+    if (pallet) {
+      pallet.fillLevel = PALLET_MAX_FILL * progress;
+      pallet.replenishmentRequested = true;
+      pallet.replenishing = true;
+    }
+
+    if (progress >= 1) {
+      if (pallet) {
+        pallet.fillLevel = PALLET_MAX_FILL;
+        pallet.replenishmentRequested = false;
+        pallet.replenishing = false;
+      }
+
+      truck.mode = 'to-storage';
+      truck.fromCell = { ...truck.cell };
+      truck.target = { ...truck.homeCell };
+      truck.modeStartMinute = minute;
+      truck.modeDurationMinutes = Math.max(0.25, manhattan(truck.fromCell, truck.target) / REPLENISH_MOVE_CELLS_PER_MIN);
+      truck.carrying = false;
+    }
+  }
+
+  if (truck.mode === 'to-storage') {
+    moveTruck(truck, minute);
+    const done = minute - truck.modeStartMinute >= truck.modeDurationMinutes;
+    if (done) {
+      truck.cell = { ...truck.homeCell };
+      truck.mode = 'idle';
+      truck.taskPalletId = null;
+      truck.carrying = true;
+      truck.modeDurationMinutes = 0;
+      truck.target = { ...truck.homeCell };
+      truck.fromCell = { ...truck.homeCell };
+    }
+  }
+
+  return runtime;
+}
+
+function sideRuntimeToVisual(side: Side, runtime: SideRuntime): { pallets: PalletVisual[]; reachTrucks: ReachTruckVisual[] } {
+  const pallets = Object.values(runtime.pallets).map((pallet) => ({
+    id: pallet.id,
+    side,
+    kind: pallet.kind,
+    cell: pallet.cell,
+    fillLevel: clamp(pallet.fillLevel, 0, PALLET_MAX_FILL),
+    isEmpty: pallet.fillLevel <= 0.01,
+    replenishmentRequested: pallet.replenishmentRequested,
+    replenishing: pallet.replenishing
+  }));
+
+  const reachTrucks: ReachTruckVisual[] = [
+    {
+      id: runtime.reachTruck.id,
+      side,
+      cell: runtime.reachTruck.cell,
+      target: runtime.reachTruck.target,
+      carrying: runtime.reachTruck.carrying
+    }
+  ];
+
+  return { pallets, reachTrucks };
 }
 
 function formatClock(minute: number): string {
@@ -1256,8 +1573,14 @@ export function useSimulationModel() {
     aiAgents: [],
     humanBoxes: [],
     aiBoxes: [],
+    humanPallets: [],
+    aiPallets: [],
+    humanReachTrucks: [],
+    aiReachTrucks: [],
     humanTargets: [],
-    aiTargets: []
+    aiTargets: [],
+    humanRuntime: createSideRuntime('human', []),
+    aiRuntime: createSideRuntime('ai', [])
   });
 
   const [demandSeed, setDemandSeed] = useState<number | null>(null);
@@ -1290,18 +1613,37 @@ export function useSimulationModel() {
     if (phase !== 'simulating' && phase !== 'paused' && phase !== 'finished') return;
     if (demandOrders.length === 0) return;
 
-    const humanVisual = buildVisualState('human', HUMAN_STATIONS, demandOrders, simMinute, activeHumanFte);
-    const aiVisual = buildVisualState('ai', AI_STATIONS, demandOrders, simMinute, activeAiFte);
+    const humanVisual = buildVisualState('human', HUMAN_STATIONS, humanTiles, demandOrders, simMinute, activeHumanFte);
+    const aiVisual = buildVisualState('ai', AI_STATIONS, aiTiles, demandOrders, simMinute, activeAiFte);
 
-    setVisualState({
-      humanAgents: humanVisual.agents,
-      aiAgents: aiVisual.agents,
-      humanBoxes: humanVisual.boxes,
-      aiBoxes: aiVisual.boxes,
-      humanTargets: humanVisual.targets,
-      aiTargets: aiVisual.targets
+    setVisualState((previous) => {
+      const humanRuntime = advanceSideRuntime(
+        'human',
+        humanTiles,
+        humanVisual.pickerEvents,
+        simMinute,
+        previous.humanRuntime
+      );
+      const aiRuntime = advanceSideRuntime('ai', aiTiles, aiVisual.pickerEvents, simMinute, previous.aiRuntime);
+      const humanStock = sideRuntimeToVisual('human', humanRuntime);
+      const aiStock = sideRuntimeToVisual('ai', aiRuntime);
+
+      return {
+        humanAgents: humanVisual.agents,
+        aiAgents: aiVisual.agents,
+        humanBoxes: humanVisual.boxes,
+        aiBoxes: aiVisual.boxes,
+        humanPallets: humanStock.pallets,
+        aiPallets: aiStock.pallets,
+        humanReachTrucks: humanStock.reachTrucks,
+        aiReachTrucks: aiStock.reachTrucks,
+        humanTargets: humanVisual.targets,
+        aiTargets: aiVisual.targets,
+        humanRuntime,
+        aiRuntime
+      };
     });
-  }, [phase, simMinute, demandOrders, activeHumanFte, activeAiFte]);
+  }, [phase, simMinute, demandOrders, activeHumanFte, activeAiFte, humanTiles, aiTiles]);
 
   useEffect(() => {
     if (phase !== 'simulating') {
@@ -1603,8 +1945,14 @@ export function useSimulationModel() {
       aiAgents: [],
       humanBoxes: [],
       aiBoxes: [],
+      humanPallets: [],
+      aiPallets: [],
+      humanReachTrucks: [],
+      aiReachTrucks: [],
       humanTargets: [],
-      aiTargets: []
+      aiTargets: [],
+      humanRuntime: createSideRuntime('human', []),
+      aiRuntime: createSideRuntime('ai', [])
     });
 
     setActiveHumanFte({ pickers: 6, runners: 2 });

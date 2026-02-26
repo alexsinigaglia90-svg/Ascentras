@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import * as THREE from 'three';
 import {
   BOARD_COLS,
@@ -12,7 +13,9 @@ import {
   type BoxVisual,
   type CircuitTile,
   type GridCell,
+  type PalletVisual,
   type Phase,
+  type ReachTruckVisual,
   type StationSet
 } from '../hooks/useSimulationModel';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -32,6 +35,10 @@ type ThreeSceneProps = {
     aiAgents: AgentVisual[];
     humanBoxes: BoxVisual[];
     aiBoxes: BoxVisual[];
+    humanPallets: PalletVisual[];
+    aiPallets: PalletVisual[];
+    humanReachTrucks: ReachTruckVisual[];
+    aiReachTrucks: ReachTruckVisual[];
     humanTargets: GridCell[];
     aiTargets: GridCell[];
   };
@@ -461,6 +468,7 @@ function Forklift({ cell, heading }: { cell: GridCell; heading: number }) {
 
 function Tile({
   tile,
+  pallet,
   y,
   hover,
   active,
@@ -471,6 +479,7 @@ function Tile({
   onPointerOut
 }: {
   tile: CircuitTile;
+  pallet?: PalletVisual;
   y: number;
   hover: boolean;
   active: boolean;
@@ -484,6 +493,11 @@ function Tile({
   const moverTone = MOVER_THEME[tile.kind];
   const groupRef = useRef<THREE.Group | null>(null);
   const smooth = useRef(new THREE.Vector3());
+  const fillRatio = clamp((pallet?.fillLevel ?? 100) / 100, 0, 1);
+  const stackHeight = 0.05 + fillRatio * 0.34;
+  const isEmpty = pallet?.isEmpty ?? false;
+  const isReplenishing = pallet?.replenishing ?? false;
+  const requested = pallet?.replenishmentRequested ?? false;
 
   const target = useMemo(() => {
     const cell = isDragging && previewCell ? previewCell : tile.cell;
@@ -519,27 +533,59 @@ function Tile({
     <group ref={groupRef} onPointerDown={onPointerDown} onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
       <group>
         <BeveledBlock
-          size={[0.86, 0.2, 0.86]}
-          radius={0.12}
-          color={moverTone.tileColor}
-          emissive={moverTone.tileEmissive}
-          emissiveIntensity={0.18 + (hover ? 0.2 : 0) + (active ? 0.26 : 0)}
-          roughness={0.33}
-          metalness={0.32}
+          size={[0.84, 0.08, 0.84]}
+          radius={0.06}
+          color="#8f7356"
+          emissive="#a07f5f"
+          emissiveIntensity={0.1 + (hover ? 0.08 : 0)}
+          roughness={0.58}
+          metalness={0.06}
           stripColor={moverTone.tileStrip}
-          stripOpacity={hover ? 0.94 : 0.74}
+          stripOpacity={hover ? 0.72 : 0.48}
         />
-        <mesh position={[0, 0.09, 0]} castShadow>
-          <boxGeometry args={[0.66, 0.05, 0.66]} />
-          <meshStandardMaterial color="#d9e8ff" emissive={moverTone.tileStrip} emissiveIntensity={0.24 + (active ? 0.16 : 0)} roughness={0.24} metalness={0.22} />
+        <mesh position={[0, 0.07 + stackHeight / 2, 0]} castShadow>
+          <boxGeometry args={[0.66, stackHeight, 0.66]} />
+          <meshStandardMaterial
+            color={isEmpty ? '#3b4b61' : '#d8e6fa'}
+            emissive={isReplenishing ? '#87b6ee' : requested ? '#d08f7a' : moverTone.tileEmissive}
+            emissiveIntensity={(active ? 0.14 : 0.08) + (isReplenishing ? 0.22 : requested ? 0.12 : 0.08)}
+            roughness={0.28}
+            metalness={0.18}
+          />
         </mesh>
-        <mesh position={[0, 0.12, 0.31]}>
-          <boxGeometry args={[0.5, 0.014, 0.03]} />
-          <meshStandardMaterial color={moverTone.tileStrip} emissive={moverTone.tileStrip} emissiveIntensity={0.46} transparent opacity={0.88} roughness={0.18} metalness={0.2} />
+        <mesh position={[0, 0.12 + stackHeight, 0]} castShadow>
+          <boxGeometry args={[0.58, 0.018, 0.58]} />
+          <meshStandardMaterial color="#b7c9e7" emissive={moverTone.tileStrip} emissiveIntensity={0.24 + fillRatio * 0.16} roughness={0.24} metalness={0.16} />
         </mesh>
-        <mesh position={[0, 0.12, -0.31]}>
-          <boxGeometry args={[0.5, 0.014, 0.03]} />
-          <meshStandardMaterial color={moverTone.tileStrip} emissive={moverTone.tileStrip} emissiveIntensity={0.44} transparent opacity={0.86} roughness={0.18} metalness={0.2} />
+        <mesh position={[0, 0.13 + stackHeight, 0.31]}>
+          <boxGeometry args={[0.38, 0.014, 0.03]} />
+          <meshStandardMaterial color={moverTone.tileStrip} emissive={moverTone.tileStrip} emissiveIntensity={0.42} transparent opacity={0.82} roughness={0.18} metalness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.13 + stackHeight, -0.31]}>
+          <boxGeometry args={[0.38, 0.014, 0.03]} />
+          <meshStandardMaterial color={moverTone.tileStrip} emissive={moverTone.tileStrip} emissiveIntensity={0.4} transparent opacity={0.8} roughness={0.18} metalness={0.2} />
+        </mesh>
+        <mesh position={[-0.27, 0.07 + stackHeight, -0.27]} castShadow>
+          <boxGeometry args={[0.16, Math.max(0.05, stackHeight * 0.82), 0.16]} />
+          <meshStandardMaterial color="#e5efff" emissive="#8fb4e8" emissiveIntensity={0.1} roughness={0.33} metalness={0.12} />
+        </mesh>
+        <mesh position={[0.27, 0.07 + stackHeight, -0.27]} castShadow>
+          <boxGeometry args={[0.16, Math.max(0.05, stackHeight * 0.72), 0.16]} />
+          <meshStandardMaterial color="#deebff" emissive="#85afe6" emissiveIntensity={0.1} roughness={0.33} metalness={0.12} />
+        </mesh>
+        <mesh position={[0, 0.07 + stackHeight, 0.27]} castShadow>
+          <boxGeometry args={[0.2, Math.max(0.05, stackHeight * 0.66), 0.16]} />
+          <meshStandardMaterial color="#d4e4fb" emissive="#81a6db" emissiveIntensity={0.1} roughness={0.34} metalness={0.12} />
+        </mesh>
+        {requested ? (
+          <mesh position={[0.31, 0.13, 0.31]} castShadow>
+            <cylinderGeometry args={[0.04, 0.04, 0.03, 14]} />
+            <meshStandardMaterial color={isReplenishing ? '#82b5f2' : '#d49b80'} emissive={isReplenishing ? '#6ea4e8' : '#c67e65'} emissiveIntensity={0.54} roughness={0.24} metalness={0.18} />
+          </mesh>
+        ) : null}
+        <mesh position={[-0.31, 0.13, -0.31]}>
+          <boxGeometry args={[0.18, 0.022, 0.1]} />
+          <meshStandardMaterial color="#0f1a2a" emissive="#3f5f87" emissiveIntensity={0.28} roughness={0.24} metalness={0.2} />
         </mesh>
       </group>
       <sprite position={[0, 0.35, 0]} scale={hover ? [0.42, 0.42, 0.42] : [0.38, 0.38, 0.38]}>
@@ -628,6 +674,67 @@ function AgentOrb({ agent }: { agent: AgentVisual }) {
   );
 }
 
+function ReachTruck({ truck }: { truck: ReachTruckVisual }) {
+  const ref = useRef<THREE.Group | null>(null);
+  const smooth = useRef(new THREE.Vector3());
+
+  const target = useMemo(() => {
+    const [x, y, z] = cellToWorld(truck.cell, 0.14);
+    return new THREE.Vector3(x, y, z);
+  }, [truck.cell]);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    if (smooth.current.lengthSq() === 0) {
+      smooth.current.copy(target);
+      ref.current.position.copy(target);
+    }
+  }, [target]);
+
+  useFrame(({ clock }, delta) => {
+    if (!ref.current) return;
+    const ease = 1 - Math.exp(-delta * 11);
+    smooth.current.lerp(target, ease);
+    const bob = 0.007 * Math.sin(clock.elapsedTime * 4 + truck.cell.col * 0.2 + truck.cell.row * 0.2);
+    ref.current.position.set(smooth.current.x, smooth.current.y + bob, smooth.current.z);
+  });
+
+  return (
+    <group ref={ref}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[0.54, 0.14, 0.34]} />
+        <meshStandardMaterial color="#8fb6ea" emissive="#6c95d3" emissiveIntensity={0.2} roughness={0.34} metalness={0.22} />
+      </mesh>
+      <mesh position={[0.11, 0.15, 0]} castShadow>
+        <boxGeometry args={[0.2, 0.2, 0.24]} />
+        <meshStandardMaterial color="#2c4463" emissive="#4a6e9f" emissiveIntensity={0.16} roughness={0.32} metalness={0.22} />
+      </mesh>
+      <mesh position={[-0.2, 0.2, -0.08]} castShadow>
+        <boxGeometry args={[0.04, 0.34, 0.04]} />
+        <meshStandardMaterial color="#b8cff0" emissive="#91b3e3" emissiveIntensity={0.2} roughness={0.26} metalness={0.24} />
+      </mesh>
+      <mesh position={[-0.2, 0.2, 0.08]} castShadow>
+        <boxGeometry args={[0.04, 0.34, 0.04]} />
+        <meshStandardMaterial color="#b8cff0" emissive="#91b3e3" emissiveIntensity={0.2} roughness={0.26} metalness={0.24} />
+      </mesh>
+      <mesh position={[-0.29, 0.07, -0.07]} castShadow>
+        <boxGeometry args={[0.2, 0.03, 0.04]} />
+        <meshStandardMaterial color="#9ec0ee" emissive="#8db2e6" emissiveIntensity={0.22} roughness={0.26} metalness={0.22} />
+      </mesh>
+      <mesh position={[-0.29, 0.07, 0.07]} castShadow>
+        <boxGeometry args={[0.2, 0.03, 0.04]} />
+        <meshStandardMaterial color="#9ec0ee" emissive="#8db2e6" emissiveIntensity={0.22} roughness={0.26} metalness={0.22} />
+      </mesh>
+      {truck.carrying ? (
+        <mesh position={[-0.24, 0.12, 0]} castShadow>
+          <boxGeometry args={[0.14, 0.09, 0.14]} />
+          <meshStandardMaterial color="#d8e8ff" emissive="#8cb2e6" emissiveIntensity={0.2} roughness={0.33} metalness={0.12} />
+        </mesh>
+      ) : null}
+    </group>
+  );
+}
+
 function SceneRig({
   phase,
   canEdit,
@@ -648,7 +755,7 @@ function SceneRig({
   const [hoverTileId, setHoverTileId] = useState<string | null>(null);
   const [focusCell, setFocusCell] = useState<GridCell | null>(null);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
-  const controlsRef = useRef<THREE.EventDispatcher | null>(null);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const isBuildMode = phase === 'build';
   const controlsLockedByDrag = canEdit && draggingTileId !== null;
 
@@ -796,6 +903,13 @@ function SceneRig({
   };
 
   const aiPulse = aiActiveTileId ? 0.35 : 0;
+  const palletLookup = useMemo(() => {
+    const lookup = new Map<string, PalletVisual>();
+    [...visualState.humanPallets, ...visualState.aiPallets].forEach((pallet) => {
+      lookup.set(pallet.id, pallet);
+    });
+    return lookup;
+  }, [visualState.humanPallets, visualState.aiPallets]);
 
   useFrame(({ clock }, delta) => {
     const isSimulating = phase === 'simulating';
@@ -809,10 +923,10 @@ function SceneRig({
 
     camera.position.lerp(desiredPosition, ease * 0.18);
 
-    const controls = controlsRef.current as (THREE.EventDispatcher & { target?: THREE.Vector3; update?: () => void }) | null;
+    const controls = controlsRef.current;
     if (controls?.target) {
       controls.target.lerp(desiredTarget, ease * 0.24);
-      controls.update?.();
+      controls.update();
     }
   });
 
@@ -975,6 +1089,7 @@ function SceneRig({
         <Tile
           key={tile.id}
           tile={tile}
+          pallet={palletLookup.get(tile.id)}
           y={0.18}
           hover={hoverTileId === tile.id}
           active={phase === 'simulating'}
@@ -1003,6 +1118,7 @@ function SceneRig({
         <Tile
           key={tile.id}
           tile={tile}
+          pallet={palletLookup.get(tile.id)}
           y={0.18}
           hover={hoverTileId === tile.id}
           active={tile.id === aiActiveTileId}
@@ -1033,6 +1149,10 @@ function SceneRig({
 
       {[...visualState.humanAgents, ...visualState.aiAgents].map((agent) => (
         <AgentOrb key={agent.id} agent={agent} />
+      ))}
+
+      {[...visualState.humanReachTrucks, ...visualState.aiReachTrucks].map((truck) => (
+        <ReachTruck key={truck.id} truck={truck} />
       ))}
 
       <OrbitControls
