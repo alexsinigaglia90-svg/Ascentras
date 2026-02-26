@@ -170,7 +170,7 @@ type ObjectiveResult = {
   kpis: SimKpis;
 };
 
-type AiStrategyKey = 'A' | 'B' | 'C' | 'D';
+type AiStrategyKey = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 
 const SHIFT_MINUTES = 8 * 60;
 const SHIFT_SECONDS = SHIFT_MINUTES * 60;
@@ -570,6 +570,7 @@ function layoutObjective(
   const travelPenalty = clamp(metrics.travelDistance / 2.2, 0, 26);
   const metricCongestionPenalty = clamp(metrics.congestionPenalty * 2.6, 0, 26);
   const spatialPenalty = side === 'ai' ? aiSpatialRulesPenalty(tiles) : 0;
+  const stationBalancePenalty = side === 'ai' ? aiStationBalancePenalty(tiles) : 0;
 
   const score =
     metrics.efficiencyScore * 0.5 +
@@ -578,7 +579,8 @@ function layoutObjective(
     congestionScore * 0.12 -
     travelPenalty * 1.6 -
     metricCongestionPenalty * 2.1 -
-    spatialPenalty * 5.2;
+    spatialPenalty * 5.2 -
+    stationBalancePenalty * 4.1;
 
   return {
     score,
@@ -905,15 +907,217 @@ function aiStrategyD(seed: number): CircuitTile[] {
   return buildAiTiles(fast, mid, slow);
 }
 
+function aiStrategyE(seed: number): CircuitTile[] {
+  const rng = mulberry32(seed);
+  const stations = AI_STATIONS;
+  const forbidden = new Set<string>([...aiCorridorCells(), ...aiDropMachineBufferCells()]);
+  const cells = aiCandidateCells().filter((cell) => !forbidden.has(cellKey(cell)));
+  const occupied = new Set<string>();
+
+  const fast = pickCellsByScore(
+    6,
+    cells,
+    occupied,
+    (cell, selected) => {
+      const dropDist = manhattan(cell, stations.dropoff);
+      const packDist = manhattan(cell, stations.packingTable);
+      const spreadPenalty = selected.reduce((sum, existing) => sum + (manhattan(cell, existing) <= 2 ? 1.3 : 0), 0);
+      return dropDist * 1.48 + packDist * 0.84 + spreadPenalty * 2.6;
+    },
+    rng,
+    10
+  );
+
+  const mid = pickCellsByScore(
+    6,
+    cells,
+    occupied,
+    (cell) =>
+      Math.abs(manhattan(cell, stations.packingTable) - 4.2) * 1.45 +
+      Math.abs(manhattan(cell, stations.dropoff) - 3.6) * 0.72 +
+      Math.abs(cell.row - 4.5) * 0.25,
+    rng,
+    10
+  );
+
+  const slow = pickCellsByScore(
+    6,
+    cells,
+    occupied,
+    (cell) => manhattan(cell, stations.dropoff) * -1.2 + Math.abs(cell.col - AI_COL_RANGE.max) * -0.5,
+    rng,
+    10
+  );
+
+  return buildAiTiles(fast, mid, slow);
+}
+
+function aiStrategyF(seed: number): CircuitTile[] {
+  const rng = mulberry32(seed);
+  const stations = AI_STATIONS;
+  const forbidden = new Set<string>([...aiCorridorCells(), ...aiDropMachineBufferCells()]);
+  const cells = aiCandidateCells().filter((cell) => !forbidden.has(cellKey(cell)));
+  const occupied = new Set<string>();
+
+  const fast = pickCellsByScore(
+    6,
+    cells,
+    occupied,
+    (cell, selected) => {
+      const depotDist = manhattan(cell, stations.depot);
+      const dropDist = manhattan(cell, stations.dropoff);
+      const sameRowPenalty = selected.reduce((sum, existing) => sum + (existing.row === cell.row ? 1 : 0), 0);
+      return dropDist * 1.32 + depotDist * 0.63 + sameRowPenalty * 1.8;
+    },
+    rng,
+    10
+  );
+
+  const mid = pickCellsByScore(
+    6,
+    cells,
+    occupied,
+    (cell) =>
+      Math.abs(manhattan(cell, stations.packingTable) - 3.2) * 1.5 +
+      Math.abs(manhattan(cell, stations.depot) - 4.5) * 0.55,
+    rng,
+    10
+  );
+
+  const slow = pickCellsByScore(
+    6,
+    cells,
+    occupied,
+    (cell) => manhattan(cell, stations.dropoff) * -1.05 + Math.abs(cell.row - 0.6) * -0.42,
+    rng,
+    10
+  );
+
+  return buildAiTiles(fast, mid, slow);
+}
+
+function aiProfileVariant(seed: number, profile: number): CircuitTile[] {
+  const rng = mulberry32(seed + profile * 97);
+  const stations = AI_STATIONS;
+  const forbidden = new Set<string>([...aiCorridorCells(), ...aiDropMachineBufferCells()]);
+  const cells = aiCandidateCells().filter((cell) => !forbidden.has(cellKey(cell)));
+  const occupied = new Set<string>();
+
+  const fastDropTarget = 1.8 + profile * 0.4;
+  const midPackTarget = 3 + profile * 0.35;
+  const slowDropTarget = 6 + profile * 0.45;
+  const lateralBias = profile % 2 === 0 ? AI_COL_RANGE.max - 0.4 : AI_COL_RANGE.min + 0.4;
+
+  const fast = pickCellsByScore(
+    6,
+    cells,
+    occupied,
+    (cell, selected) => {
+      const dropDist = manhattan(cell, stations.dropoff);
+      const packDist = manhattan(cell, stations.packingTable);
+      const targetFit = Math.abs(dropDist - fastDropTarget);
+      const spreadPenalty = selected.reduce((sum, existing) => sum + (manhattan(cell, existing) <= 2 ? 1.2 : 0), 0);
+      return targetFit * 1.9 + packDist * 0.58 + spreadPenalty * 2.3;
+    },
+    rng,
+    12
+  );
+
+  const mid = pickCellsByScore(
+    6,
+    cells,
+    occupied,
+    (cell) => {
+      const packDist = manhattan(cell, stations.packingTable);
+      const dropDist = manhattan(cell, stations.dropoff);
+      return (
+        Math.abs(packDist - midPackTarget) * 1.5 +
+        Math.abs(dropDist - (2.8 + profile * 0.28)) * 0.84 +
+        Math.abs(cell.col - lateralBias) * 0.2
+      );
+    },
+    rng,
+    12
+  );
+
+  const slow = pickCellsByScore(
+    6,
+    cells,
+    occupied,
+    (cell) => {
+      const dropDist = manhattan(cell, stations.dropoff);
+      const depotDist = manhattan(cell, stations.depot);
+      return Math.abs(dropDist - slowDropTarget) * 1.1 - depotDist * 0.38;
+    },
+    rng,
+    12
+  );
+
+  return buildAiTiles(fast, mid, slow);
+}
+
 function generateAiStrategyCandidates(seed: number): Array<{ strategy: AiStrategyKey; layout: CircuitTile[] }> {
   const candidates: Array<{ strategy: AiStrategyKey; layout: CircuitTile[] }> = [
     { strategy: 'A', layout: aiStrategyA(seed + 11) },
     { strategy: 'B', layout: aiStrategyB(seed + 29) },
     { strategy: 'C', layout: aiStrategyC(seed + 47) },
-    { strategy: 'D', layout: aiStrategyD(seed + 71) }
+    { strategy: 'D', layout: aiStrategyD(seed + 71) },
+    { strategy: 'E', layout: aiStrategyE(seed + 89) },
+    { strategy: 'F', layout: aiStrategyF(seed + 113) }
   ];
 
+  for (let profile = 0; profile < 6; profile += 1) {
+    for (let variant = 0; variant < 6; variant += 1) {
+      const strategy: AiStrategyKey = profile % 2 === 0 ? 'E' : 'F';
+      candidates.push({
+        strategy,
+        layout: aiProfileVariant(seed + profile * 173 + variant * 41 + 137, profile)
+      });
+    }
+  }
+
   return candidates.filter((candidate) => isAiLayoutValid(candidate.layout));
+}
+
+function aiStationBalancePenalty(tiles: CircuitTile[]): number {
+  if (tiles.length === 0) return 0;
+
+  const stations = AI_STATIONS;
+  const byKind: Record<TileKind, CircuitTile[]> = {
+    F: tiles.filter((tile) => tile.kind === 'F'),
+    M: tiles.filter((tile) => tile.kind === 'M'),
+    S: tiles.filter((tile) => tile.kind === 'S')
+  };
+
+  const avgDist = (group: CircuitTile[], point: GridCell) => {
+    if (group.length === 0) return 0;
+    return group.reduce((sum, tile) => sum + manhattan(tile.cell, point), 0) / group.length;
+  };
+
+  const fastDropAvg = avgDist(byKind.F, stations.dropoff);
+  const fastPackAvg = avgDist(byKind.F, stations.packingTable);
+  const midPackAvg = avgDist(byKind.M, stations.packingTable);
+  const slowDropAvg = avgDist(byKind.S, stations.dropoff);
+
+  let penalty = 0;
+  penalty += Math.abs(fastDropAvg - 2.1) * 0.42;
+  penalty += Math.abs(fastPackAvg - 4.4) * 0.18;
+  penalty += Math.abs(midPackAvg - 3.7) * 0.31;
+  penalty += Math.abs(slowDropAvg - 6.8) * 0.36;
+
+  const congestionRows = new Map<number, number>();
+  tiles.forEach((tile) => {
+    const count = congestionRows.get(tile.cell.row) ?? 0;
+    congestionRows.set(tile.cell.row, count + 1);
+  });
+
+  for (const count of congestionRows.values()) {
+    if (count > 4) {
+      penalty += (count - 4) * 0.32;
+    }
+  }
+
+  return penalty;
 }
 
 function aiSpatialRulesPenalty(tiles: CircuitTile[]): number {
@@ -1092,10 +1296,17 @@ function optimizeAiLayout(
   humanScore: number,
   maxTotalIterations = 5200
 ): { best: CircuitTile[]; bestResult: ObjectiveResult } {
-  const rng = mulberry32(objectiveSeed + 1337);
   const cells = aiCandidateCells();
 
-  const strategyStarts = generateAiStrategyCandidates(objectiveSeed + 7).map((candidate) => cloneTiles(candidate.layout));
+  const strategyStarts = generateAiStrategyCandidates(objectiveSeed + 7)
+    .map((candidate, index) => ({
+      layout: cloneTiles(candidate.layout),
+      eval: layoutObjective('ai', candidate.layout, demandOrders, objectiveSeed + 29 + index * 17, targetOrders)
+    }))
+    .sort((left, right) => right.eval.score - left.eval.score)
+    .slice(0, 24)
+    .map((entry) => entry.layout);
+
   const starts: CircuitTile[][] = [];
 
   if (isAiLayoutValid(initial)) {
@@ -1104,8 +1315,13 @@ function optimizeAiLayout(
 
   starts.push(...strategyStarts);
 
-  for (let index = 0; index < 8; index += 1) {
+  for (let index = 0; index < 22; index += 1) {
     starts.push(seededAiLayoutVariant(objectiveSeed + index * 97 + 41));
+  }
+
+  for (let index = 0; index < 14; index += 1) {
+    const profile = index % 6;
+    starts.push(aiProfileVariant(objectiveSeed + 4000 + index * 83, profile));
   }
 
   const uniqueStarts = new Map<string, CircuitTile[]>();
@@ -1126,11 +1342,20 @@ function optimizeAiLayout(
     searchStarts.push(fallback);
   }
 
-  let best = cloneTiles(searchStarts[0]);
+  const rankedStarts = searchStarts
+    .map((layout, index) => ({
+      layout,
+      eval: layoutObjective('ai', layout, demandOrders, objectiveSeed + 800 + index * 19, targetOrders)
+    }))
+    .sort((left, right) => right.eval.score - left.eval.score)
+    .slice(0, 18)
+    .map((entry) => cloneTiles(entry.layout));
+
+  let best = cloneTiles(rankedStarts[0]);
   let bestEval = layoutObjective('ai', best, demandOrders, objectiveSeed + 1, targetOrders);
 
-  for (let index = 1; index < searchStarts.length; index += 1) {
-    const probe = searchStarts[index];
+  for (let index = 1; index < rankedStarts.length; index += 1) {
+    const probe = rankedStarts[index];
     const probeEval = layoutObjective('ai', probe, demandOrders, objectiveSeed + 101 + index * 13, targetOrders);
     if (probeEval.score > bestEval.score) {
       best = cloneTiles(probe);
@@ -1138,14 +1363,19 @@ function optimizeAiLayout(
     }
   }
 
-  const localIterations = Math.max(320, Math.floor(maxTotalIterations / Math.max(1, searchStarts.length)));
+  const localIterations = Math.max(560, Math.floor((maxTotalIterations * 2) / Math.max(1, rankedStarts.length)));
+  const desiredEdge = 1.4;
 
   const runFromStart = (startLayout: CircuitTile[], searchSeed: number) => {
+    const localRng = mulberry32(searchSeed + 211);
     let current = cloneTiles(startLayout);
     let currentEval = layoutObjective('ai', current, demandOrders, searchSeed, targetOrders);
 
     for (let iteration = 0; iteration < localIterations; iteration += 1) {
-      const candidate = randomNeighbor(current, cells, rng);
+      let candidate = randomNeighbor(current, cells, localRng);
+      if (iteration % 9 === 0) {
+        candidate = randomNeighbor(candidate, cells, localRng);
+      }
       if (candidate === current) continue;
 
       const candidateEval = layoutObjective('ai', candidate, demandOrders, searchSeed + 13 + iteration, targetOrders);
@@ -1162,14 +1392,35 @@ function optimizeAiLayout(
     }
   };
 
-  for (let index = 0; index < searchStarts.length; index += 1) {
-    runFromStart(searchStarts[index], objectiveSeed + index * 311 + 29);
+  for (let index = 0; index < rankedStarts.length; index += 1) {
+    runFromStart(rankedStarts[index], objectiveSeed + index * 311 + 29);
   }
 
-  for (let restart = 0; restart < 5; restart += 1) {
-    if (bestEval.score >= humanScore) break;
-    const variant = seededAiLayoutVariant(objectiveSeed + Math.floor(rng() * 10000));
+  const restartRng = mulberry32(objectiveSeed + 7919);
+  for (let restart = 0; restart < 14; restart += 1) {
+    if (bestEval.score >= humanScore + desiredEdge) break;
+
+    const profile = restart % 6;
+    const useProfile = restart % 2 === 0;
+    const variant = useProfile
+      ? aiProfileVariant(objectiveSeed + 9000 + restart * 223, profile)
+      : seededAiLayoutVariant(objectiveSeed + Math.floor(restartRng() * 12000));
+
     runFromStart(variant, objectiveSeed + 7000 + restart * 131);
+  }
+
+  if (bestEval.score < humanScore) {
+    const fallbackCandidates = generateAiStrategyCandidates(objectiveSeed + 17001)
+      .map((candidate, index) => ({
+        layout: cloneTiles(candidate.layout),
+        eval: layoutObjective('ai', candidate.layout, demandOrders, objectiveSeed + 17031 + index * 11, targetOrders)
+      }))
+      .sort((left, right) => right.eval.score - left.eval.score)
+      .slice(0, 10);
+
+    fallbackCandidates.forEach((entry, index) => {
+      runFromStart(entry.layout, objectiveSeed + 19000 + index * 173);
+    });
   }
 
   return { best, bestResult: bestEval };
