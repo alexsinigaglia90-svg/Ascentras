@@ -677,11 +677,20 @@ function AgentOrb({ agent }: { agent: AgentVisual }) {
 function ReachTruck({ truck }: { truck: ReachTruckVisual }) {
   const ref = useRef<THREE.Group | null>(null);
   const smooth = useRef(new THREE.Vector3());
+  const cabinRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const beaconRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const glowRef = useRef<THREE.PointLight | null>(null);
+  const headingRef = useRef(0);
 
   const target = useMemo(() => {
     const [x, y, z] = cellToWorld(truck.cell, 0.14);
     return new THREE.Vector3(x, y, z);
   }, [truck.cell]);
+
+  const facingTarget = useMemo(() => {
+    const [x, , z] = cellToWorld(truck.target, 0.14);
+    return new THREE.Vector3(x, 0, z);
+  }, [truck.target]);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -697,6 +706,33 @@ function ReachTruck({ truck }: { truck: ReachTruckVisual }) {
     smooth.current.lerp(target, ease);
     const bob = 0.007 * Math.sin(clock.elapsedTime * 4 + truck.cell.col * 0.2 + truck.cell.row * 0.2);
     ref.current.position.set(smooth.current.x, smooth.current.y + bob, smooth.current.z);
+
+    const direction = new THREE.Vector3(facingTarget.x - smooth.current.x, 0, facingTarget.z - smooth.current.z);
+    if (direction.lengthSq() > 0.0004) {
+      const targetHeading = Math.atan2(direction.x, direction.z);
+      let deltaHeading = targetHeading - headingRef.current;
+      while (deltaHeading > Math.PI) deltaHeading -= Math.PI * 2;
+      while (deltaHeading < -Math.PI) deltaHeading += Math.PI * 2;
+      headingRef.current += deltaHeading * Math.min(1, delta * 6.5);
+      ref.current.rotation.y = headingRef.current;
+    }
+
+    const modeBoost =
+      truck.mode === 'refill' ? 0.62 : truck.mode === 'to-pallet' ? 0.36 : truck.mode === 'to-storage' ? 0.26 : truck.mode === 'roam' ? 0.14 : 0.08;
+    const pulse = 0.5 + 0.5 * Math.sin(clock.elapsedTime * (truck.mode === 'refill' ? 6 : 3.4) + truck.cell.col * 0.22);
+
+    if (cabinRef.current) {
+      cabinRef.current.emissiveIntensity = 0.16 + modeBoost * 0.32 + pulse * 0.12;
+    }
+
+    if (beaconRef.current) {
+      beaconRef.current.emissiveIntensity = 0.3 + modeBoost * 0.86 + pulse * 0.4;
+    }
+
+    if (glowRef.current) {
+      glowRef.current.intensity = 0.26 + modeBoost * 0.9 + pulse * 0.32;
+      glowRef.current.distance = 1.6 + modeBoost * 1.1;
+    }
   });
 
   return (
@@ -707,7 +743,7 @@ function ReachTruck({ truck }: { truck: ReachTruckVisual }) {
       </mesh>
       <mesh position={[0.11, 0.15, 0]} castShadow>
         <boxGeometry args={[0.2, 0.2, 0.24]} />
-        <meshStandardMaterial color="#2c4463" emissive="#4a6e9f" emissiveIntensity={0.16} roughness={0.32} metalness={0.22} />
+        <meshStandardMaterial ref={cabinRef} color="#2c4463" emissive="#4a6e9f" emissiveIntensity={0.16} roughness={0.32} metalness={0.22} />
       </mesh>
       <mesh position={[-0.2, 0.2, -0.08]} castShadow>
         <boxGeometry args={[0.04, 0.34, 0.04]} />
@@ -731,6 +767,11 @@ function ReachTruck({ truck }: { truck: ReachTruckVisual }) {
           <meshStandardMaterial color="#d8e8ff" emissive="#8cb2e6" emissiveIntensity={0.2} roughness={0.33} metalness={0.12} />
         </mesh>
       ) : null}
+      <mesh position={[0.24, 0.24, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.03, 0.03, 14]} />
+        <meshStandardMaterial ref={beaconRef} color="#9ec4f2" emissive="#86b4ea" emissiveIntensity={0.34} roughness={0.2} metalness={0.18} />
+      </mesh>
+      <pointLight ref={glowRef} position={[0.24, 0.22, 0]} color="#9ec3f0" intensity={0.36} distance={2.1} decay={1.8} />
     </group>
   );
 }

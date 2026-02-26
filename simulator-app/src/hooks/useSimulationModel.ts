@@ -103,6 +103,7 @@ export type ReachTruckVisual = {
   cell: GridCell;
   target: GridCell;
   carrying: boolean;
+  mode: 'idle' | 'roam' | 'to-pallet' | 'refill' | 'to-storage';
 };
 
 type PickerEvent = {
@@ -128,18 +129,19 @@ type ReachTruckRuntime = {
   cell: GridCell;
   target: GridCell;
   carrying: boolean;
-  mode: 'idle' | 'to-pallet' | 'refill' | 'to-storage';
+  mode: 'idle' | 'roam' | 'to-pallet' | 'refill' | 'to-storage';
   taskPalletId: string | null;
   modeStartMinute: number;
   modeDurationMinutes: number;
   fromCell: GridCell;
+  roamDecisionMinute: number;
 };
 
 type SideRuntime = {
   pallets: Record<string, PalletRuntime>;
   replenishQueue: string[];
   pickerEventStamps: Record<string, number>;
-  reachTruck: ReachTruckRuntime;
+  reachTrucks: ReachTruckRuntime[];
 };
 
 type DemandOrder = {
@@ -179,7 +181,10 @@ const AI_SECONDARY_AISLE_COL = 10;
 const AI_CORRIDOR_ROWS = [2, 5, 8] as const;
 const PALLET_MAX_FILL = 100;
 const REPLENISH_MOVE_CELLS_PER_MIN = 2.6;
+const REPLENISH_ROAM_CELLS_PER_MIN = 1.15;
 const REPLENISH_REFILL_MINUTES = 1.2;
+const REPLENISH_ROAM_PAUSE_MINUTES = 0.55;
+const TRUCKS_PER_SIDE = 2;
 
 const DEPLETION_PER_PICK: Record<TileKind, number> = {
   F: 4.6,
@@ -245,6 +250,41 @@ function sideStations(side: Side): StationSet {
 
 function sideStorageCell(side: Side): GridCell {
   return side === 'human' ? { col: 0, row: 0 } : { col: BOARD_COLS - 1, row: 0 };
+}
+
+function sideTruckHomes(side: Side): GridCell[] {
+  if (side === 'human') {
+    return [
+      { col: 0, row: 1 },
+      { col: 1, row: 0 }
+    ];
+  }
+
+  return [
+    { col: BOARD_COLS - 1, row: 1 },
+    { col: BOARD_COLS - 2, row: 0 }
+  ];
+}
+
+function sideStorageRoamCells(side: Side): GridCell[] {
+  const blocked = blockedCells(side);
+  const cells: GridCell[] = [];
+  const colRange = side === 'human' ? { min: 0, max: 2 } : { min: BOARD_COLS - 3, max: BOARD_COLS - 1 };
+
+  for (let col = colRange.min; col <= colRange.max; col += 1) {
+    for (let row = 0; row <= BOARD_ROWS - 2; row += 1) {
+      const cell = sideClamp({ col, row }, side);
+      if (!blocked.has(cellKey(cell))) {
+        cells.push(cell);
+      }
+    }
+  }
+
+  if (cells.length === 0) {
+    cells.push(sideStorageCell(side));
+  }
+
+  return cells;
 }
 
 function sideCols(side: Side): { min: number; max: number } {
@@ -1320,6 +1360,7 @@ function buildVisualState(
 
 function createSideRuntime(side: Side, tiles: CircuitTile[]): SideRuntime {
   const storage = sideStorageCell(side);
+  const truckHomes = sideTruckHomes(side);
   const pallets: Record<string, PalletRuntime> = {};
 
   tiles.forEach((tile) => {
@@ -1337,19 +1378,23 @@ function createSideRuntime(side: Side, tiles: CircuitTile[]): SideRuntime {
     pallets,
     replenishQueue: [],
     pickerEventStamps: {},
-    reachTruck: {
-      id: `${side}-reach-truck-0`,
-      side,
-      homeCell: storage,
-      cell: { ...storage },
-      target: { ...storage },
-      carrying: true,
-      mode: 'idle',
-      taskPalletId: null,
-      modeStartMinute: 0,
-      modeDurationMinutes: 0,
-      fromCell: { ...storage }
-    }
+    reachTrucks: new Array(TRUCKS_PER_SIDE).fill(0).map((_, index) => {
+      const home = truckHomes[index] ?? storage;
+      return {
+        id: `${side}-reach-truck-${index}`,
+        side,
+        homeCell: home,
+        cell: { ...home },
+        target: { ...home },
+        carrying: true,
+        mode: 'idle' as const,
+        taskPalletId: null,
+        modeStartMinute: 0,
+        modeDurationMinutes: 0,
+        fromCell: { ...home },
+        roamDecisionMinute: 0.2 + index * 0.27
+      };
+    })
   };
 }
 
@@ -1372,21 +1417,56 @@ function ensureRuntime(side: Side, tiles: CircuitTile[], previous?: SideRuntime)
   });
 
   const queue = previous.replenishQueue.filter((id) => Boolean(pallets[id]));
-  const truck = { ...previous.reachTruck };
+  const storage = sideStorageCell(side);
+  const homes = sideTruckHomes(side);
 
-  if (truck.taskPalletId && !pallets[truck.taskPalletId]) {
-    truck.taskPalletId = null;
-    truck.mode = 'idle';
-    truck.target = { ...truck.homeCell };
-    truck.fromCell = { ...truck.cell };
-    truck.modeDurationMinutes = 0;
+  const trucks = previous.reachTrucks
+    .slice(0, TRUCKS_PER_SIDE)
+    .map((truck, index) => {
+      const homeCell = homes[index] ?? storage;
+      const normalized: ReachTruckRuntime = {
+        ...truck,
+        homeCell,
+        cell: { ...truck.cell },
+        target: { ...truck.target },
+        fromCell: { ...truck.fromCell }
+      };
+
+      if (normalized.taskPalletId && !pallets[normalized.taskPalletId]) {
+        normalized.taskPalletId = null;
+        normalized.mode = 'idle';
+        normalized.target = { ...homeCell };
+        normalized.fromCell = { ...normalized.cell };
+        normalized.modeDurationMinutes = 0;
+      }
+
+      return normalized;
+    });
+
+  while (trucks.length < TRUCKS_PER_SIDE) {
+    const index = trucks.length;
+    const homeCell = homes[index] ?? storage;
+    trucks.push({
+      id: `${side}-reach-truck-${index}`,
+      side,
+      homeCell,
+      cell: { ...homeCell },
+      target: { ...homeCell },
+      carrying: true,
+      mode: 'idle',
+      taskPalletId: null,
+      modeStartMinute: 0,
+      modeDurationMinutes: 0,
+      fromCell: { ...homeCell },
+      roamDecisionMinute: 0.2 + index * 0.27
+    });
   }
 
   return {
     pallets,
     replenishQueue: queue,
     pickerEventStamps: { ...previous.pickerEventStamps },
-    reachTruck: truck
+    reachTrucks: trucks
   };
 }
 
@@ -1410,6 +1490,50 @@ function moveTruck(truck: ReachTruckRuntime, minute: number) {
 
   const progress = clamp((minute - truck.modeStartMinute) / truck.modeDurationMinutes, 0, 1);
   truck.cell = interpolateGridPath(truck.fromCell, truck.target, progress);
+}
+
+function assignTruckToPallet(truck: ReachTruckRuntime, pallet: PalletRuntime, minute: number) {
+  pallet.replenishing = true;
+  pallet.replenishmentRequested = true;
+
+  truck.taskPalletId = pallet.id;
+  truck.mode = 'to-pallet';
+  truck.carrying = true;
+  truck.fromCell = { ...truck.cell };
+  truck.target = { ...pallet.cell };
+  truck.modeStartMinute = minute;
+  truck.modeDurationMinutes = Math.max(0.25, manhattan(truck.fromCell, truck.target) / REPLENISH_MOVE_CELLS_PER_MIN);
+}
+
+function nearestQueuedPalletId(runtime: SideRuntime, truck: ReachTruckRuntime): string | null {
+  if (runtime.replenishQueue.length === 0) return null;
+
+  let bestId: string | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  runtime.replenishQueue.forEach((palletId) => {
+    const pallet = runtime.pallets[palletId];
+    if (!pallet) return;
+    const distance = manhattan(truck.cell, pallet.cell);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestId = palletId;
+    }
+  });
+
+  return bestId;
+}
+
+function pickRoamTarget(side: Side, truck: ReachTruckRuntime, minute: number): GridCell {
+  const roamCells = sideStorageRoamCells(side);
+  const seed = Math.floor(minute * 19) + truck.id.length * 37 + truck.cell.col * 11 + truck.cell.row * 17;
+  const rng = mulberry32(seed >>> 0);
+  const candidates = roamCells
+    .slice()
+    .sort((left, right) => manhattan(truck.cell, right) - manhattan(truck.cell, left));
+
+  const top = Math.min(4, candidates.length);
+  return candidates[Math.floor(rng() * top)] ?? truck.homeCell;
 }
 
 function advanceSideRuntime(
@@ -1437,83 +1561,111 @@ function advanceSideRuntime(
       pallet.fillLevel = 0;
       pallet.replenishmentRequested = true;
       pallet.replenishing = false;
-      const alreadyQueued = runtime.replenishQueue.includes(pallet.id) || runtime.reachTruck.taskPalletId === pallet.id;
+      const alreadyAssigned = runtime.reachTrucks.some((truck) => truck.taskPalletId === pallet.id);
+      const alreadyQueued = runtime.replenishQueue.includes(pallet.id) || alreadyAssigned;
       if (!alreadyQueued) {
         runtime.replenishQueue.push(pallet.id);
       }
     }
   });
 
-  const truck = runtime.reachTruck;
+  runtime.reachTrucks.forEach((truck) => {
+    if (truck.mode !== 'idle' && truck.mode !== 'roam') {
+      return;
+    }
 
-  if (truck.mode === 'idle') {
-    const nextPalletId = runtime.replenishQueue.shift() ?? null;
+    const nextPalletId = nearestQueuedPalletId(runtime, truck);
     if (nextPalletId) {
+      runtime.replenishQueue = runtime.replenishQueue.filter((queuedId) => queuedId !== nextPalletId);
       const pallet = runtime.pallets[nextPalletId];
       if (pallet) {
-        pallet.replenishing = true;
-        truck.taskPalletId = pallet.id;
-        truck.mode = 'to-pallet';
-        truck.carrying = true;
+        assignTruckToPallet(truck, pallet, minute);
+        return;
+      }
+    }
+
+    if (truck.mode === 'idle' && minute >= truck.roamDecisionMinute) {
+      const roamTarget = pickRoamTarget(side, truck, minute);
+      const roamDistance = manhattan(truck.cell, roamTarget);
+      if (roamDistance > 0) {
+        truck.mode = 'roam';
         truck.fromCell = { ...truck.cell };
-        truck.target = { ...pallet.cell };
+        truck.target = roamTarget;
+        truck.modeStartMinute = minute;
+        truck.modeDurationMinutes = Math.max(0.45, roamDistance / REPLENISH_ROAM_CELLS_PER_MIN);
+      } else {
+        truck.roamDecisionMinute = minute + REPLENISH_ROAM_PAUSE_MINUTES;
+      }
+    }
+  });
+
+  runtime.reachTrucks.forEach((truck) => {
+    if (truck.mode === 'roam') {
+      moveTruck(truck, minute);
+      const done = minute - truck.modeStartMinute >= truck.modeDurationMinutes;
+      if (done) {
+        truck.cell = { ...truck.target };
+        truck.mode = 'idle';
+        truck.modeDurationMinutes = 0;
+        truck.fromCell = { ...truck.cell };
+        truck.target = { ...truck.cell };
+        truck.roamDecisionMinute = minute + REPLENISH_ROAM_PAUSE_MINUTES;
+      }
+    }
+
+    if (truck.mode === 'to-pallet') {
+      moveTruck(truck, minute);
+      const done = minute - truck.modeStartMinute >= truck.modeDurationMinutes;
+      if (done) {
+        truck.cell = { ...truck.target };
+        truck.mode = 'refill';
+        truck.modeStartMinute = minute;
+        truck.modeDurationMinutes = REPLENISH_REFILL_MINUTES;
+        truck.carrying = true;
+      }
+    }
+
+    if (truck.mode === 'refill') {
+      const pallet = truck.taskPalletId ? runtime.pallets[truck.taskPalletId] : null;
+      const progress = clamp((minute - truck.modeStartMinute) / REPLENISH_REFILL_MINUTES, 0, 1);
+
+      if (pallet) {
+        pallet.fillLevel = PALLET_MAX_FILL * progress;
+        pallet.replenishmentRequested = true;
+        pallet.replenishing = true;
+      }
+
+      if (progress >= 1) {
+        if (pallet) {
+          pallet.fillLevel = PALLET_MAX_FILL;
+          pallet.replenishmentRequested = false;
+          pallet.replenishing = false;
+        }
+
+        truck.mode = 'to-storage';
+        truck.fromCell = { ...truck.cell };
+        truck.target = { ...truck.homeCell };
         truck.modeStartMinute = minute;
         truck.modeDurationMinutes = Math.max(0.25, manhattan(truck.fromCell, truck.target) / REPLENISH_MOVE_CELLS_PER_MIN);
+        truck.carrying = false;
       }
     }
-  }
 
-  if (truck.mode === 'to-pallet') {
-    moveTruck(truck, minute);
-    const done = minute - truck.modeStartMinute >= truck.modeDurationMinutes;
-    if (done) {
-      truck.cell = { ...truck.target };
-      truck.mode = 'refill';
-      truck.modeStartMinute = minute;
-      truck.modeDurationMinutes = REPLENISH_REFILL_MINUTES;
-      truck.carrying = true;
-    }
-  }
-
-  if (truck.mode === 'refill') {
-    const pallet = truck.taskPalletId ? runtime.pallets[truck.taskPalletId] : null;
-    const progress = clamp((minute - truck.modeStartMinute) / REPLENISH_REFILL_MINUTES, 0, 1);
-
-    if (pallet) {
-      pallet.fillLevel = PALLET_MAX_FILL * progress;
-      pallet.replenishmentRequested = true;
-      pallet.replenishing = true;
-    }
-
-    if (progress >= 1) {
-      if (pallet) {
-        pallet.fillLevel = PALLET_MAX_FILL;
-        pallet.replenishmentRequested = false;
-        pallet.replenishing = false;
+    if (truck.mode === 'to-storage') {
+      moveTruck(truck, minute);
+      const done = minute - truck.modeStartMinute >= truck.modeDurationMinutes;
+      if (done) {
+        truck.cell = { ...truck.homeCell };
+        truck.mode = 'idle';
+        truck.taskPalletId = null;
+        truck.carrying = true;
+        truck.modeDurationMinutes = 0;
+        truck.target = { ...truck.homeCell };
+        truck.fromCell = { ...truck.homeCell };
+        truck.roamDecisionMinute = minute + REPLENISH_ROAM_PAUSE_MINUTES;
       }
-
-      truck.mode = 'to-storage';
-      truck.fromCell = { ...truck.cell };
-      truck.target = { ...truck.homeCell };
-      truck.modeStartMinute = minute;
-      truck.modeDurationMinutes = Math.max(0.25, manhattan(truck.fromCell, truck.target) / REPLENISH_MOVE_CELLS_PER_MIN);
-      truck.carrying = false;
     }
-  }
-
-  if (truck.mode === 'to-storage') {
-    moveTruck(truck, minute);
-    const done = minute - truck.modeStartMinute >= truck.modeDurationMinutes;
-    if (done) {
-      truck.cell = { ...truck.homeCell };
-      truck.mode = 'idle';
-      truck.taskPalletId = null;
-      truck.carrying = true;
-      truck.modeDurationMinutes = 0;
-      truck.target = { ...truck.homeCell };
-      truck.fromCell = { ...truck.homeCell };
-    }
-  }
+  });
 
   return runtime;
 }
@@ -1530,15 +1682,14 @@ function sideRuntimeToVisual(side: Side, runtime: SideRuntime): { pallets: Palle
     replenishing: pallet.replenishing
   }));
 
-  const reachTrucks: ReachTruckVisual[] = [
-    {
-      id: runtime.reachTruck.id,
-      side,
-      cell: runtime.reachTruck.cell,
-      target: runtime.reachTruck.target,
-      carrying: runtime.reachTruck.carrying
-    }
-  ];
+  const reachTrucks: ReachTruckVisual[] = runtime.reachTrucks.map((truck) => ({
+    id: truck.id,
+    side,
+    cell: truck.cell,
+    target: truck.target,
+    carrying: truck.carrying,
+    mode: truck.mode
+  }));
 
   return { pallets, reachTrucks };
 }
