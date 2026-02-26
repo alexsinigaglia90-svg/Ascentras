@@ -47,8 +47,8 @@ export function MetricsStrip({ metrics, score }: MetricsStripProps) {
   return (
     <section className="subpanel">
       <div className="mb-3 flex items-baseline justify-between">
-        <span className="text-[0.7rem] uppercase tracking-[0.16em] text-slate-300">Efficiency Index</span>
-        <strong className="text-2xl font-semibold text-slate-50 tabular-nums drop-shadow-[0_0_14px_rgba(126,170,235,0.32)]">
+        <span className="text-[0.7rem] uppercase tracking-[0.16em] text-[#4d5d72]">Efficiency Index</span>
+        <strong className="text-2xl font-semibold text-[#1f4e77] tabular-nums">
           <AnimatedValue value={score} digits={1} />
         </strong>
       </div>
@@ -56,7 +56,7 @@ export function MetricsStrip({ metrics, score }: MetricsStripProps) {
         {items.map((item) => (
           <li key={item.label} className="metric-row">
             <span className="metric-label">{item.label}</span>
-            <span className="tabular-nums text-slate-100"><AnimatedValue value={item.value} digits={item.digits ?? 1} suffix={item.suffix ?? ''} /></span>
+            <span className="tabular-nums text-[#0d1b2c]"><AnimatedValue value={item.value} digits={item.digits ?? 1} suffix={item.suffix ?? ''} /></span>
           </li>
         ))}
       </ul>

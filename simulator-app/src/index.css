@@ -3,16 +3,20 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
-  --as-accent: #8bb8ec;
-  --as-accent-strong: #5f96e2;
-  --as-neutral-1: #070d16;
-  --as-neutral-2: #0d1725;
-  --as-neutral-3: #17283d;
-  --as-border: rgba(162, 195, 236, 0.24);
-  --as-border-strong: rgba(181, 213, 248, 0.54);
-  --as-text-main: #e8f1ff;
-  --as-text-sub: #aebed7;
+  color-scheme: light;
+  --as-bg: #f6f2ea;
+  --as-surface: #fffaf3;
+  --as-surface-strong: #ffffff;
+  --as-accent: #2f5f8a;
+  --as-accent-strong: #1f4e77;
+  --as-neutral-1: #f5f1e8;
+  --as-neutral-2: #fffaf3;
+  --as-neutral-3: #ffffff;
+  --as-border: rgba(23, 58, 93, 0.14);
+  --as-border-strong: rgba(23, 58, 93, 0.28);
+  --as-text-main: #0d1b2c;
+  --as-text-sub: #4d5d72;
+  --as-pack-accent: #b18a5b;
 
   --as-fast: #3ea2ff;
   --as-fast-emissive: #2d85e8;
@@ -21,12 +25,12 @@
   --as-slow: #7f95b3;
   --as-slow-emissive: #5f7390;
 
-  --as-radius-panel: 1.1rem;
+  --as-radius-panel: 1.05rem;
   --as-radius-control: 9999px;
-  --as-shadow-soft: 0 16px 34px rgba(3, 8, 14, 0.5);
-  --as-shadow-panel: 0 24px 54px rgba(2, 7, 14, 0.62);
-  --as-glow: 0 0 0 1px rgba(166, 200, 238, 0.16), 0 0 28px rgba(114, 156, 222, 0.2);
-  --as-glow-strong: 0 0 0 1px rgba(188, 215, 248, 0.28), 0 0 32px rgba(116, 166, 236, 0.28);
+  --as-shadow-soft: 0 8px 20px rgba(8, 23, 42, 0.08);
+  --as-shadow-panel: 0 12px 30px rgba(8, 23, 42, 0.12);
+  --as-glow: 0 0 0 1px rgba(47, 95, 138, 0.08);
+  --as-glow-strong: 0 0 0 1px rgba(47, 95, 138, 0.22);
 }
 
 html,
@@ -39,20 +43,20 @@ body,
 
 body {
   font-family: Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--as-text-main);
   background:
-    radial-gradient(circle at 14% 16%, rgba(92, 132, 196, 0.14), transparent 36%),
-    radial-gradient(circle at 84% 82%, rgba(84, 120, 182, 0.12), transparent 40%),
-    linear-gradient(180deg, #060b12 0%, #08101a 100%);
+    radial-gradient(circle at 18% 14%, rgba(47, 95, 138, 0.08), transparent 38%),
+    radial-gradient(circle at 84% 80%, rgba(47, 95, 138, 0.06), transparent 42%),
+    linear-gradient(180deg, var(--as-bg) 0%, #f3eee5 100%);
 }
 
 @layer components {
   .glass-panel {
-    @apply relative min-h-0 overflow-auto p-4 backdrop-blur-xl;
+    @apply relative min-h-0 overflow-auto p-4;
     border-radius: var(--as-radius-panel);
     border: 1px solid var(--as-border);
-    background:
-      linear-gradient(158deg, rgba(24, 36, 54, 0.62) 0%, rgba(14, 22, 35, 0.66) 55%, rgba(10, 16, 27, 0.74) 100%);
-    box-shadow: var(--as-shadow-panel), inset 0 1px 0 rgba(223, 236, 255, 0.12), inset 0 0 0 1px rgba(177, 206, 241, 0.1), var(--as-glow);
+    background: linear-gradient(180deg, var(--as-surface) 0%, #fcf8f0 100%);
+    box-shadow: var(--as-shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.78), var(--as-glow);
   }
 
   .glass-panel::before {
@@ -61,72 +65,72 @@ body {
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(180deg, rgba(220, 236, 255, 0.08), rgba(220, 236, 255, 0));
-    opacity: 0.8;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+    opacity: 0.5;
   }
 
   .subpanel {
-    @apply relative rounded-xl p-3 backdrop-blur-lg;
+    @apply relative rounded-xl p-3;
     border: 1px solid var(--as-border);
-    background:
-      linear-gradient(165deg, rgba(20, 31, 47, 0.72), rgba(12, 19, 31, 0.78));
-    box-shadow: var(--as-shadow-soft), inset 0 1px 0 rgba(221, 235, 255, 0.08), inset 0 0 0 1px rgba(167, 197, 236, 0.08);
+    background: linear-gradient(180deg, var(--as-surface-strong) 0%, #fdfaf4 100%);
+    box-shadow: var(--as-shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.66);
   }
 
   .panel-title {
     color: var(--as-text-main);
-    text-shadow: 0 0 18px rgba(121, 166, 232, 0.16);
+    text-shadow: none;
     letter-spacing: 0.01em;
   }
 
   .panel-kicker {
-    color: #c9dcf6;
+    color: var(--as-accent);
     letter-spacing: 0.16em;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .control-btn {
-    @apply px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-45;
+    @apply px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45;
     border-radius: var(--as-radius-control);
     border: 1px solid var(--as-border);
-    background: linear-gradient(170deg, rgba(20, 30, 44, 0.84), rgba(12, 20, 32, 0.88));
+    background: linear-gradient(180deg, #ffffff 0%, #f7f1e8 100%);
     color: var(--as-text-main);
-    box-shadow: inset 0 1px 0 rgba(220, 235, 255, 0.08), 0 6px 12px rgba(3, 8, 15, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86), 0 3px 8px rgba(8, 23, 42, 0.09);
   }
 
   .control-btn:hover {
     border-color: var(--as-border-strong);
     transform: translateY(-1px);
-    box-shadow: inset 0 1px 0 rgba(220, 235, 255, 0.11), var(--as-glow-strong);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 14px rgba(8, 23, 42, 0.12);
   }
 
   .control-btn:active {
     transform: translateY(0);
-    box-shadow: inset 0 2px 6px rgba(4, 8, 14, 0.32), var(--as-glow);
+    box-shadow: inset 0 2px 5px rgba(8, 23, 42, 0.12);
   }
 
   .control-btn-active {
-    border-color: rgba(151, 191, 242, 0.64);
-    background: linear-gradient(170deg, rgba(72, 121, 191, 0.52), rgba(23, 39, 64, 0.9));
-    box-shadow: inset 0 1px 0 rgba(234, 244, 255, 0.14), var(--as-glow-strong);
+    border-color: color-mix(in srgb, var(--as-accent) 62%, #ffffff 38%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--as-accent) 18%, #ffffff 82%), color-mix(in srgb, var(--as-accent) 26%, #f5f1e8 74%));
+    color: var(--as-accent-strong);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), var(--as-glow-strong);
   }
 
   .control-btn-kind-fast {
-    border-color: color-mix(in srgb, var(--as-fast) 36%, rgba(167, 198, 239, 0.3));
-    background: linear-gradient(170deg, color-mix(in srgb, var(--as-fast) 20%, rgba(16, 27, 43, 0.86)), rgba(12, 20, 33, 0.84));
-    box-shadow: inset 0 1px 0 rgba(223, 236, 255, 0.1), 0 0 20px color-mix(in srgb, var(--as-fast) 24%, transparent);
+    border-color: color-mix(in srgb, var(--as-fast) 46%, rgba(23, 58, 93, 0.16));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--as-fast) 14%, #ffffff 86%), #f8fbff);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
   }
 
   .control-btn-kind-mid {
-    border-color: color-mix(in srgb, var(--as-mid) 36%, rgba(167, 198, 239, 0.3));
-    background: linear-gradient(170deg, color-mix(in srgb, var(--as-mid) 20%, rgba(16, 27, 43, 0.86)), rgba(12, 20, 33, 0.84));
-    box-shadow: inset 0 1px 0 rgba(223, 236, 255, 0.1), 0 0 20px color-mix(in srgb, var(--as-mid) 24%, transparent);
+    border-color: color-mix(in srgb, var(--as-mid) 46%, rgba(23, 58, 93, 0.16));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--as-mid) 14%, #ffffff 86%), #f8fbff);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
   }
 
   .control-btn-kind-slow {
-    border-color: color-mix(in srgb, var(--as-slow) 36%, rgba(167, 198, 239, 0.3));
-    background: linear-gradient(170deg, color-mix(in srgb, var(--as-slow) 18%, rgba(16, 27, 43, 0.86)), rgba(12, 20, 33, 0.84));
-    box-shadow: inset 0 1px 0 rgba(223, 236, 255, 0.1), 0 0 20px color-mix(in srgb, var(--as-slow) 22%, transparent);
+    border-color: color-mix(in srgb, var(--as-slow) 46%, rgba(23, 58, 93, 0.16));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--as-slow) 14%, #ffffff 86%), #f9fafc);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
   }
 
   .mover-chip {
@@ -136,50 +140,50 @@ body {
 
   .mover-chip-fast {
     border-color: color-mix(in srgb, var(--as-fast) 55%, #ffffff 10%);
-    background: color-mix(in srgb, var(--as-fast) 22%, transparent);
-    color: #d5eaff;
+    background: color-mix(in srgb, var(--as-fast) 18%, #ffffff 82%);
+    color: #1a4f78;
   }
 
   .mover-chip-mid {
     border-color: color-mix(in srgb, var(--as-mid) 52%, #ffffff 8%);
-    background: color-mix(in srgb, var(--as-mid) 22%, transparent);
-    color: #d8ecf4;
+    background: color-mix(in srgb, var(--as-mid) 18%, #ffffff 82%);
+    color: #23536f;
   }
 
   .mover-chip-slow {
     border-color: color-mix(in srgb, var(--as-slow) 50%, #ffffff 8%);
-    background: color-mix(in srgb, var(--as-slow) 20%, transparent);
-    color: #efe6db;
+    background: color-mix(in srgb, var(--as-slow) 16%, #ffffff 84%);
+    color: #3f556d;
   }
 
   .mover-count-pill {
     @apply inline-flex min-w-[3.5rem] items-center justify-center rounded-full border px-2 py-1 text-sm font-semibold;
-    box-shadow: inset 0 1px 0 rgba(229, 240, 255, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
   }
 
   .mover-count-pill-fast {
     border-color: color-mix(in srgb, var(--as-fast) 58%, rgba(187, 215, 248, 0.32));
-    background: linear-gradient(168deg, color-mix(in srgb, var(--as-fast) 22%, rgba(8, 16, 26, 0.8)), rgba(13, 23, 36, 0.86));
-    color: #d9ecff;
+    background: linear-gradient(168deg, color-mix(in srgb, var(--as-fast) 20%, #ffffff 80%), #f8fbff);
+    color: #1f5278;
   }
 
   .mover-count-pill-mid {
     border-color: color-mix(in srgb, var(--as-mid) 58%, rgba(187, 215, 248, 0.32));
-    background: linear-gradient(168deg, color-mix(in srgb, var(--as-mid) 22%, rgba(8, 16, 26, 0.8)), rgba(13, 23, 36, 0.86));
-    color: #dbedf4;
+    background: linear-gradient(168deg, color-mix(in srgb, var(--as-mid) 20%, #ffffff 80%), #f8fbff);
+    color: #275571;
   }
 
   .mover-count-pill-slow {
     border-color: color-mix(in srgb, var(--as-slow) 56%, rgba(187, 215, 248, 0.32));
-    background: linear-gradient(168deg, color-mix(in srgb, var(--as-slow) 18%, rgba(8, 16, 26, 0.8)), rgba(13, 23, 36, 0.86));
-    color: #f1e9df;
+    background: linear-gradient(168deg, color-mix(in srgb, var(--as-slow) 18%, #ffffff 82%), #f9fafc);
+    color: #46596d;
   }
 
   .metric-row {
     @apply flex items-center justify-between text-sm;
     color: var(--as-text-main);
-    border-bottom: 1px solid rgba(163, 192, 231, 0.12);
-    padding-bottom: 0.2rem;
+    border-bottom: 1px solid rgba(23, 58, 93, 0.12);
+    padding: 0.24rem 0;
   }
 
   .metric-row:last-child {
@@ -197,17 +201,17 @@ body {
     height: 0.85rem;
     margin-left: 0.4rem;
     border-radius: 9999px;
-    border: 2px solid rgba(178, 210, 248, 0.3);
-    border-top-color: rgba(188, 220, 255, 0.95);
+    border: 2px solid rgba(47, 95, 138, 0.24);
+    border-top-color: rgba(47, 95, 138, 0.9);
     animation: spinDot 780ms linear infinite;
   }
 
   .status-pill {
     @apply inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.1em];
-    border-color: rgba(167, 200, 240, 0.5);
-    background: linear-gradient(168deg, rgba(42, 65, 99, 0.56), rgba(26, 41, 66, 0.6));
-    color: #d9e9ff;
-    box-shadow: inset 0 1px 0 rgba(223, 236, 255, 0.1), 0 0 24px rgba(106, 151, 224, 0.22);
+    border-color: color-mix(in srgb, var(--as-accent) 44%, #ffffff 56%);
+    background: linear-gradient(168deg, color-mix(in srgb, var(--as-accent) 12%, #ffffff 88%), #f6f1e8);
+    color: var(--as-accent-strong);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   }
 }
 
