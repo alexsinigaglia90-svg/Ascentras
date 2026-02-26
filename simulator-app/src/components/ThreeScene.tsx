@@ -42,6 +42,10 @@ type ThreeSceneProps = {
 
 const ORIGIN_X = -((BOARD_COLS - 1) * CELL_SIZE) / 2;
 const ORIGIN_Z = -((BOARD_ROWS - 1) * CELL_SIZE) / 2;
+const PICK_ZONE_WIDTH = BOARD_COLS * CELL_SIZE;
+const PICK_ZONE_DEPTH = BOARD_ROWS * CELL_SIZE;
+const FACILITY_WIDTH = PICK_ZONE_WIDTH * 2.2;
+const FACILITY_DEPTH = PICK_ZONE_DEPTH * 2.2;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -347,65 +351,68 @@ function DockGroup({ docks }: { docks: GridCell[] }) {
   );
 }
 
-function RackAisles({ side }: { side: 'human' | 'ai' }) {
-  const columns = side === 'human' ? [1.2, 2.8, 4.4, 6] : [9, 10.6, 12.2, 13.8];
-  const rows = [2, 4, 6, 8];
+function StorageRackUnit({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[0.94, 0.66, 0.36]} />
+        <meshStandardMaterial color="#22344b" emissive="#354f73" emissiveIntensity={0.08} roughness={0.35} metalness={0.28} />
+      </mesh>
+      <mesh position={[0, 0.19, 0]} castShadow>
+        <boxGeometry args={[0.92, 0.032, 0.38]} />
+        <meshStandardMaterial color="#6a86a9" emissive="#83a7d8" emissiveIntensity={0.14} roughness={0.22} metalness={0.24} />
+      </mesh>
+      <mesh position={[0, -0.04, 0]} castShadow>
+        <boxGeometry args={[0.92, 0.032, 0.38]} />
+        <meshStandardMaterial color="#4f6888" emissive="#6d8fbb" emissiveIntensity={0.1} roughness={0.24} metalness={0.24} />
+      </mesh>
+    </group>
+  );
+}
+
+function StorageRackField() {
+  const leftRightColumns = [-13.2, -11.1, -9.1, 9.1, 11.1, 13.2];
+  const sideRows = [-7.2, -4.8, -2.4, 0, 2.4, 4.8, 7.2];
+  const backRows = [-9.4, -7.4, -5.4];
+  const backColumns = [-6.4, -4.2, -2, 0.2, 2.4, 4.6, 6.6];
 
   return (
     <group>
-      {columns.map((col) =>
-        rows.map((row) => {
-          const [x, y, z] = cellToWorld({ col, row }, 0.26);
-          return (
-            <group key={`${side}-${col}-${row}`} position={[x, y, z]}>
-              <mesh castShadow receiveShadow>
-                <boxGeometry args={[0.92, 0.6, 0.34]} />
-                <meshStandardMaterial color="#22344b" emissive="#3a5578" emissiveIntensity={0.08} roughness={0.34} metalness={0.28} />
-              </mesh>
-              <mesh position={[0, 0.16, 0]} castShadow>
-                <boxGeometry args={[0.9, 0.03, 0.36]} />
-                <meshStandardMaterial color="#6a86a9" emissive="#83a7d8" emissiveIntensity={0.16} roughness={0.22} metalness={0.24} />
-              </mesh>
-              <mesh position={[0, -0.03, 0]} castShadow>
-                <boxGeometry args={[0.9, 0.03, 0.36]} />
-                <meshStandardMaterial color="#4f6888" emissive="#6d8fbb" emissiveIntensity={0.12} roughness={0.24} metalness={0.24} />
-              </mesh>
-              <mesh position={[0.44, 0.2, 0]} castShadow>
-                <boxGeometry args={[0.04, 0.4, 0.04]} />
-                <meshStandardMaterial color="#9ebee6" emissive="#7da6db" emissiveIntensity={0.18} roughness={0.26} metalness={0.2} />
-              </mesh>
-              <mesh position={[-0.44, 0.2, 0]} castShadow>
-                <boxGeometry args={[0.04, 0.4, 0.04]} />
-                <meshStandardMaterial color="#9ebee6" emissive="#7da6db" emissiveIntensity={0.18} roughness={0.26} metalness={0.2} />
-              </mesh>
-            </group>
-          );
-        })
+      {leftRightColumns.map((x) =>
+        sideRows.map((z) => (
+          <StorageRackUnit key={`side-rack-${x}-${z}`} position={[x, 0.29, z]} />
+        ))
+      )}
+      {backRows.map((z) =>
+        backColumns.map((x) => (
+          <StorageRackUnit key={`back-rack-${x}-${z}`} position={[x, 0.29, z]} />
+        ))
       )}
     </group>
   );
 }
 
-function PalletPlaceholders({ side }: { side: 'human' | 'ai' }) {
-  const columns = side === 'human' ? [2.1, 5.1] : [9.9, 12.9];
-  const rows = [1.4, 3.6, 5.8, 8];
+function StoragePallets() {
+  const points: Array<[number, number, number]> = [
+    [-13.7, 0.08, -6.1], [-12.1, 0.08, -1.2], [-10.2, 0.08, 3.6], [-9.5, 0.08, 7.3],
+    [13.7, 0.08, -6.4], [12.3, 0.08, -1.5], [10.2, 0.08, 3.2], [9.2, 0.08, 7],
+    [-5.9, 0.08, -9.8], [-2.9, 0.08, -9.5], [0.1, 0.08, -9.2], [3.2, 0.08, -9.7], [6.1, 0.08, -9.4]
+  ];
 
   return (
     <group>
-      {columns.map((col) =>
-        rows.map((row) => (
-          <group key={`pallet-${side}-${col}-${row}`} position={cellToWorld({ col, row }, 0.08)}>
-            <mesh castShadow receiveShadow>
-              <boxGeometry args={[0.54, 0.06, 0.54]} />
-              <meshStandardMaterial color="#8d7459" emissive="#a48564" emissiveIntensity={0.07} roughness={0.58} metalness={0.04} />
-            </mesh>
-            <mesh position={[0, 0.09, 0]} castShadow receiveShadow>
-              <boxGeometry args={[0.4, 0.1, 0.4]} />
-              <meshStandardMaterial color="#b7c8e4" emissive="#89aad5" emissiveIntensity={0.12} roughness={0.4} metalness={0.12} />
-            </mesh>
-          </group>
-        ))
-      )}
+      {points.map((position, index) => (
+        <group key={`storage-pallet-${index}`} position={position}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[0.56, 0.06, 0.56]} />
+            <meshStandardMaterial color="#8d7459" emissive="#a48564" emissiveIntensity={0.07} roughness={0.58} metalness={0.04} />
+          </mesh>
+          <mesh position={[0, 0.09, 0]} castShadow receiveShadow>
+            <boxGeometry args={[0.4, 0.1, 0.4]} />
+            <meshStandardMaterial color="#b7c8e4" emissive="#89aad5" emissiveIntensity={0.1} roughness={0.42} metalness={0.12} />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }
@@ -752,8 +759,8 @@ function SceneRig({
     return () => window.removeEventListener('keydown', handleKeydown);
   }, [canEdit, hoverTileId, humanTiles, onRemoveHumanTileById, draggingTileId]);
 
-  const floorWidth = BOARD_COLS * CELL_SIZE + 4;
-  const floorDepth = BOARD_ROWS * CELL_SIZE + 4;
+  const floorWidth = FACILITY_WIDTH + 4;
+  const floorDepth = FACILITY_DEPTH + 4;
 
   const handleBoardMove = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation();
@@ -796,8 +803,8 @@ function SceneRig({
     const desiredTarget = new THREE.Vector3(0, 0.26 + focusBoost * 0.08, 0);
     const activeDrift = isSimulating && aiActiveTileId ? Math.sin(clock.elapsedTime * 1.5) * 0.14 : 0;
     const desiredPosition = isBuildMode
-      ? new THREE.Vector3(13.4, 10.8, 13.4)
-      : new THREE.Vector3(13.2 + activeDrift, 10.0 + focusBoost * 0.5, 13.2 + activeDrift * 0.6);
+      ? new THREE.Vector3(18.6, 13.8, 18.2)
+      : new THREE.Vector3(18.1 + activeDrift * 0.8, 12.9 + focusBoost * 0.62, 17.9 + activeDrift * 0.7);
     const ease = 1 - Math.exp(-delta * 1.7);
 
     camera.position.lerp(desiredPosition, ease * 0.18);
@@ -841,37 +848,64 @@ function SceneRig({
       </mesh>
 
       <mesh position={[0, 0.01, 0]} receiveShadow>
-        <boxGeometry args={[BOARD_COLS * CELL_SIZE + 0.16, 0.06, BOARD_ROWS * CELL_SIZE + 0.16]} />
-        <meshStandardMaterial color="#182a41" emissive="#2c4569" emissiveIntensity={0.12} roughness={0.56} metalness={0.14} />
+        <boxGeometry args={[FACILITY_WIDTH, 0.06, FACILITY_DEPTH]} />
+        <meshStandardMaterial color="#16263b" emissive="#253f5f" emissiveIntensity={0.1} roughness={0.58} metalness={0.14} />
       </mesh>
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} receiveShadow>
-        <planeGeometry args={[BOARD_COLS * CELL_SIZE, BOARD_ROWS * CELL_SIZE]} />
+        <planeGeometry args={[PICK_ZONE_WIDTH, PICK_ZONE_DEPTH]} />
         <meshStandardMaterial color="#0f1a2a" roughness={0.78} metalness={0.14} map={floorTexture} />
       </mesh>
 
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} receiveShadow>
+        <planeGeometry args={[FACILITY_WIDTH, FACILITY_DEPTH]} />
+        <meshStandardMaterial color="#1a2b42" emissive="#253f5f" emissiveIntensity={0.06} roughness={0.74} metalness={0.12} transparent opacity={0.22} depthWrite={false} />
+      </mesh>
+
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.051, 0]} receiveShadow>
-        <planeGeometry args={[BOARD_COLS * CELL_SIZE - 0.1, BOARD_ROWS * CELL_SIZE - 0.1]} />
+        <planeGeometry args={[PICK_ZONE_WIDTH - 0.1, PICK_ZONE_DEPTH - 0.1]} />
         <meshStandardMaterial color="#122034" emissive="#223957" emissiveIntensity={0.1} roughness={0.72} metalness={0.14} transparent opacity={0.3} depthWrite={false} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-4, 0.056, 0]} receiveShadow>
-        <planeGeometry args={[8, BOARD_ROWS]} />
-        <meshBasicMaterial color="#6f9ad4" transparent opacity={0.05} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.052, 0]} receiveShadow>
+        <planeGeometry args={[FACILITY_WIDTH - 0.5, FACILITY_DEPTH - 0.5]} />
+        <meshBasicMaterial color="#a1bee3" transparent opacity={0.03} depthWrite={false} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4, 0.056, 0]} receiveShadow>
-        <planeGeometry args={[8, BOARD_ROWS]} />
-        <meshBasicMaterial color="#8ea8cc" transparent opacity={0.045} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-11.6, 0.056, 0]} receiveShadow>
+        <planeGeometry args={[5.8, FACILITY_DEPTH - 0.8]} />
+        <meshBasicMaterial color="#6f9ad4" transparent opacity={0.06} />
       </mesh>
+
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[11.6, 0.056, 0]} receiveShadow>
+        <planeGeometry args={[5.8, FACILITY_DEPTH - 0.8]} />
+        <meshBasicMaterial color="#8ea8cc" transparent opacity={0.06} />
+      </mesh>
+
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.056, -8.4]} receiveShadow>
+        <planeGeometry args={[PICK_ZONE_WIDTH - 0.4, 4.2]} />
+        <meshBasicMaterial color="#7c9fcf" transparent opacity={0.055} />
+      </mesh>
+
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.056, 6.4]} receiveShadow>
+        <planeGeometry args={[PICK_ZONE_WIDTH - 0.5, 3]} />
+        <meshBasicMaterial color="#b7cceb" transparent opacity={0.08} />
+      </mesh>
+
+      {[-6, -3, 0, 3, 6].map((x, index) => (
+        <mesh key={`dock-mark-${index}`} position={[x, 0.09, 6.4]}>
+          <boxGeometry args={[0.08, 0.01, 2.8]} />
+          <meshStandardMaterial color="#a6c0e6" emissive="#86addf" emissiveIntensity={0.28} roughness={0.24} metalness={0.18} transparent opacity={0.62} />
+        </mesh>
+      ))}
 
       <mesh position={cellToWorld({ col: 7, row: 4.5 }, 0.09)} castShadow receiveShadow>
-        <boxGeometry args={[0.08, 0.16, BOARD_ROWS + 0.8]} />
+        <boxGeometry args={[0.08, 0.16, PICK_ZONE_DEPTH + 0.8]} />
         <meshStandardMaterial color="#a6bfe4" emissive="#7b9ccf" emissiveIntensity={0.3} roughness={0.28} metalness={0.26} />
       </mesh>
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.058, 0]}>
-        <planeGeometry args={[BOARD_COLS * CELL_SIZE - 0.25, BOARD_ROWS * CELL_SIZE - 0.25]} />
+        <planeGeometry args={[PICK_ZONE_WIDTH - 0.25, PICK_ZONE_DEPTH - 0.25]} />
         <meshBasicMaterial color="#9dbfe9" transparent opacity={0.04} depthWrite={false} />
       </mesh>
 
@@ -891,15 +925,13 @@ function SceneRig({
 
       <GridLines />
 
-      <RackAisles side="human" />
-      <RackAisles side="ai" />
-      <PalletPlaceholders side="human" />
-      <PalletPlaceholders side="ai" />
+      <StorageRackField />
+      <StoragePallets />
 
       {phase === 'build' ? (
         <>
-          <Forklift cell={{ col: 3.2, row: 1.2 }} heading={Math.PI * 0.09} />
-          <Forklift cell={{ col: 11.1, row: 1.2 }} heading={Math.PI * -0.09} />
+          <Forklift cell={{ col: 0.6, row: 0.8 }} heading={Math.PI * 0.28} />
+          <Forklift cell={{ col: 14.3, row: 0.8 }} heading={Math.PI * -0.22} />
         </>
       ) : null}
 
@@ -1013,8 +1045,8 @@ function SceneRig({
         enableZoom={!controlsLockedByDrag}
         enableDamping
         dampingFactor={0.09}
-        minDistance={isBuildMode ? 14.9 : 14.5}
-        maxDistance={isBuildMode ? 18.6 : 19.6}
+        minDistance={isBuildMode ? 20.4 : 19.6}
+        maxDistance={isBuildMode ? 28.2 : 29.5}
         minPolarAngle={isBuildMode ? 0.98 : 0.9}
         maxPolarAngle={isBuildMode ? 0.98 : 1.12}
         minAzimuthAngle={isBuildMode ? 0.785 : 0.42}
