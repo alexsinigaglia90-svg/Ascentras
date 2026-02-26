@@ -57,12 +57,12 @@ export function HumanPanel({
     <aside className="glass-panel">
       <header className="mb-4">
         <h2 className="panel-title text-lg font-semibold tracking-[0.02em]">Human Mission</h2>
-        <p className="mt-1 text-sm font-medium text-[#4d5d72]">Build your pick circuit on the left half and prepare for the 09:00–17:00 run.</p>
+        <p className="mt-1 text-sm font-medium text-[var(--as-text-sub)]">Build your pick circuit on the left half and prepare for the 09:00–17:00 run.</p>
       </header>
 
       <section className="subpanel">
         <h3 className="panel-kicker mb-2 text-[0.7rem] uppercase">Mission Brief</h3>
-        <ul className="space-y-1.5 text-sm text-[#0d1b2c]">
+        <ul className="space-y-1.5 text-sm text-[var(--as-text-main)]">
           <li>Peak season window: {mission.startLabel}–{mission.endLabel}</li>
           <li>Target orders: {mission.targetOrders.toLocaleString()}</li>
           <li>Minimum locations: 18 total (6 Fast / 6 Mid / 6 Slow)</li>
@@ -102,7 +102,7 @@ export function HumanPanel({
 
       <section className="subpanel mt-3">
         <h3 className="panel-kicker mb-2 text-[0.7rem] uppercase">Runtime</h3>
-        <div className="grid gap-2 text-sm text-[#0d1b2c]">
+        <div className="grid gap-2 text-sm text-[var(--as-text-main)]">
           <div className="metric-row">
             <span className="metric-label">Simulation clock</span>
             <strong>{simClockLabel}</strong>

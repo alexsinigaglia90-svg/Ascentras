@@ -208,10 +208,10 @@ function GridLines() {
   return (
     <group>
       <lineSegments geometry={geometry} position={[0, 0, 0]}>
-        <lineBasicMaterial color="#6f8fb4" transparent opacity={0.072} />
+        <lineBasicMaterial color="#7ca3d4" transparent opacity={0.041} />
       </lineSegments>
       <lineSegments geometry={geometry} position={[0, 0.002, 0]}>
-        <lineBasicMaterial color="#89a9cf" transparent opacity={0.016} />
+        <lineBasicMaterial color="#9fc0e3" transparent opacity={0.012} />
       </lineSegments>
     </group>
   );
@@ -520,6 +520,7 @@ function Tile({
   active,
   previewCell,
   isDragging,
+  placementPulseAt,
   onPointerDown,
   onPointerOver,
   onPointerOut
@@ -531,6 +532,7 @@ function Tile({
   active: boolean;
   previewCell?: GridCell | null;
   isDragging: boolean;
+  placementPulseAt?: number;
   onPointerDown?: (event: ThreeEvent<PointerEvent>) => void;
   onPointerOver?: (event: ThreeEvent<PointerEvent>) => void;
   onPointerOut?: (event: ThreeEvent<PointerEvent>) => void;
@@ -561,9 +563,13 @@ function Tile({
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
+    const pulseTime = placementPulseAt ? (performance.now() - placementPulseAt) / 1000 : 999;
+    const snapPulse = pulseTime < 0.22 ? Math.sin((pulseTime / 0.22) * Math.PI) * 0.16 : 0;
+
     if (isDragging) {
       smooth.current.copy(target);
       groupRef.current.position.copy(target);
+      groupRef.current.scale.setScalar(1.02);
       return;
     }
 
@@ -571,8 +577,9 @@ function Tile({
     smooth.current.lerp(target, ease);
     const bobAmplitude = active ? 0.022 : hover ? 0.016 : 0.008;
     const bob = bobAmplitude * Math.sin(performance.now() * 0.003 + tile.cell.col * 0.5 + tile.cell.row * 0.34);
-    groupRef.current.position.set(smooth.current.x, smooth.current.y + bob, smooth.current.z);
+    groupRef.current.position.set(smooth.current.x, smooth.current.y + bob + snapPulse * 0.08, smooth.current.z);
     groupRef.current.rotation.y = (active ? 0.03 : hover ? 0.018 : 0) * Math.sin(performance.now() * 0.0018 + tile.cell.col * 0.2);
+    groupRef.current.scale.setScalar(1 + snapPulse * 0.06 + (hover ? 0.01 : 0));
   });
 
   return (
@@ -688,6 +695,58 @@ function ActiveTarget({ target, index }: { target: GridCell; index: number }) {
       <mesh castShadow>
         <torusGeometry args={[0.22, 0.028, 10, 20]} />
         <meshStandardMaterial ref={ringRef} color="#b7cdf2" emissive="#95b7e6" emissiveIntensity={0.36} transparent opacity={0.58} roughness={0.22} metalness={0.28} />
+      </mesh>
+    </group>
+  );
+}
+
+function OutboundBuffer({ cell, count, accent }: { cell: GridCell; count: number; accent: string }) {
+  const [x, y, z] = cellToWorld(cell, 0.12);
+  const direction = cell.col < BOARD_COLS / 2 ? -1 : 1;
+  const stacks = Math.max(1, Math.min(4, Math.ceil(count / 6)));
+
+  return (
+    <group position={[x + direction * 1.04, y, z]}>
+      {new Array(stacks).fill(0).map((_, stackIndex) => {
+        const units = clamp(count - stackIndex * 6, 0, 6);
+        const fill = units / 6;
+        const stackZ = (stackIndex - (stacks - 1) / 2) * 0.64;
+
+        return (
+          <group key={`outbound-stack-${stackIndex}`} position={[0, 0, stackZ]}>
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[0.58, 0.08, 0.54]} />
+              <meshStandardMaterial color="#6d5a45" emissive="#846a4f" emissiveIntensity={0.08} roughness={0.6} metalness={0.08} />
+            </mesh>
+            <mesh position={[0, 0.05 + fill * 0.18, 0]} castShadow>
+              <boxGeometry args={[0.48, 0.08 + fill * 0.36, 0.44]} />
+              <meshStandardMaterial color="#d3e5ff" emissive="#84afe6" emissiveIntensity={0.16 + fill * 0.2} roughness={0.34} metalness={0.16} />
+            </mesh>
+            {new Array(units).fill(0).map((__, unitIndex) => (
+              <mesh
+                key={`outbound-unit-${stackIndex}-${unitIndex}`}
+                position={[
+                  unitIndex % 2 === 0 ? -0.11 : 0.11,
+                  0.13,
+                  (Math.floor(unitIndex / 2) - 1) * 0.11
+                ]}
+                castShadow
+              >
+                <boxGeometry args={[0.12, 0.08, 0.09]} />
+                <meshStandardMaterial color="#e1efff" emissive="#8ab5ea" emissiveIntensity={0.14} roughness={0.3} metalness={0.12} />
+              </mesh>
+            ))}
+          </group>
+        );
+      })}
+
+      <mesh position={[direction * 0.36, 0.42, 0]}>
+        <boxGeometry args={[0.06, 0.26, 0.06]} />
+        <meshStandardMaterial color="#d5e8ff" emissive={accent} emissiveIntensity={0.24} roughness={0.26} metalness={0.2} />
+      </mesh>
+      <mesh position={[direction * 0.36, 0.58, 0]}>
+        <boxGeometry args={[0.22, 0.06, 0.06]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.34} roughness={0.2} metalness={0.18} />
       </mesh>
     </group>
   );
@@ -853,7 +912,10 @@ function SceneRig({
   const [previewCell, setPreviewCell] = useState<GridCell | null>(null);
   const [hoverTileId, setHoverTileId] = useState<string | null>(null);
   const [focusCell, setFocusCell] = useState<GridCell | null>(null);
+  const [lastPlacement, setLastPlacement] = useState<{ tileId: string; at: number } | null>(null);
+  const [outboundFill, setOutboundFill] = useState({ human: 0, ai: 0 });
   const [effectsEnabled, setEffectsEnabled] = useState(true);
+  const deliveredBoxRefs = useRef<Set<string>>(new Set());
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const controlsLockedByDrag = canEdit && draggingTileId !== null;
 
@@ -995,7 +1057,9 @@ function SceneRig({
       return;
     }
 
-    onCommitHumanTile(draggingTileId, cell);
+    const committedTileId = draggingTileId;
+    onCommitHumanTile(committedTileId, cell);
+    setLastPlacement({ tileId: committedTileId, at: performance.now() });
     setDraggingTileId(null);
     setPreviewCell(null);
   };
@@ -1010,7 +1074,7 @@ function SceneRig({
   }, [visualState.humanPallets, visualState.aiPallets]);
 
   useEffect(() => {
-    camera.position.set(17.2, 13.8, 17.2);
+    camera.position.set(15.8, 12.6, 15.8);
     const controls = controlsRef.current;
     if (controls) {
       controls.target.set(0, 0.24, 0);
@@ -1018,32 +1082,83 @@ function SceneRig({
     }
   }, [camera]);
 
+  useEffect(() => {
+    if (phase === 'build') {
+      setOutboundFill({ human: 0, ai: 0 });
+      deliveredBoxRefs.current.clear();
+    }
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== 'simulating') {
+      deliveredBoxRefs.current.clear();
+      return;
+    }
+
+    const nextDelivered = new Set<string>();
+    let humanIncrement = 0;
+    let aiIncrement = 0;
+
+    visualState.humanBoxes.forEach((box, index) => {
+      const key = `h:${box.id}:${index}`;
+      const atOutbound = manhattan(box.cell, humanStations.outbound) <= 1;
+      if (atOutbound) {
+        nextDelivered.add(key);
+        if (!deliveredBoxRefs.current.has(key)) {
+          humanIncrement += 1;
+        }
+      }
+    });
+
+    visualState.aiBoxes.forEach((box, index) => {
+      const key = `a:${box.id}:${index}`;
+      const atOutbound = manhattan(box.cell, aiStations.outbound) <= 1;
+      if (atOutbound) {
+        nextDelivered.add(key);
+        if (!deliveredBoxRefs.current.has(key)) {
+          aiIncrement += 1;
+        }
+      }
+    });
+
+    if (humanIncrement > 0 || aiIncrement > 0) {
+      setOutboundFill((current) => ({
+        human: clamp(current.human + humanIncrement, 0, 24),
+        ai: clamp(current.ai + aiIncrement, 0, 24)
+      }));
+    }
+
+    deliveredBoxRefs.current = nextDelivered;
+  }, [phase, visualState.humanBoxes, visualState.aiBoxes, humanStations.outbound, aiStations.outbound]);
+
   return (
     <>
-      <fog attach="fog" args={['#0a111b', 70, 165]} />
-      <ambientLight intensity={0.24} color="#a8c0de" />
-      <hemisphereLight intensity={0.56} color="#dcecff" groundColor="#0d1726" position={[0, 18, 0]} />
+      <fog attach="fog" args={['#070f1b', 96, 212]} />
+      <ambientLight intensity={0.34} color="#b6cde8" />
+      <hemisphereLight intensity={0.68} color="#e2efff" groundColor="#0c1624" position={[0, 20, 0]} />
       <directionalLight
         castShadow
-        position={[14.2, 18, 12.8]}
-        intensity={1.02}
+        position={[15.5, 20, 11.5]}
+        intensity={1.26}
         color="#e1efff"
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
         shadow-camera-near={2}
-        shadow-camera-far={62}
+        shadow-camera-far={68}
         shadow-camera-left={-20}
         shadow-camera-right={20}
         shadow-camera-top={16}
         shadow-camera-bottom={-16}
-        shadow-radius={4.6}
-        shadow-bias={-0.00011}
+        shadow-radius={5.4}
+        shadow-bias={-0.00013}
       />
       <directionalLight
-        position={[-15, 8.2, -12.5]}
-        intensity={0.34}
+        position={[-14, 9.4, -12.3]}
+        intensity={0.44}
         color="#9dbbe1"
       />
+      <pointLight position={[-7.8, 4.2, 7]} color="#79a8e4" intensity={0.42} distance={17} decay={2} />
+      <pointLight position={[8.4, 4, -6.8]} color="#8bb7ef" intensity={0.33} distance={15} decay={2} />
 
       <mesh position={[0, -0.11, 0]} receiveShadow>
         <boxGeometry args={[floorWidth + 0.9, 0.24, floorDepth + 0.9]} />
@@ -1052,7 +1167,7 @@ function SceneRig({
 
       <mesh position={[0, 0.01, 0]} receiveShadow>
         <boxGeometry args={[FACILITY_WIDTH, 0.075, FACILITY_DEPTH]} />
-        <meshStandardMaterial color="#122033" emissive="#1c304a" emissiveIntensity={0.05} roughness={0.68} metalness={0.1} />
+        <meshStandardMaterial color="#122033" emissive="#203754" emissiveIntensity={0.07} roughness={0.62} metalness={0.12} />
       </mesh>
 
       <mesh position={[0, 0.055, 0]} receiveShadow>
@@ -1062,7 +1177,7 @@ function SceneRig({
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} receiveShadow>
         <planeGeometry args={[PICK_ZONE_WIDTH, PICK_ZONE_DEPTH]} />
-        <meshStandardMaterial color="#0e1928" roughness={0.86} metalness={0.08} map={floorTexture} />
+        <meshStandardMaterial color="#0d1828" roughness={0.78} metalness={0.1} map={floorTexture} />
       </mesh>
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]} receiveShadow>
@@ -1145,20 +1260,20 @@ function SceneRig({
 
       {focusCell ? (
         <mesh position={cellToWorld(draggingTileId ? sideClamp(focusCell) : focusCell, 0.08)}>
-          <boxGeometry args={[0.98, 0.016, 0.98]} />
-          <meshStandardMaterial color="#a7c3ea" emissive="#88afe2" emissiveIntensity={0.26} transparent opacity={0.24} />
+          <boxGeometry args={[0.98, 0.02, 0.98]} />
+          <meshStandardMaterial color="#9ec0eb" emissive="#8db4e9" emissiveIntensity={0.42} transparent opacity={0.34} />
         </mesh>
       ) : null}
 
       {draggingTileId && previewCell ? (
         <mesh position={cellToWorld(sideClamp(previewCell), 0.09)}>
-          <boxGeometry args={[0.92, 0.03, 0.92]} />
+          <boxGeometry args={[0.94, 0.04, 0.94]} />
           <meshStandardMaterial
             color={occupancy.has(cellKey(sideClamp(previewCell))) || blockedHuman.has(cellKey(sideClamp(previewCell))) ? '#c56f6f' : '#7da7df'}
             emissive={occupancy.has(cellKey(sideClamp(previewCell))) || blockedHuman.has(cellKey(sideClamp(previewCell))) ? '#aa5d5d' : '#6f9bd8'}
-            emissiveIntensity={0.46}
+            emissiveIntensity={0.6}
             transparent
-            opacity={0.62}
+            opacity={0.72}
           />
         </mesh>
       ) : null}
@@ -1168,6 +1283,7 @@ function SceneRig({
       <StationObject cell={humanStations.packingTable} title="Packing" accent="#e69b63" />
       <StationObject cell={humanStations.machine} title="Machine" accent="#6d9add" />
       <StationObject cell={humanStations.outbound} title="Outbound" accent="#6f94c9" />
+      <OutboundBuffer cell={humanStations.outbound} count={outboundFill.human} accent="#8cb8ef" />
       <DockGroup docks={humanStations.docks} />
       <Conveyor from={humanStations.dropoff} to={humanStations.machine} />
 
@@ -1176,6 +1292,7 @@ function SceneRig({
       <StationObject cell={aiStations.packingTable} title="Packing" accent="#e69b63" />
       <StationObject cell={aiStations.machine} title="Machine" accent="#6d9add" />
       <StationObject cell={aiStations.outbound} title="Outbound" accent="#6f94c9" />
+      <OutboundBuffer cell={aiStations.outbound} count={outboundFill.ai} accent="#8cb8ef" />
       <DockGroup docks={aiStations.docks} />
       <Conveyor from={aiStations.dropoff} to={aiStations.machine} />
 
@@ -1189,6 +1306,7 @@ function SceneRig({
           active={phase === 'simulating'}
           previewCell={previewCell}
           isDragging={draggingTileId === tile.id}
+          placementPulseAt={lastPlacement?.tileId === tile.id ? lastPlacement.at : undefined}
           onPointerDown={(event) => {
             if (!canEdit) return;
             event.stopPropagation();
@@ -1258,9 +1376,9 @@ function SceneRig({
         panSpeed={0.2}
         enableZoom={!controlsLockedByDrag}
         enableDamping
-        dampingFactor={0.09}
-        minDistance={21.2}
-        maxDistance={27.4}
+        dampingFactor={0.08}
+        minDistance={18.4}
+        maxDistance={24.2}
         minPolarAngle={0.96}
         maxPolarAngle={0.96}
         minAzimuthAngle={Math.PI / 4}
@@ -1277,8 +1395,8 @@ function SceneRig({
           fallbackRender={() => null}
         >
           <EffectComposer>
-            <Bloom luminanceThreshold={0.28} luminanceSmoothing={0.72} intensity={0.18 + aiPulse * 0.55} />
-            <Vignette eskil offset={0.14} darkness={0.72} />
+            <Bloom luminanceThreshold={0.31} luminanceSmoothing={0.66} intensity={0.26 + aiPulse * 0.58} />
+            <Vignette eskil offset={0.1} darkness={0.76} />
           </EffectComposer>
         </ErrorBoundary>
       ) : null}
@@ -1337,13 +1455,18 @@ export function ThreeScene(props: ThreeSceneProps) {
       <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl border border-borderline/70 bg-slate-950/35">
         <Canvas
           shadows
-          camera={{ position: [17.2, 13.8, 17.2], fov: 34 }}
-          gl={{ antialias: true }}
+          dpr={[1.25, 2]}
+          camera={{ position: [15.8, 12.6, 15.8], fov: 31 }}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
             try {
               if (!gl || typeof gl.getContextAttributes !== 'function') {
                 throw new Error('WebGL renderer context unavailable');
               }
+              (gl as THREE.WebGLRenderer & { useLegacyLights?: boolean }).useLegacyLights = false;
+              gl.outputColorSpace = THREE.SRGBColorSpace;
+              gl.toneMapping = THREE.ACESFilmicToneMapping;
+              gl.toneMappingExposure = 1.03;
             } catch (error) {
               console.error('[ThreeScene] Canvas creation check failed.', error);
               setCanvasFailed(true);

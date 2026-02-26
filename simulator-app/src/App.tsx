@@ -82,7 +82,7 @@ export default function WarehouseSimulatorPage() {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-ink text-[#0d1b2c]">
+    <div className="relative h-screen w-full overflow-hidden bg-ink text-[var(--as-text-main)]">
       <main className="relative z-10 grid h-screen grid-rows-[auto_1fr] gap-3 p-3">
         <header className="glass-panel px-4 py-3">
           <div className="flex items-center justify-between gap-4">
@@ -96,16 +96,16 @@ export default function WarehouseSimulatorPage() {
                 ← Back to site
               </a>
               <div>
-                <nav aria-label="Breadcrumb" className="mb-1 flex items-center gap-2 text-xs font-semibold tracking-[0.08em] text-[#4d5d72]">
-                  <a href="/" className="text-[#2f5f8a] hover:underline focus-visible:underline">Home</a>
+                <nav aria-label="Breadcrumb" className="mb-1 flex items-center gap-2 text-xs font-semibold tracking-[0.08em] text-[var(--as-text-sub)]">
+                  <a href="/" className="text-[var(--as-accent)] hover:underline focus-visible:underline">Home</a>
                   <span aria-hidden="true">/</span>
-                  <span aria-current="page" className="text-[#0d1b2c]">Simulator</span>
+                  <span aria-current="page" className="text-[var(--as-text-main)]">Simulator</span>
                 </nav>
-                <h1 className="text-xl font-semibold tracking-[0.015em] text-[#0d1b2c]">Build → Ready → Simulate</h1>
-                <p className="mt-1 text-sm font-medium text-[#4d5d72]">Pick Circuit Builder · Human vs Ascentra Engine</p>
+                <h1 className="text-xl font-semibold tracking-[0.015em] text-[var(--as-text-main)]">Build → Ready → Simulate</h1>
+                <p className="mt-1 text-sm font-medium text-[var(--as-text-sub)]">Pick Circuit Builder · Human vs Ascentra Engine</p>
               </div>
             </div>
-            <div className="rounded-full border border-borderline/90 bg-white/80 px-4 py-2 text-sm font-semibold text-[#2f5f8a] shadow-[0_6px_14px_rgba(8,23,42,0.12)]">
+            <div className="rounded-full border border-borderline/90 bg-panel/80 px-4 py-2 text-sm font-semibold text-[var(--as-accent-strong)] shadow-panel">
               Clock {simClockLabel}
             </div>
           </div>
@@ -130,12 +130,12 @@ export default function WarehouseSimulatorPage() {
             onReset={requestReset}
           />
 
-          <div className="relative min-h-[420px] rounded-2xl border border-borderline/80 bg-white/58 shadow-[0_10px_24px_rgba(8,23,42,0.12)] backdrop-blur-[1px]">
+          <div className="relative min-h-[420px] rounded-2xl border border-borderline/80 bg-panel/40 shadow-panel backdrop-blur-[1px]">
             <ErrorBoundary
               fallbackRender={(error) => {
                 console.error('[Simulator] 3D board crashed; rendering center fallback.', error);
                 return (
-                  <div className="absolute inset-0 z-0 rounded-2xl bg-[radial-gradient(circle_at_16%_18%,rgba(47,95,138,0.12),transparent_44%),radial-gradient(circle_at_86%_82%,rgba(47,95,138,0.08),transparent_46%),linear-gradient(180deg,#f6f2ea,#f2ede4)]" />
+                  <div className="absolute inset-0 z-0 rounded-2xl bg-[radial-gradient(circle_at_16%_18%,rgba(117,160,224,0.16),transparent_44%),radial-gradient(circle_at_86%_82%,rgba(117,160,224,0.1),transparent_46%),linear-gradient(180deg,#060d18,#091424)]" />
                 );
               }}
             >
@@ -159,21 +159,21 @@ export default function WarehouseSimulatorPage() {
 
             {results ? (
               <div className="pointer-events-none absolute inset-x-6 bottom-6 z-20 rounded-xl border border-borderline/90 bg-panel/95 p-4 shadow-panel backdrop-blur-sm">
-                <div className="grid gap-2 text-sm text-[#0d1b2c] md:grid-cols-2">
+                <div className="grid gap-2 text-sm text-[var(--as-text-main)] md:grid-cols-2">
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4d5d72]">Human Result</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--as-text-sub)]">Human Result</p>
                     <p>Orders: {results.human.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
                     <p>Avg cycle: {results.human.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
                     <p>FTE: {results.human.requiredFte.pickers} pickers + {results.human.requiredFte.runners} runners = {humanTotalFte}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4d5d72]">Ascentra Result</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--as-text-sub)]">Ascentra Result</p>
                     <p>Orders: {results.ai.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
                     <p>Avg cycle: {results.ai.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
                     <p>FTE: {results.ai.requiredFte.pickers} pickers + {results.ai.requiredFte.runners} runners = {aiTotalFte}</p>
                   </div>
                 </div>
-                <p className="mt-2 text-sm font-semibold text-[#2f5f8a]">{results.conclusion}</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--as-accent-strong)]">{results.conclusion}</p>
               </div>
             ) : null}
           </div>
@@ -193,10 +193,10 @@ export default function WarehouseSimulatorPage() {
       </main>
 
       {resetConfirmOpen ? (
-        <div className="absolute inset-0 z-50 grid place-items-center bg-[#0d1b2c]/32 p-4" role="dialog" aria-modal="true" aria-labelledby="reset-layout-title" aria-describedby="reset-layout-copy">
+        <div className="absolute inset-0 z-50 grid place-items-center bg-[#030711]/62 p-4" role="dialog" aria-modal="true" aria-labelledby="reset-layout-title" aria-describedby="reset-layout-copy">
           <div className="glass-panel w-full max-w-md p-5">
             <h2 id="reset-layout-title" className="panel-title text-lg font-semibold">Reset layout?</h2>
-            <p id="reset-layout-copy" className="mt-2 text-sm text-[#4d5d72]">
+            <p id="reset-layout-copy" className="mt-2 text-sm text-[var(--as-text-sub)]">
               This will clear your current simulator setup and progress.
             </p>
             <div className="mt-4 flex items-center justify-end gap-2">

@@ -5,13 +5,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#f6f2ea',
-        panel: 'rgba(255, 250, 243, 0.9)',
-        borderline: 'rgba(23, 58, 93, 0.14)',
-        accent: '#2f5f8a'
+        ink: '#050a12',
+        panel: 'rgba(15, 24, 39, 0.9)',
+        borderline: 'rgba(156, 192, 234, 0.24)',
+        accent: '#6fa6df'
       },
       boxShadow: {
-        panel: '0 12px 30px rgba(8, 23, 42, 0.12)'
+        panel: '0 20px 44px rgba(2, 7, 14, 0.5)'
       }
     }
   },

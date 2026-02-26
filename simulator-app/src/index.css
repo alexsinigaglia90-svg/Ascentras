@@ -3,19 +3,19 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --as-bg: #f6f2ea;
-  --as-surface: #fffaf3;
-  --as-surface-strong: #ffffff;
-  --as-accent: #2f5f8a;
-  --as-accent-strong: #1f4e77;
-  --as-neutral-1: #f5f1e8;
-  --as-neutral-2: #fffaf3;
-  --as-neutral-3: #ffffff;
-  --as-border: rgba(23, 58, 93, 0.14);
-  --as-border-strong: rgba(23, 58, 93, 0.28);
-  --as-text-main: #0d1b2c;
-  --as-text-sub: #4d5d72;
+  color-scheme: dark;
+  --as-bg: #050a12;
+  --as-surface: #0f1827;
+  --as-surface-strong: #142237;
+  --as-accent: #6fa6df;
+  --as-accent-strong: #8bbaf0;
+  --as-neutral-1: #070d16;
+  --as-neutral-2: #0d1725;
+  --as-neutral-3: #17283d;
+  --as-border: rgba(156, 192, 234, 0.24);
+  --as-border-strong: rgba(182, 213, 248, 0.56);
+  --as-text-main: #edf4ff;
+  --as-text-sub: #b4c5db;
   --as-pack-accent: #b18a5b;
 
   --as-fast: #3ea2ff;
@@ -25,12 +25,12 @@
   --as-slow: #7f95b3;
   --as-slow-emissive: #5f7390;
 
-  --as-radius-panel: 1.05rem;
+  --as-radius-panel: 1.08rem;
   --as-radius-control: 9999px;
-  --as-shadow-soft: 0 8px 20px rgba(8, 23, 42, 0.08);
-  --as-shadow-panel: 0 12px 30px rgba(8, 23, 42, 0.12);
-  --as-glow: 0 0 0 1px rgba(47, 95, 138, 0.08);
-  --as-glow-strong: 0 0 0 1px rgba(47, 95, 138, 0.22);
+  --as-shadow-soft: 0 12px 26px rgba(3, 8, 15, 0.38);
+  --as-shadow-panel: 0 20px 44px rgba(2, 7, 14, 0.5);
+  --as-glow: 0 0 0 1px rgba(121, 164, 226, 0.16), 0 0 24px rgba(96, 145, 218, 0.18);
+  --as-glow-strong: 0 0 0 1px rgba(164, 201, 244, 0.28), 0 0 30px rgba(105, 156, 234, 0.32);
 }
 
 html,
@@ -45,9 +45,9 @@ body {
   font-family: Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   color: var(--as-text-main);
   background:
-    radial-gradient(circle at 18% 14%, rgba(47, 95, 138, 0.08), transparent 38%),
-    radial-gradient(circle at 84% 80%, rgba(47, 95, 138, 0.06), transparent 42%),
-    linear-gradient(180deg, var(--as-bg) 0%, #f3eee5 100%);
+    radial-gradient(circle at 14% 15%, rgba(90, 133, 196, 0.14), transparent 36%),
+    radial-gradient(circle at 84% 80%, rgba(102, 138, 194, 0.1), transparent 42%),
+    linear-gradient(180deg, var(--as-bg) 0%, #08121f 100%);
 }
 
 @layer components {
@@ -55,8 +55,8 @@ body {
     @apply relative min-h-0 overflow-auto p-4;
     border-radius: var(--as-radius-panel);
     border: 1px solid var(--as-border);
-    background: linear-gradient(180deg, var(--as-surface) 0%, #fcf8f0 100%);
-    box-shadow: var(--as-shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.78), var(--as-glow);
+    background: linear-gradient(170deg, rgba(20, 31, 48, 0.9), rgba(10, 16, 26, 0.95));
+    box-shadow: var(--as-shadow-panel), inset 0 1px 0 rgba(220, 236, 255, 0.1), inset 0 0 0 1px rgba(166, 198, 236, 0.08), var(--as-glow);
   }
 
   .glass-panel::before {
@@ -65,25 +65,25 @@ body {
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
-    opacity: 0.5;
+    background: linear-gradient(180deg, rgba(223, 238, 255, 0.1), rgba(223, 238, 255, 0));
+    opacity: 0.8;
   }
 
   .subpanel {
     @apply relative rounded-xl p-3;
     border: 1px solid var(--as-border);
-    background: linear-gradient(180deg, var(--as-surface-strong) 0%, #fdfaf4 100%);
-    box-shadow: var(--as-shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.66);
+    background: linear-gradient(170deg, rgba(18, 28, 44, 0.84), rgba(10, 16, 28, 0.92));
+    box-shadow: var(--as-shadow-soft), inset 0 1px 0 rgba(221, 237, 255, 0.07), inset 0 0 0 1px rgba(161, 193, 233, 0.06);
   }
 
   .panel-title {
     color: var(--as-text-main);
-    text-shadow: none;
+    text-shadow: 0 0 18px rgba(123, 169, 235, 0.2);
     letter-spacing: 0.01em;
   }
 
   .panel-kicker {
-    color: var(--as-accent);
+    color: #b8d7ff;
     letter-spacing: 0.16em;
     font-weight: 700;
   }
@@ -92,45 +92,45 @@ body {
     @apply px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45;
     border-radius: var(--as-radius-control);
     border: 1px solid var(--as-border);
-    background: linear-gradient(180deg, #ffffff 0%, #f7f1e8 100%);
+    background: linear-gradient(170deg, rgba(22, 34, 53, 0.88), rgba(12, 20, 33, 0.94));
     color: var(--as-text-main);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86), 0 3px 8px rgba(8, 23, 42, 0.09);
+    box-shadow: inset 0 1px 0 rgba(223, 238, 255, 0.1), 0 7px 14px rgba(2, 7, 13, 0.3);
   }
 
   .control-btn:hover {
     border-color: var(--as-border-strong);
     transform: translateY(-1px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 14px rgba(8, 23, 42, 0.12);
+    box-shadow: inset 0 1px 0 rgba(230, 243, 255, 0.13), var(--as-glow-strong);
   }
 
   .control-btn:active {
     transform: translateY(0);
-    box-shadow: inset 0 2px 5px rgba(8, 23, 42, 0.12);
+    box-shadow: inset 0 2px 7px rgba(3, 7, 12, 0.34), var(--as-glow);
   }
 
   .control-btn-active {
-    border-color: color-mix(in srgb, var(--as-accent) 62%, #ffffff 38%);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--as-accent) 18%, #ffffff 82%), color-mix(in srgb, var(--as-accent) 26%, #f5f1e8 74%));
-    color: var(--as-accent-strong);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), var(--as-glow-strong);
+    border-color: color-mix(in srgb, var(--as-accent) 68%, rgba(208, 229, 255, 0.4));
+    background: linear-gradient(170deg, color-mix(in srgb, var(--as-accent) 38%, rgba(17, 29, 45, 0.82)), rgba(19, 34, 52, 0.9));
+    color: #e8f3ff;
+    box-shadow: inset 0 1px 0 rgba(235, 246, 255, 0.18), var(--as-glow-strong);
   }
 
   .control-btn-kind-fast {
     border-color: color-mix(in srgb, var(--as-fast) 46%, rgba(23, 58, 93, 0.16));
-    background: linear-gradient(180deg, color-mix(in srgb, var(--as-fast) 14%, #ffffff 86%), #f8fbff);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    background: linear-gradient(170deg, color-mix(in srgb, var(--as-fast) 18%, rgba(16, 27, 43, 0.86)), rgba(12, 20, 33, 0.84));
+    box-shadow: inset 0 1px 0 rgba(223, 236, 255, 0.1), 0 0 20px color-mix(in srgb, var(--as-fast) 24%, transparent);
   }
 
   .control-btn-kind-mid {
     border-color: color-mix(in srgb, var(--as-mid) 46%, rgba(23, 58, 93, 0.16));
-    background: linear-gradient(180deg, color-mix(in srgb, var(--as-mid) 14%, #ffffff 86%), #f8fbff);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    background: linear-gradient(170deg, color-mix(in srgb, var(--as-mid) 18%, rgba(16, 27, 43, 0.86)), rgba(12, 20, 33, 0.84));
+    box-shadow: inset 0 1px 0 rgba(223, 236, 255, 0.1), 0 0 20px color-mix(in srgb, var(--as-mid) 24%, transparent);
   }
 
   .control-btn-kind-slow {
     border-color: color-mix(in srgb, var(--as-slow) 46%, rgba(23, 58, 93, 0.16));
-    background: linear-gradient(180deg, color-mix(in srgb, var(--as-slow) 14%, #ffffff 86%), #f9fafc);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    background: linear-gradient(170deg, color-mix(in srgb, var(--as-slow) 16%, rgba(16, 27, 43, 0.86)), rgba(12, 20, 33, 0.84));
+    box-shadow: inset 0 1px 0 rgba(223, 236, 255, 0.1), 0 0 18px color-mix(in srgb, var(--as-slow) 22%, transparent);
   }
 
   .mover-chip {
@@ -140,49 +140,49 @@ body {
 
   .mover-chip-fast {
     border-color: color-mix(in srgb, var(--as-fast) 55%, #ffffff 10%);
-    background: color-mix(in srgb, var(--as-fast) 18%, #ffffff 82%);
-    color: #1a4f78;
+    background: color-mix(in srgb, var(--as-fast) 22%, transparent);
+    color: #d8ebff;
   }
 
   .mover-chip-mid {
     border-color: color-mix(in srgb, var(--as-mid) 52%, #ffffff 8%);
-    background: color-mix(in srgb, var(--as-mid) 18%, #ffffff 82%);
-    color: #23536f;
+    background: color-mix(in srgb, var(--as-mid) 22%, transparent);
+    color: #ddeeff;
   }
 
   .mover-chip-slow {
     border-color: color-mix(in srgb, var(--as-slow) 50%, #ffffff 8%);
-    background: color-mix(in srgb, var(--as-slow) 16%, #ffffff 84%);
-    color: #3f556d;
+    background: color-mix(in srgb, var(--as-slow) 2%, rgba(177, 138, 91, 0.18));
+    color: #f2e8dc;
   }
 
   .mover-count-pill {
     @apply inline-flex min-w-[3.5rem] items-center justify-center rounded-full border px-2 py-1 text-sm font-semibold;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    box-shadow: inset 0 1px 0 rgba(229, 240, 255, 0.08);
   }
 
   .mover-count-pill-fast {
     border-color: color-mix(in srgb, var(--as-fast) 58%, rgba(187, 215, 248, 0.32));
-    background: linear-gradient(168deg, color-mix(in srgb, var(--as-fast) 20%, #ffffff 80%), #f8fbff);
-    color: #1f5278;
+    background: linear-gradient(168deg, color-mix(in srgb, var(--as-fast) 22%, rgba(8, 16, 26, 0.8)), rgba(13, 23, 36, 0.86));
+    color: #d9ecff;
   }
 
   .mover-count-pill-mid {
     border-color: color-mix(in srgb, var(--as-mid) 58%, rgba(187, 215, 248, 0.32));
-    background: linear-gradient(168deg, color-mix(in srgb, var(--as-mid) 20%, #ffffff 80%), #f8fbff);
-    color: #275571;
+    background: linear-gradient(168deg, color-mix(in srgb, var(--as-mid) 22%, rgba(8, 16, 26, 0.8)), rgba(13, 23, 36, 0.86));
+    color: #dbedf4;
   }
 
   .mover-count-pill-slow {
     border-color: color-mix(in srgb, var(--as-slow) 56%, rgba(187, 215, 248, 0.32));
-    background: linear-gradient(168deg, color-mix(in srgb, var(--as-slow) 18%, #ffffff 82%), #f9fafc);
-    color: #46596d;
+    background: linear-gradient(168deg, color-mix(in srgb, var(--as-slow) 18%, rgba(8, 16, 26, 0.8)), rgba(13, 23, 36, 0.86));
+    color: #f1e9df;
   }
 
   .metric-row {
     @apply flex items-center justify-between text-sm;
     color: var(--as-text-main);
-    border-bottom: 1px solid rgba(23, 58, 93, 0.12);
+    border-bottom: 1px solid rgba(163, 192, 231, 0.16);
     padding: 0.24rem 0;
   }
 
@@ -201,17 +201,17 @@ body {
     height: 0.85rem;
     margin-left: 0.4rem;
     border-radius: 9999px;
-    border: 2px solid rgba(47, 95, 138, 0.24);
-    border-top-color: rgba(47, 95, 138, 0.9);
+    border: 2px solid rgba(178, 210, 248, 0.3);
+    border-top-color: rgba(188, 220, 255, 0.95);
     animation: spinDot 780ms linear infinite;
   }
 
   .status-pill {
     @apply inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.1em];
-    border-color: color-mix(in srgb, var(--as-accent) 44%, #ffffff 56%);
-    background: linear-gradient(168deg, color-mix(in srgb, var(--as-accent) 12%, #ffffff 88%), #f6f1e8);
-    color: var(--as-accent-strong);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border-color: rgba(167, 200, 240, 0.5);
+    background: linear-gradient(168deg, rgba(42, 65, 99, 0.56), rgba(26, 41, 66, 0.6));
+    color: #d9e9ff;
+    box-shadow: inset 0 1px 0 rgba(223, 236, 255, 0.1), 0 0 24px rgba(106, 151, 224, 0.22);
   }
 }
 
