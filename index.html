@@ -15,348 +15,108 @@
   <meta name="twitter:description" content="Operational excellence, engineered with elegance.">
   <meta name="twitter:image" content="/assets/og-image.png">
   <link rel="preload" href="/assets/styles.css?v=20260225k" as="style">
-  <link rel="preload" href="/assets/css/platform-journey.css?v=20260226a" as="style">
-  <link rel="preload" href="/assets/js/lane-navigator.js?v=20260226a" as="script">
-  <link rel="preload" href="/assets/app.js?v=20260225k" as="script">
-  <link rel="preload" href="/assets/js/platform-journey.js?v=20260226a" as="script">
+  <link rel="preload" href="/assets/css/lane-shell.css?v=20260226a" as="style">
+  <link rel="preload" href="/assets/js/lane-shell.js?v=20260226a" as="script">
   <link rel="stylesheet" href="/assets/styles.css?v=20260225k">
-  <link rel="stylesheet" href="/assets/css/platform-journey.css?v=20260226a">
+  <link rel="stylesheet" href="/assets/css/lane-shell.css?v=20260226a">
 </head>
-<body>
-  <header class="topnav" id="topnav">
-    <div class="container nav-inner">
-      <span class="logo">Ascentra</span>
-      <div class="header-controls-cluster">
-        <div class="header-controls-capsule">
-          <div class="header-toggle-group header-toggle-lang" id="lang-toggle">
-            <button type="button" class="header-dot" data-lang="en" aria-label="English">EN</button>
-            <button type="button" class="header-dot" data-lang="nl" aria-label="Nederlands">NL</button>
-          </div>
-          <div class="header-toggle-group header-toggle-theme" id="theme-toggle">
-            <button type="button" class="header-dot" data-theme="light" aria-label="Light"></button>
-            <button type="button" class="header-dot" data-theme="dark" aria-label="Dark"></button>
-          </div>
-          <div class="header-toggle-group header-toggle-style" id="style-toggle">
-            <button type="button" class="header-dot" data-style="ivory" aria-label="Ivory"></button>
-            <button type="button" class="header-dot" data-style="porcelain" aria-label="Porcelain"></button>
-            <button type="button" class="header-dot" data-style="midnight" aria-label="Midnight"></button>
-            <button type="button" class="header-dot" data-style="heritage" aria-label="Heritage"></button>
-          </div>
-        </div>
+<body class="lane-shell-body">
+  <div class="lane-shell" id="lane-shell" data-active-lane="home">
+    <div class="lane-shell-bg" aria-hidden="true"></div>
+
+    <nav class="lane-rail" aria-label="Lane navigation">
+      <button class="lane-back" type="button" id="lane-back" aria-label="Go back">
+        <span aria-hidden="true">‹</span>
+      </button>
+      <div class="lane-dots" id="lane-dots" role="tablist" aria-label="Lane map">
+        <button class="lane-dot" role="tab" data-lane-dot="home" aria-label="Home"></button>
+        <button class="lane-dot" role="tab" data-lane-dot="pyramid" aria-label="Pyramid Hub"></button>
+        <button class="lane-dot" role="tab" data-lane-dot="ascentra" aria-label="Ascentra"></button>
+        <button class="lane-dot" role="tab" data-lane-dot="operis" aria-label="Operis"></button>
+        <button class="lane-dot" role="tab" data-lane-dot="astra" aria-label="Astra"></button>
       </div>
-      <nav>
-        <a href="#platform" class="nav-link" data-i18n="nav_platform">Platform</a>
-        <a href="#usecases" class="nav-link" data-i18n="nav_usecases">Use cases</a>
-        <a href="/warehouse-simulator/" class="nav-link">Simulator</a>
-        <a href="#contact" class="nav-link" data-i18n="nav_contact">Contact</a>
-        <button class="btn nav-cta" id="nav-cta" data-i18n="nav_cta">Contact</button>
-      </nav>
-    </div>
-  </header>
+    </nav>
 
-  <section class="hero" id="hero">
-    <video class="hero-video" src="/assets/hero.mp4" autoplay muted loop playsinline poster="" id="hero-video"></video>
-    <div class="hero-fallback" id="hero-fallback">
-      <div class="hero-bg noimg"></div>
-    </div>
-    <div class="hero-overlay-gradient"></div>
-    <div class="hero-vignette"></div>
-    <div class="hero-content">
-      <div class="hero-eyebrow" data-i18n="hero_eyebrow">PRIVATE ENTERPRISE ADVISORY</div>
-      <h1 class="hero-headline" data-i18n="hero_headline">Ascentra</h1>
-      <p class="hero-subcopy" data-i18n="hero_subcopy">Operational excellence, engineered with elegance.</p>
-      <div class="hero-ctas">
-        <button class="btn pill primary" id="cta-explore" data-i18n="hero_cta_explore">Explore platform</button>
-        <button class="btn pill secondary" id="cta-meeting" data-i18n="hero_cta_meeting">Plan a meeting</button>
-      </div>
-    </div>
-  </section>
-  <main>
-    <section id="platform-journey" class="platform-journey" aria-label="Journey through Ascentra, Operis and Astra">
-      <div class="platform-journey-noise" aria-hidden="true"></div>
-      <div class="platform-journey-stage" id="platform-journey-stage">
-        <div class="platform-lines" aria-hidden="true">
-          <span class="line l1"></span>
-          <span class="line l2"></span>
-          <span class="line l3"></span>
-          <span class="line l4"></span>
+    <div class="lane-track" id="lane-track">
+      <section class="lane" data-lane-id="home" aria-label="Home lane">
+        <div class="lane-scroll" data-lane-scroll="home">
+          <header class="home-head">
+            <span class="home-mark">Ascentra</span>
+            <div class="home-actions">
+              <button class="btn pill" type="button" data-goto-lane="pyramid">Pyramid Hub</button>
+              <button class="btn pill secondary" type="button" data-goto-lane="ascentra">Enter Ascentra</button>
+            </div>
+          </header>
+
+          <main class="home-main">
+            <section class="home-hero">
+              <p class="lane-kicker">Private Enterprise Advisory</p>
+              <h1 tabindex="-1">Operational excellence, engineered with elegance.</h1>
+              <p>Navigate horizontally through the Ascentra ecosystem while preserving deep vertical journeys per lane.</p>
+              <div class="home-hero-ctas">
+                <button class="btn pill" type="button" data-goto-lane="pyramid">Open Pyramid Hub</button>
+                <button class="btn pill secondary" type="button" data-goto-lane="operis">Fly to Operis</button>
+                <button class="btn pill secondary" type="button" data-goto-lane="astra">Fly to Astra</button>
+              </div>
+            </section>
+
+            <section class="home-strip" aria-label="Ascentra pillars">
+              <article><h2>Strategy</h2><p>Operating-model architecture and execution governance.</p></article>
+              <article><h2>Mechanization</h2><p>Warehouse and process optimization with durable standards.</p></article>
+              <article><h2>Software</h2><p>Data, control and orchestration systems for measurable impact.</p></article>
+            </section>
+          </main>
         </div>
+      </section>
 
-        <div class="pj-worlds" id="pj-worlds">
-          <article class="pj-world is-active" data-world="ascentra" aria-label="Ascentra world">
-            <div class="pj-copy">
-              <p class="pj-kicker">Platform Journey</p>
-              <h2 class="pj-title">Ascentra</h2>
-              <p class="pj-subtitle">Consulting intelligence and engineering orchestration for measurable execution.</p>
-              <ul class="pj-bullets">
-                <li>Strategy and operating model alignment</li>
-                <li>Mechanization and software architecture</li>
-                <li>Execution governance with measurable outcomes</li>
-              </ul>
-              <a class="pj-cta" href="/ascentra/" aria-label="Explore Ascentra">Explore Ascentra</a>
-            </div>
-            <div class="pj-preview">
-              <div class="app-window glass">
-                <header class="app-head">Ascentra Orchestration</header>
-                <div class="panel-grid">
-                  <div class="panel-card">Strategy</div>
-                  <button class="panel-card pj-branch-chip" type="button" data-lane-target="operis" aria-label="Open Operis lane">Operis</button>
-                  <button class="panel-card pj-branch-chip" type="button" data-lane-target="astra" aria-label="Open Astra lane">Astra</button>
-                </div>
-                <div class="kpi-strip">
-                  <span>ROI +18%</span><span>Lead Time -23%</span><span>Uptime 99.4%</span>
-                </div>
-              </div>
-            </div>
-          </article>
+      <section class="lane" data-lane-id="pyramid" aria-label="Pyramid Hub lane">
+        <div class="lane-scroll" data-lane-scroll="pyramid">
+          <main class="hub-shell">
+            <p class="lane-kicker">Pyramid Hub</p>
+            <h1 tabindex="-1" data-lane-title="pyramid">Structure</h1>
 
-          <article class="pj-world" data-world="operis" aria-label="Operis world">
-            <div class="pj-copy">
-              <p class="pj-kicker">Platform Journey</p>
-              <h2 class="pj-title">Operis</h2>
-              <p class="pj-subtitle">Operational detachering with dashboard assistance and always-on Ascentra backup.</p>
-              <ul class="pj-bullets">
-                <li>Shift orchestration with floor-level accountability</li>
-                <li>Live control panels without implementation burden</li>
-                <li>Performance uplift backed by Ascentra standards</li>
-              </ul>
-              <a class="pj-cta" href="/operis/" data-lane-target="operis" aria-label="Explore Operis">Explore Operis</a>
-            </div>
-            <div class="pj-preview">
-              <div class="app-window glass operis-mini-window">
-                <header class="app-head">Operis Operational Control</header>
-                <div class="operis-mini-kpis">
-                  <div class="operis-mini-kpi"><span>Direct labor</span><strong>62</strong></div>
-                  <div class="operis-mini-kpi"><span>Throughput</span><strong>1,342/h</strong></div>
-                  <div class="operis-mini-kpi"><span>Efficiency</span><strong>96.8%</strong></div>
-                </div>
+            <div class="pyramid" role="group" aria-label="Ascentra pyramid structure">
+              <span class="pyramid-edge edge-left" aria-hidden="true"></span>
+              <span class="pyramid-edge edge-right" aria-hidden="true"></span>
+              <span class="pyramid-edge edge-base" aria-hidden="true"></span>
 
-                <div class="operis-mini-grid">
-                  <div class="operis-mini-zones">
-                    <div class="operis-mini-zoneline active">
-                      <div class="operis-mini-zonehead"><strong>Pick East</strong><span>438/h</span></div>
-                      <div class="operis-mini-stations"><span>E-01</span><span>E-02</span><span>E-03</span></div>
-                    </div>
-                    <div class="operis-mini-zoneline">
-                      <div class="operis-mini-zonehead"><strong>Pick West</strong><span>412/h</span></div>
-                      <div class="operis-mini-stations"><span>W-01</span><span>W-02</span><span>W-03</span></div>
-                    </div>
-                    <div class="operis-mini-zoneline">
-                      <div class="operis-mini-zonehead"><strong>Sortation</strong><span>261/h</span></div>
-                      <div class="operis-mini-stations"><span>S-01</span><span>S-02</span><span>S-03</span></div>
-                    </div>
-                  </div>
-
-                  <div class="operis-mini-trend">
-                    <div class="operis-mini-trendhead">Employee compare · 30/60/90d</div>
-                    <svg viewBox="0 0 320 118" role="img" aria-label="Employee throughput trend">
-                      <defs>
-                        <linearGradient id="miniTrendPrimary" x1="0" y1="0" x2="320" y2="118" gradientUnits="userSpaceOnUse">
-                          <stop offset="0%" stop-color="rgba(28, 42, 57, 0.98)"></stop>
-                          <stop offset="100%" stop-color="rgba(65, 101, 137, 0.92)"></stop>
-                        </linearGradient>
-                        <linearGradient id="miniTrendSecond" x1="0" y1="0" x2="320" y2="118" gradientUnits="userSpaceOnUse">
-                          <stop offset="0%" stop-color="rgba(106, 78, 66, 0.86)"></stop>
-                          <stop offset="100%" stop-color="rgba(65, 101, 137, 0.86)"></stop>
-                        </linearGradient>
-                        <linearGradient id="miniTrendThird" x1="0" y1="0" x2="320" y2="118" gradientUnits="userSpaceOnUse">
-                          <stop offset="0%" stop-color="rgba(112, 128, 146, 0.78)"></stop>
-                          <stop offset="100%" stop-color="rgba(106, 78, 66, 0.74)"></stop>
-                        </linearGradient>
-                        <filter id="miniTrendGlow" x="-10%" y="-20%" width="120%" height="160%">
-                          <feGaussianBlur stdDeviation="2.2" result="blur"></feGaussianBlur>
-                          <feMerge>
-                            <feMergeNode in="blur"></feMergeNode>
-                            <feMergeNode in="SourceGraphic"></feMergeNode>
-                          </feMerge>
-                        </filter>
-                      </defs>
-                      <g>
-                        <line x1="0" y1="16" x2="320" y2="16"></line>
-                        <line x1="0" y1="46" x2="320" y2="46"></line>
-                        <line x1="0" y1="76" x2="320" y2="76"></line>
-                        <line x1="0" y1="106" x2="320" y2="106"></line>
-                      </g>
-                      <path class="operis-mini-trend-path glow p1" d="M0 88 C20 85, 40 79, 60 74 C82 70, 102 67, 120 64 C142 60, 162 56, 180 54 C202 50, 222 47, 240 45 C262 41, 286 36, 320 30"></path>
-                      <path class="operis-mini-trend-path p1" d="M0 88 C20 85, 40 79, 60 74 C82 70, 102 67, 120 64 C142 60, 162 56, 180 54 C202 50, 222 47, 240 45 C262 41, 286 36, 320 30"></path>
-
-                      <path class="operis-mini-trend-path glow p2" d="M0 94 C20 93, 40 89, 60 86 C82 83, 101 78, 120 74 C142 72, 162 69, 180 67 C202 64, 222 60, 240 58 C262 55, 286 51, 320 45"></path>
-                      <path class="operis-mini-trend-path p2" d="M0 94 C20 93, 40 89, 60 86 C82 83, 101 78, 120 74 C142 72, 162 69, 180 67 C202 64, 222 60, 240 58 C262 55, 286 51, 320 45"></path>
-
-                      <path class="operis-mini-trend-path p3" d="M0 98 C20 96, 40 94, 60 92 C82 90, 102 86, 120 83 C142 80, 162 77, 180 75 C202 72, 222 69, 240 66 C262 64, 286 61, 320 57"></path>
-
-                      <circle class="operis-mini-trend-dot p1" cx="320" cy="30" r="2.8"></circle>
-                      <circle class="operis-mini-trend-dot p2" cx="320" cy="45" r="2.3"></circle>
-                      <circle class="operis-mini-trend-dot p3" cx="320" cy="57" r="2"></circle>
-                    </svg>
-                    <div class="operis-mini-legend"><span class="l1">Emma</span><span class="l2">Noah</span><span class="l3">Sara</span></div>
-                  </div>
-                </div>
-
-                <div class="assist-ribbon">Live labor monitoring · pure throughput & efficiency</div>
-                <a class="operis-mini-cta" href="/operis/" aria-label="Open Operis environment">Enter Operis environment</a>
-              </div>
-            </div>
-          </article>
-
-          <article class="pj-world" data-world="astra" aria-label="Astra world">
-            <div class="pj-copy">
-              <p class="pj-kicker">Platform Journey</p>
-              <h2 class="pj-title">Astra</h2>
-              <p class="pj-subtitle">Autonomous cycle counting hardware and IP built for precise warehouse continuity.</p>
-              <ul class="pj-bullets">
-                <li>Mission-based autonomous drone runs</li>
-                <li>Coverage and battery telemetry in real time</li>
-                <li>Future-ready infrastructure with measurable ROI</li>
-              </ul>
-              <a class="pj-cta" href="/astra/" data-lane-target="astra" aria-label="Explore Astra">Explore Astra</a>
-            </div>
-            <div class="pj-preview">
-              <div class="app-window glass">
-                <header class="app-head">Astra Mission Console</header>
-                <div class="astra-mission">Cycle Count Run · Zone D4</div>
-                <div class="astra-map">
-                  <span class="node n1"></span><span class="node n2"></span><span class="node n3"></span>
-                  <span class="node n4"></span><span class="node n5"></span>
-                </div>
-                <div class="astra-stats"><span>Battery 84%</span><span>Coverage 92%</span><span>Drone 06 · Active</span></div>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        <div class="pj-build-indicator" aria-label="Build runtime indicator">Build: LIVE</div>
-      </div>
-
-      <div class="pj-lane-overlay" id="pj-lane-overlay" aria-live="polite">
-        <div class="pj-lane-parallax" aria-hidden="true"></div>
-        <div class="pj-lane-track" id="pj-lane-track">
-          <section class="pj-lane pj-lane-operis" id="pj-lane-operis" data-lane="operis" role="dialog" aria-modal="false" aria-labelledby="pj-lane-operis-title" tabindex="-1" inert>
-            <div class="pj-lane-shell">
-              <button class="pj-lane-back" type="button" data-lane-close aria-label="Back to Ascentra center">
-                <span aria-hidden="true">←</span>
+              <button type="button" class="pyramid-node apex" data-goto-lane="ascentra" aria-label="Go to Ascentra">
+                <strong>Ascentra</strong>
               </button>
-              <p class="pj-kicker">Platform Journey</p>
-              <h2 class="pj-title pj-lane-title" id="pj-lane-operis-title" tabindex="-1">Operis</h2>
-              <p class="pj-subtitle">Execution-led operations with measurable labor and throughput accountability.</p>
-              <div class="pj-lane-shell-grid" aria-label="Operis lane highlights">
-                <article class="pj-lane-tile"><h3>Floor Cadence</h3><p>Shift orchestration with station-level accountability.</p></article>
-                <article class="pj-lane-tile"><h3>Control Surface</h3><p>Live operational visibility without implementation drag.</p></article>
-                <article class="pj-lane-tile"><h3>Measured Uplift</h3><p>Governed performance trajectory backed by Ascentra standards.</p></article>
-              </div>
-              <a class="pj-cta" href="/operis/" aria-label="Open Operis destination">Open Operis</a>
-            </div>
-          </section>
-
-          <section class="pj-lane pj-lane-center" data-lane="center" aria-hidden="true" inert></section>
-
-          <section class="pj-lane pj-lane-astra" id="pj-lane-astra" data-lane="astra" role="dialog" aria-modal="false" aria-labelledby="pj-lane-astra-title" tabindex="-1" inert>
-            <div class="pj-lane-shell">
-              <button class="pj-lane-back" type="button" data-lane-close aria-label="Back to Ascentra center">
-                <span aria-hidden="true">←</span>
+              <button type="button" class="pyramid-node left" data-goto-lane="operis" aria-label="Go to Operis">
+                <strong>Operis</strong>
               </button>
-              <p class="pj-kicker">Platform Journey</p>
-              <h2 class="pj-title pj-lane-title" id="pj-lane-astra-title" tabindex="-1">Astra</h2>
-              <p class="pj-subtitle">Autonomous inventory continuity with mission telemetry and resilient coverage.</p>
-              <div class="pj-lane-shell-grid" aria-label="Astra lane highlights">
-                <article class="pj-lane-tile"><h3>Autonomy</h3><p>Mission-based routes tuned for recurring counting cycles.</p></article>
-                <article class="pj-lane-tile"><h3>Signal Clarity</h3><p>Battery, coverage and mission health in a single layer.</p></article>
-                <article class="pj-lane-tile"><h3>Future Capacity</h3><p>Infrastructure-ready architecture for scaling warehouse networks.</p></article>
-              </div>
-              <a class="pj-cta" href="/astra/" aria-label="Open Astra destination">Open Astra</a>
+              <button type="button" class="pyramid-node right" data-goto-lane="astra" aria-label="Go to Astra">
+                <strong>Astra</strong>
+              </button>
             </div>
-          </section>
+          </main>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="operis-app" id="operis-app">
-      <div class="operis-app-container">
-        <div class="operis-header">
-          <div>
-            <div class="operis-logo" data-i18n="operis_title">Operis Dashboard</div>
-            <div class="operis-desc" data-i18n="operis_desc">Activated when consultants and operational leaders run site execution with your teams.</div>
-          </div>
-          <button class="btn pill operis-launch" id="operis-launch" type="button" data-i18n="operis_open_dashboard">Open Dashboard</button>
+      <section class="lane" data-lane-id="ascentra" aria-label="Ascentra lane">
+        <div class="lane-scroll lane-scroll-frame" data-lane-scroll="ascentra">
+          <h1 class="lane-title" tabindex="-1" data-lane-title="ascentra">Ascentra</h1>
+          <iframe title="Ascentra lane content" src="/ascentra/index.html" loading="lazy"></iframe>
         </div>
-        <div class="operis-runtime-strip" id="operis-runtime-strip">
-          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_mode">Mode</span><span class="runtime-value" id="operis-mode">Standby</span></div>
-          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_picks_hour">Picks/h</span><span class="runtime-value" id="operis-picks-hour">0</span></div>
-          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_repl_hour">Repl/h</span><span class="runtime-value" id="operis-repl-hour">0</span></div>
-          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_flow">Flow</span><span class="runtime-value" id="operis-flow-state">Nominal</span></div>
-          <div class="runtime-chip"><span class="runtime-label" data-i18n="operis_system_health">System Health</span><span class="runtime-value" id="operis-health">99.9%</span></div>
+      </section>
+
+      <section class="lane" data-lane-id="operis" aria-label="Operis lane">
+        <div class="lane-scroll lane-scroll-frame" data-lane-scroll="operis">
+          <h1 class="lane-title" tabindex="-1" data-lane-title="operis">Operis</h1>
+          <iframe title="Operis lane content" src="/operis/index.html" loading="lazy"></iframe>
         </div>
-        <div class="operis-dashboard">
-          <div class="operis-warehouse" id="operis-warehouse" tabindex="0" aria-label="Operis SCADA warehouse view">
-          </div>
-          <div class="operis-sidepanel">
-            <div class="operis-staff" id="operis-staff">
-            </div>
-            <div class="operis-charts" id="operis-charts">
-            </div>
-            <div class="operis-systems" id="operis-systems"></div>
-          </div>
+      </section>
+
+      <section class="lane" data-lane-id="astra" aria-label="Astra lane">
+        <div class="lane-scroll lane-scroll-frame" data-lane-scroll="astra">
+          <h1 class="lane-title" tabindex="-1" data-lane-title="astra">Astra</h1>
+          <iframe title="Astra lane content" src="/astra/index.html" loading="lazy"></iframe>
         </div>
-      </div>
-    </section>
-    <section class="platform-explorer" id="platform">
-      <div class="container">
-        <h2 class="section-title" data-i18n="platform_title">Platform</h2>
-        <div class="explorer-grid">
-          <nav class="explorer-nav" id="explorer-nav">
-            <button class="explorer-nav-btn active" data-platform="IFS" data-i18n="platform_ifs">IFS</button>
-            <button class="explorer-nav-btn" data-platform="IPS" data-i18n="platform_ips">IPS</button>
-            <button class="explorer-nav-btn" data-platform="ICS" data-i18n="platform_ics">ICS</button>
-            <button class="explorer-nav-btn" data-platform="Hardware" data-i18n="platform_hw">Hardware</button>
-          </nav>
-          <div class="explorer-panel" id="explorer-panel">
-            <div class="explorer-title" data-i18n="platform_ifs">IFS</div>
-            <div class="explorer-desc" data-i18n="platform_ifs_desc">Intelligent Factory Suite: Orchestrate, monitor, and optimize manufacturing operations in real time.</div>
-            <div class="explorer-kpis">
-              <div class="kpi-chip"><span class="kpi-label">OEE</span> <span class="kpi-value">98.2%</span></div>
-              <div class="kpi-chip"><span class="kpi-label">Downtime</span> <span class="kpi-value">1.1h/mo</span></div>
-              <div class="kpi-chip"><span class="kpi-label">Yield</span> <span class="kpi-value">99.7%</span></div>
-            </div>
-            <div class="explorer-chart">
-              <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <polyline points="0,38 20,30 40,20 60,10 80,12 100,8 120,6" stroke="#0B1F3A" stroke-width="3" fill="none"/>
-                <circle cx="120" cy="6" r="4" fill="#0B1F3A"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section class="usecases" id="usecases">
-      <div class="container">
-        <h2 class="section-title" data-i18n="usecases_title">Use Cases</h2>
-        <div class="usecase-cards">
-          <div class="usecase-card">
-            <div class="usecase-card-title" data-i18n="usecases_smart">Smart Manufacturing</div>
-            <div class="usecase-card-desc" data-i18n="usecases_smart_desc">Realtime insights &amp; control for next-gen factories.</div>
-          </div>
-          <div class="usecase-card">
-            <div class="usecase-card-title" data-i18n="usecases_energy">Energy Optimization</div>
-            <div class="usecase-card-desc" data-i18n="usecases_energy_desc">Reduce waste, maximize uptime, sustainable operations.</div>
-          </div>
-          <div class="usecase-card">
-            <div class="usecase-card-title" data-i18n="usecases_infra">Critical Infrastructure</div>
-            <div class="usecase-card-desc" data-i18n="usecases_infra_desc">Secure, resilient, and scalable for mission-critical needs.</div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-  <footer class="footer">
-    <div class="container">
-      <span>&copy; 2026 Ascentra. All rights reserved.</span>
+      </section>
     </div>
-  </footer>
-  <div class="ambient-bg"></div>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script src="/assets/js/lane-navigator.js?v=20260226a" defer></script>
-  <script src="/assets/js/platform-journey.js?v=20260226a" defer></script>
-  <script src="/assets/app.js?v=20260225k" defer></script>
+  </div>
+
+  <script src="/assets/js/lane-shell.js?v=20260226a" defer></script>
 </body>
 </html>
