@@ -6,7 +6,7 @@
   <title>Operis | Workforce & Warehouse Excellence</title>
   <meta name="description" content="Operis brengt logistiek- en warehouseprofessionals, dashboarding en Ascentra Supply Chain consulting samen voor blijvend operationeel resultaat.">
   <link rel="stylesheet" href="/assets/styles.css?v=20260225o">
-  <link rel="stylesheet" href="/assets/css/operis-experience.css?v=20260226e">
+  <link rel="stylesheet" href="/assets/css/operis-experience.css?v=20260226f">
 </head>
 <body class="operis-page">
   <div class="operis-bg" aria-hidden="true"></div>
@@ -107,12 +107,17 @@
             <div class="compare-head">
               <p class="hero-eyebrow">Before vs After</p>
               <strong><span id="compare-percent">58</span>% Operis + Ascentra impact</strong>
+              <div class="compare-modes" role="group" aria-label="Comparison scenario mode">
+                <button type="button" class="compare-mode active" data-compare-mode="operations">Operations</button>
+                <button type="button" class="compare-mode" data-compare-mode="analytics">Analytics</button>
+                <button type="button" class="compare-mode" data-compare-mode="support">Support</button>
+              </div>
             </div>
 
             <div class="compare-shell" data-compare-shell style="--split:58%;">
               <div class="compare-pane compare-before">
                 <h4>Before</h4>
-                <ul>
+                <ul id="compare-before-list">
                   <li>Labor visibility fragmented</li>
                   <li>Throughput variance between shifts</li>
                   <li>Limited SC support on escalations</li>
@@ -121,7 +126,7 @@
 
               <div class="compare-pane compare-after" aria-hidden="true">
                 <h4>After</h4>
-                <ul>
+                <ul id="compare-after-list">
                   <li>Live BI with direct labor transparency</li>
                   <li>Stabilized zone throughput performance</li>
                   <li>Embedded SC consulting support model</li>
@@ -133,6 +138,24 @@
             </div>
 
             <input id="compare-range" class="compare-range" type="range" min="15" max="85" value="58" aria-label="Comparison split">
+
+            <div class="compare-metric-grid" aria-label="Scenario impact metrics">
+              <div class="compare-metric">
+                <div class="compare-metric-label" id="cmp-m1-label">Throughput</div>
+                <div class="compare-metric-values"><span class="compare-before-value" id="cmp-m1-before">980/h</span><span class="compare-after-value" id="cmp-m1-after">1,220/h</span></div>
+                <div class="compare-delta" id="cmp-m1-delta">+240/h</div>
+              </div>
+              <div class="compare-metric">
+                <div class="compare-metric-label" id="cmp-m2-label">Stability</div>
+                <div class="compare-metric-values"><span class="compare-before-value" id="cmp-m2-before">82%</span><span class="compare-after-value" id="cmp-m2-after">93%</span></div>
+                <div class="compare-delta" id="cmp-m2-delta">+11pp</div>
+              </div>
+              <div class="compare-metric">
+                <div class="compare-metric-label" id="cmp-m3-label">Escalations</div>
+                <div class="compare-metric-values"><span class="compare-before-value" id="cmp-m3-before">18/wk</span><span class="compare-after-value" id="cmp-m3-after">11/wk</span></div>
+                <div class="compare-delta" id="cmp-m3-delta">-7/wk</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -231,6 +254,6 @@
     </section>
   </main>
 
-  <script src="/assets/js/operis-experience.js?v=20260226d" defer></script>
+  <script src="/assets/js/operis-experience.js?v=20260226f" defer></script>
 </body>
 </html>

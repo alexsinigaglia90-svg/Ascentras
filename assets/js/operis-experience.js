@@ -159,11 +159,12 @@
   function setupCinematicStory() {
     const section = document.querySelector('[data-cinematic]');
     const stage = document.getElementById('cinematic-stage');
+    const sticky = section?.querySelector('.cinematic-sticky');
     const progress = document.getElementById('cinematic-progress-fill');
     const scenes = Array.from(document.querySelectorAll('.cinematic-scene'));
     const dots = Array.from(document.querySelectorAll('[data-jump-scene]'));
 
-    if (!section || !stage || !progress || scenes.length === 0) return;
+    if (!section || !stage || !sticky || !progress || scenes.length === 0) return;
 
     const mobile = window.matchMedia('(max-width: 1024px)').matches;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -178,24 +179,27 @@
     }
 
     function applyStageHeight() {
+      const viewport = window.innerHeight || document.documentElement.clientHeight || 900;
       const largestScene = scenes.reduce((maxHeight, scene) => Math.max(maxHeight, scene.scrollHeight || 0), 0);
-      const stageHeight = Math.max(300, Math.min(460, Math.round(largestScene + 64)));
+      const viewportBased = Math.round(viewport * 0.44);
+      const stageHeight = Math.max(340, Math.min(540, Math.max(viewportBased, Math.round(largestScene + 72))));
       section.style.setProperty('--operis-cinematic-stage-height', `${stageHeight}px`);
       return stageHeight;
     }
 
     function applyDynamicHeight() {
       const viewport = window.innerHeight || document.documentElement.clientHeight || 900;
-      const stickyOffset = 92;
       const stageHeight = applyStageHeight();
+      const stickyHeight = Math.max(sticky.offsetHeight || 0, stageHeight + 240);
       const sceneSteps = Math.max(1, scenes.length - 1);
-      const scrollPerStep = Math.max(260, Math.round(viewport * 0.42));
-      const total = stageHeight + stickyOffset + sceneSteps * scrollPerStep + 96;
-      section.style.setProperty('--operis-cinematic-height', `${Math.max(total, viewport + 220)}px`);
+      const scrollPerStep = Math.max(220, Math.round(viewport * 0.34));
+      const total = stickyHeight + sceneSteps * scrollPerStep + 64;
+      section.style.setProperty('--operis-cinematic-height', `${Math.round(total)}px`);
     }
 
     applyDynamicHeight();
     section.classList.add('operis-cinematic-ready');
+    let currentSceneIndex = -1;
 
     function setScene(index, ratio) {
       scenes.forEach((scene, sceneIndex) => {
@@ -207,6 +211,11 @@
       });
 
       progress.style.width = `${Math.max(0, Math.min(100, ratio * 100)).toFixed(2)}%`;
+
+      if (index !== currentSceneIndex) {
+        currentSceneIndex = index;
+        document.dispatchEvent(new CustomEvent('operis:scenechange', { detail: { index, ratio } }));
+      }
     }
 
     function calculateProgress() {
@@ -323,11 +332,158 @@
     const shell = document.querySelector('[data-compare-shell]');
     const range = document.getElementById('compare-range');
     const percent = document.getElementById('compare-percent');
-    if (!shell || !range || !percent) return;
+    const beforeList = document.getElementById('compare-before-list');
+    const afterList = document.getElementById('compare-after-list');
+    const modeButtons = Array.from(document.querySelectorAll('[data-compare-mode]'));
+
+    const m1Label = document.getElementById('cmp-m1-label');
+    const m1Before = document.getElementById('cmp-m1-before');
+    const m1After = document.getElementById('cmp-m1-after');
+    const m1Delta = document.getElementById('cmp-m1-delta');
+    const m2Label = document.getElementById('cmp-m2-label');
+    const m2Before = document.getElementById('cmp-m2-before');
+    const m2After = document.getElementById('cmp-m2-after');
+    const m2Delta = document.getElementById('cmp-m2-delta');
+    const m3Label = document.getElementById('cmp-m3-label');
+    const m3Before = document.getElementById('cmp-m3-before');
+    const m3After = document.getElementById('cmp-m3-after');
+    const m3Delta = document.getElementById('cmp-m3-delta');
+
+    if (!shell || !range || !percent || !beforeList || !afterList || !modeButtons.length || !m1Label || !m1Before || !m1After || !m1Delta || !m2Label || !m2Before || !m2After || !m2Delta || !m3Label || !m3Before || !m3After || !m3Delta) return;
+
+    const modeToScene = {
+      operations: 0,
+      analytics: 1,
+      support: 2
+    };
+
+    const sceneToMode = {
+      0: 'operations',
+      1: 'analytics',
+      2: 'support'
+    };
+
+    const scenarios = {
+      operations: {
+        title: 'Operations',
+        baseImpact: 45,
+        impactRange: 26,
+        before: [
+          'Labor visibility fragmented',
+          'Throughput variance between shifts',
+          'Ramp-up quality differs by team'
+        ],
+        after: [
+          'Real-time workforce balancing by zone',
+          'Shift output stabilized with floor steering',
+          'Standard work adoption across teams'
+        ],
+        metrics: [
+          { label: 'Throughput', before: 980, gain: 280, suffix: '/h', decimals: 0, higherIsBetter: true },
+          { label: 'Stability', before: 82, gain: 14, suffix: '%', decimals: 1, higherIsBetter: true },
+          { label: 'Escalations', before: 18, gain: -10, suffix: '/wk', decimals: 0, higherIsBetter: false }
+        ]
+      },
+      analytics: {
+        title: 'Analytics',
+        baseImpact: 48,
+        impactRange: 24,
+        before: [
+          'No shared KPI narrative between shifts',
+          'Reactive decision-making from lagging reports',
+          'Limited benchmark visibility per role'
+        ],
+        after: [
+          'Live dashboards with role-level accountability',
+          'Proactive steering from lead indicators',
+          '30/60/90-day trend views per employee cohort'
+        ],
+        metrics: [
+          { label: 'Decision latency', before: 28, gain: -16, suffix: ' min', decimals: 0, higherIsBetter: false },
+          { label: 'Forecast accuracy', before: 71, gain: 18, suffix: '%', decimals: 1, higherIsBetter: true },
+          { label: 'Planning misses', before: 14, gain: -8, suffix: '/wk', decimals: 0, higherIsBetter: false }
+        ]
+      },
+      support: {
+        title: 'Support',
+        baseImpact: 50,
+        impactRange: 22,
+        before: [
+          'Escalations handled without SC governance model',
+          'Improvement actions not structurally sustained',
+          'Knowledge transfer depends on individuals'
+        ],
+        after: [
+          'Ascentra SC escalation lane with response standards',
+          'Governed improvement cadence after deployment',
+          'Handover playbooks with KPI continuity checks'
+        ],
+        metrics: [
+          { label: 'Escalation SLA', before: 74, gain: 22, suffix: '%', decimals: 1, higherIsBetter: true },
+          { label: 'Issue recovery', before: 42, gain: -19, suffix: ' min', decimals: 0, higherIsBetter: false },
+          { label: 'Retention of gains', before: 58, gain: 24, suffix: '%', decimals: 1, higherIsBetter: true }
+        ]
+      }
+    };
 
     const min = Number(range.min || 15);
     const max = Number(range.max || 85);
     let dragging = false;
+    let activeMode = 'operations';
+
+    function formatMetric(value, config) {
+      if (config.decimals > 0) return `${value.toFixed(config.decimals)}${config.suffix}`;
+      return `${Math.round(value)}${config.suffix}`;
+    }
+
+    function renderBullets(target, items) {
+      target.innerHTML = items.map((item) => `<li>${item}</li>`).join('');
+    }
+
+    function renderMetrics(intensity) {
+      const scenario = scenarios[activeMode] || scenarios.operations;
+      const entries = scenario.metrics;
+      const view = [
+        [m1Label, m1Before, m1After, m1Delta, entries[0]],
+        [m2Label, m2Before, m2After, m2Delta, entries[1]],
+        [m3Label, m3Before, m3After, m3Delta, entries[2]]
+      ];
+
+      view.forEach(([labelEl, beforeEl, afterEl, deltaEl, metric]) => {
+        const before = metric.before;
+        const after = metric.before + metric.gain * intensity;
+        const delta = after - before;
+
+        labelEl.textContent = metric.label;
+        beforeEl.textContent = formatMetric(before, metric);
+        afterEl.textContent = formatMetric(after, metric);
+
+        const sign = delta >= 0 ? '+' : '-';
+        const deltaAbs = Math.abs(delta);
+        const deltaText = metric.suffix === '%' ? `${sign}${deltaAbs.toFixed(metric.decimals)}pp` : `${sign}${metric.decimals > 0 ? deltaAbs.toFixed(metric.decimals) : Math.round(deltaAbs)}${metric.suffix}`;
+        deltaEl.textContent = deltaText;
+      });
+    }
+
+    function setActiveMode(mode, skipScrollSync) {
+      if (!scenarios[mode]) return;
+      activeMode = mode;
+
+      modeButtons.forEach((button) => {
+        button.classList.toggle('active', button.getAttribute('data-compare-mode') === mode);
+      });
+
+      const scenario = scenarios[mode];
+      renderBullets(beforeList, scenario.before);
+      renderBullets(afterList, scenario.after);
+
+      if (!skipScrollSync) {
+        const sceneIndex = modeToScene[mode] ?? 0;
+        document.dispatchEvent(new CustomEvent('operis:comparemodechange', { detail: { mode, sceneIndex } }));
+      }
+
+      update(Number(range.value));
+    }
 
     function clamp(value) {
       return Math.max(min, Math.min(max, value));
@@ -337,7 +493,10 @@
       const next = clamp(value);
       shell.style.setProperty('--split', `${next}%`);
       range.value = `${next}`;
-      percent.textContent = `${Math.round(next)}`;
+      const intensity = (next - min) / Math.max(1, max - min);
+      const scenario = scenarios[activeMode] || scenarios.operations;
+      percent.textContent = `${Math.round(scenario.baseImpact + scenario.impactRange * intensity)}`;
+      renderMetrics(intensity);
     }
 
     function updateFromClientX(clientX) {
@@ -348,6 +507,20 @@
 
     range.addEventListener('input', () => {
       update(Number(range.value));
+    });
+
+    modeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const mode = button.getAttribute('data-compare-mode');
+        if (!mode) return;
+        setActiveMode(mode, false);
+      });
+    });
+
+    document.addEventListener('operis:scenechange', (event) => {
+      const sceneIndex = event.detail?.index;
+      const nextMode = sceneToMode[sceneIndex] || 'operations';
+      setActiveMode(nextMode, true);
     });
 
     shell.addEventListener('mousedown', (event) => {
@@ -380,7 +553,7 @@
       dragging = false;
     }, { passive: true });
 
-    update(Number(range.value));
+    setActiveMode('operations', true);
   }
 
   window.addEventListener('DOMContentLoaded', () => {

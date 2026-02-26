@@ -241,7 +241,7 @@ main {
   background: color-mix(in srgb, var(--surface) 90%, var(--bg) 10%);
   box-shadow: var(--shadow);
   padding: 0.95rem;
-  min-height: min(64vh, 560px);
+  min-height: clamp(520px, calc(100vh - 108px), 680px);
   display: grid;
   grid-template-columns: 0.74fr 1fr auto;
   gap: 0.78rem;
@@ -407,6 +407,31 @@ main {
   margin-bottom: 0.44rem;
 }
 
+.compare-modes {
+  display: flex;
+  gap: 0.34rem;
+  flex-wrap: wrap;
+}
+
+.compare-mode {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--bg) 8%);
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.24rem 0.52rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.compare-mode.active {
+  color: var(--blue);
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--gold) 42%);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface) 90%);
+}
+
 .compare-head strong {
   color: var(--blue);
   font-size: 0.84rem;
@@ -497,6 +522,52 @@ main {
   margin-top: 0.52rem;
   width: 100%;
   accent-color: var(--accent);
+}
+
+.compare-metric-grid {
+  margin-top: 0.58rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.compare-metric {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--bg) 8%);
+  padding: 0.42rem 0.52rem;
+}
+
+.compare-metric-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.compare-metric-values {
+  margin-top: 0.2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.compare-before-value {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.compare-after-value {
+  font-size: 0.9rem;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.compare-delta {
+  margin-top: 0.14rem;
+  font-size: 0.74rem;
+  color: var(--blue);
 }
 
 .section-head h2 {
@@ -734,6 +805,10 @@ main {
 
   .cinematic-compare {
     padding: 0.58rem;
+  }
+
+  .compare-metric-grid {
+    grid-template-columns: 1fr;
   }
 
   .cinematic-dot {
