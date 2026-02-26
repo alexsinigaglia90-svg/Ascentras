@@ -1358,22 +1358,6 @@ function SceneRig({
     );
   }
 
-  function OverheadLamp({ position }: { position: [number, number, number] }) {
-    return (
-      <group position={position}>
-        <mesh castShadow>
-          <cylinderGeometry args={[0.12, 0.16, 0.12, 18]} />
-          <meshStandardMaterial color="#334b6a" emissive="#4f719f" emissiveIntensity={0.12} roughness={0.34} metalness={0.24} />
-        </mesh>
-        <mesh position={[0, -0.12, 0]}>
-          <cylinderGeometry args={[0.21, 0.11, 0.12, 18]} />
-          <meshStandardMaterial color="#dcecff" emissive="#9ac0ee" emissiveIntensity={0.24} roughness={0.18} metalness={0.08} />
-        </mesh>
-        <pointLight color="#dbeaff" intensity={performanceMode ? 1.12 : 1.28} distance={performanceMode ? 10.5 : 13} decay={1.9} position={[0, -0.04, 0]} />
-      </group>
-    );
-  }
-
   function MachineProcessor({ stations, phaseOffset }: { stations: StationSet; phaseOffset: number }) {
     const [mx, , mz] = cellToWorld(stations.machine, 0.28);
     const [px, , pz] = cellToWorld(stations.packingTable, 0.28);
@@ -1781,31 +1765,17 @@ function SceneRig({
     }
   });
 
-  const overheadLampPositions = performanceMode ? [-14.8, -8.8, 0, 8.8, 14.8] : [-14.8, -11.8, -8.8, 8.8, 11.8, 14.8];
-
   return (
     <>
       <fog attach="fog" args={['#1d1511', 78, 168]} />
       <ambientLight intensity={0.22} color="#d9be9a" />
       <directionalLight
-        castShadow
         position={[12.2, 18.6, 10.4]}
-        intensity={1.22}
+        intensity={1.1}
         color="#f2d2a5"
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-camera-near={6}
-        shadow-camera-far={48}
-        shadow-camera-left={-12}
-        shadow-camera-right={12}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
-        shadow-radius={performanceMode ? 4.2 : 5.2}
-        shadow-bias={-0.00012}
       />
-      <pointLight position={[-9.6, 6.2, -6]} color="#8ea2c3" intensity={0.6} distance={26} decay={2.2} />
-      <pointLight position={[10.4, 5.4, 7.2]} color="#f1cc9d" intensity={0.5} distance={18} decay={2.1} />
-      <pointLight position={[0, 3.6, -11.8]} color="#a7b7cf" intensity={0.35} distance={16} decay={2.25} />
+      <pointLight position={[-9.6, 6.2, -6]} color="#8ea2c3" intensity={0.4} distance={12} decay={2.2} />
+      <pointLight position={[10.4, 5.4, 7.2]} color="#f1cc9d" intensity={0.34} distance={10} decay={2.1} />
 
       <mesh position={[0, -0.27, 0]} receiveShadow>
         <boxGeometry args={[floorWidth + 1.6, 0.62, floorDepth + 1.6]} />
@@ -1904,10 +1874,6 @@ function SceneRig({
 
       <StorageRackField />
       <StoragePallets />
-      {overheadLampPositions.map((x, index) => (
-        <OverheadLamp key={`lamp-${index}`} position={[x, 3.3, 0.6]} />
-      ))}
-
       {phase === 'build' ? (
         <>
           <Forklift cell={{ col: 0.6, row: 0.8 }} heading={Math.PI * 0.28} />
@@ -2144,7 +2110,6 @@ export function ThreeScene(props: ThreeSceneProps) {
   const [webglAvailable, setWebglAvailable] = useState(true);
   const [canvasFailed, setCanvasFailed] = useState(false);
   const [performanceMode, setPerformanceMode] = useState(false);
-  const [autoPerformanceMode, setAutoPerformanceMode] = useState(false);
 
   useEffect(() => {
     const supported = supportsWebGL();
@@ -2171,29 +2136,9 @@ export function ThreeScene(props: ThreeSceneProps) {
       fallbackRender={() => <BackgroundFallback reason="Canvas runtime error" />}
     >
       <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl border border-borderline/70 bg-slate-950/35">
-        <div className="pointer-events-auto absolute right-3 top-3 z-20 flex items-center gap-2 rounded-md border border-borderline/70 bg-panel/75 px-2 py-1 text-[11px] text-slate-200 backdrop-blur-sm">
-          <span className="opacity-85">Performance</span>
-          <button
-            type="button"
-            className="rounded border border-borderline/70 bg-slate-900/70 px-2 py-0.5 text-[11px] font-medium text-slate-100 transition hover:bg-slate-800/80"
-            onClick={() => {
-              setPerformanceMode((current) => {
-                const next = !current;
-                if (!next) {
-                  setAutoPerformanceMode(false);
-                }
-                return next;
-              });
-            }}
-            aria-pressed={performanceMode}
-            aria-label="Toggle performance mode"
-          >
-            {performanceMode ? (autoPerformanceMode ? 'AUTO ON' : 'ON') : 'OFF'}
-          </button>
-        </div>
         <Canvas
           key={performanceMode ? 'performance' : 'quality'}
-          shadows
+          shadows={false}
           dpr={performanceMode ? [1, 1.2] : [1, 1.5]}
           camera={{ position: [18.6, 14.8, 18.6], fov: 30 }}
           gl={{ antialias: !performanceMode, powerPreference: 'high-performance' }}
@@ -2218,7 +2163,6 @@ export function ThreeScene(props: ThreeSceneProps) {
             performanceMode={performanceMode}
             onAutoPerformanceMode={() => {
               setPerformanceMode(true);
-              setAutoPerformanceMode(true);
             }}
           />
         </Canvas>
