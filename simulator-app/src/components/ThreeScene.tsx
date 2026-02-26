@@ -16,6 +16,7 @@ import {
   type StationSet
 } from '../hooks/useSimulationModel';
 import { ErrorBoundary } from './ErrorBoundary';
+import { ASCENTRA_THEME, MOVER_THEME, STATION_THEME } from '../theme/ascentraTheme';
 
 type ThreeSceneProps = {
   phase: Phase;
@@ -79,16 +80,16 @@ function labelTexture(label: string): THREE.CanvasTexture {
   }
 
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = 'rgba(5, 11, 20, 0.78)';
+  context.fillStyle = 'rgba(7, 12, 20, 0.8)';
   context.beginPath();
   context.roundRect(10, 16, 236, 94, 24);
   context.fill();
 
-  context.strokeStyle = 'rgba(145, 181, 231, 0.72)';
+  context.strokeStyle = 'rgba(144, 184, 236, 0.74)';
   context.lineWidth = 4;
   context.stroke();
 
-  context.fillStyle = '#e7f0ff';
+  context.fillStyle = '#e8f1ff';
   context.font = '700 38px Inter, Segoe UI, Arial';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
@@ -219,17 +220,17 @@ function Conveyor({ from, to }: { from: GridCell; to: GridCell }) {
       <BeveledBlock
         size={[length, 0.08, 0.4]}
         radius={0.08}
-        color="#293a52"
-        emissive="#3d587d"
+        color={STATION_THEME.conveyorBase}
+        emissive={STATION_THEME.conveyorTrack}
         emissiveIntensity={0.2}
-        stripColor="#86aee2"
+        stripColor={STATION_THEME.strip}
         stripOpacity={0.78}
       />
       <group ref={stripeRef}>
         {new Array(6).fill(0).map((_, index) => (
           <mesh key={index} castShadow>
             <boxGeometry args={[0.28, 0.012, 0.18]} />
-            <meshStandardMaterial color="#9fc0ec" emissive="#7ea9e2" emissiveIntensity={0.4} roughness={0.34} metalness={0.24} />
+            <meshStandardMaterial color={STATION_THEME.conveyorStripe} emissive={STATION_THEME.strip} emissiveIntensity={0.4} roughness={0.34} metalness={0.24} />
           </mesh>
         ))}
       </group>
@@ -245,21 +246,40 @@ function StationObject({ cell, title, accent, scale = [0.88, 0.42, 0.88] as [num
 }) {
   const [texture] = useState(() => labelTexture(title));
   const [x, y, z] = cellToWorld(cell, 0.24);
+  const ledRef = useRef<THREE.MeshStandardMaterial | null>(null);
+
+  useFrame(({ clock }) => {
+    if (!ledRef.current) return;
+    const pulse = 0.35 + (Math.sin(clock.elapsedTime * 2.1 + x * 0.12 + z * 0.08) + 1) * 0.26;
+    ledRef.current.emissiveIntensity = pulse;
+  });
 
   return (
     <group position={[x, y, z]}>
       <BeveledBlock
-        size={scale}
-        radius={0.1}
-        color="#263548"
+        size={[scale[0] * 1.06, scale[1] * 0.58, scale[2] * 1.06]}
+        radius={ASCENTRA_THEME.radius.machine}
+        color={STATION_THEME.base}
         emissive={accent}
-        emissiveIntensity={0.24}
-        stripColor="#96b7e3"
-        stripOpacity={0.72}
+        emissiveIntensity={0.2}
+        stripColor={STATION_THEME.strip}
+        stripOpacity={0.64}
       />
-      <mesh position={[0, 0.24, 0]} castShadow receiveShadow>
-        <boxGeometry args={[scale[0] * 0.88, 0.04, scale[2] * 0.88]} />
-        <meshStandardMaterial color="#8ab0e2" emissive="#7da6dd" emissiveIntensity={0.2} roughness={0.28} metalness={0.3} />
+      <mesh position={[0, 0.18, 0]} castShadow receiveShadow>
+        <boxGeometry args={[scale[0] * 0.92, scale[1] * 0.76, scale[2] * 0.92]} />
+        <meshStandardMaterial color={STATION_THEME.housing} emissive={accent} emissiveIntensity={0.16} roughness={0.3} metalness={0.26} />
+      </mesh>
+      <mesh position={[0, 0.36, 0]} castShadow receiveShadow>
+        <boxGeometry args={[scale[0] * 0.8, 0.05, scale[2] * 0.8]} />
+        <meshStandardMaterial color={STATION_THEME.top} emissive={STATION_THEME.strip} emissiveIntensity={0.25} roughness={0.24} metalness={0.3} />
+      </mesh>
+      <mesh position={[0, 0.34, scale[2] * 0.38]}>
+        <boxGeometry args={[scale[0] * 0.62, 0.02, 0.03]} />
+        <meshStandardMaterial color={STATION_THEME.strip} emissive={STATION_THEME.strip} emissiveIntensity={0.45} transparent opacity={0.85} roughness={0.18} metalness={0.2} />
+      </mesh>
+      <mesh position={[scale[0] * 0.31, 0.38, scale[2] * 0.31]} castShadow>
+        <cylinderGeometry args={[0.03, 0.03, 0.02, 14]} />
+        <meshStandardMaterial ref={ledRef} color={STATION_THEME.led} emissive={STATION_THEME.led} emissiveIntensity={0.42} roughness={0.2} metalness={0.22} />
       </mesh>
       <sprite position={[0, 0.52, 0]} scale={[1.16, 0.5, 1]}>
         <spriteMaterial map={texture} transparent depthWrite={false} />
@@ -317,6 +337,7 @@ function Tile({
   onPointerOut?: (event: ThreeEvent<PointerEvent>) => void;
 }) {
   const [tex] = useState(() => labelTexture(tile.kind));
+  const moverTone = MOVER_THEME[tile.kind];
   const groupRef = useRef<THREE.Group | null>(null);
   const smooth = useRef(new THREE.Vector3());
 
@@ -352,13 +373,13 @@ function Tile({
       <group>
         <BeveledBlock
           size={[0.82, 0.34, 0.82]}
-          radius={0.1}
-          color={tile.kind === 'F' ? '#6ca9ff' : tile.kind === 'M' ? '#8caed9' : '#a4b3c4'}
-          emissive={tile.kind === 'F' ? '#4c8ef5' : tile.kind === 'M' ? '#6f91bb' : '#708196'}
+          radius={ASCENTRA_THEME.radius.tile}
+          color={moverTone.tileColor}
+          emissive={moverTone.tileEmissive}
           emissiveIntensity={0.16 + (hover ? 0.18 : 0) + (active ? 0.24 : 0)}
           roughness={0.36}
           metalness={0.3}
-          stripColor={tile.kind === 'F' ? '#9cc3ff' : tile.kind === 'M' ? '#a8c7e9' : '#b8c6d8'}
+          stripColor={moverTone.tileStrip}
           stripOpacity={hover ? 0.94 : 0.74}
         />
       </group>
@@ -762,7 +783,7 @@ export function ThreeScene(props: ThreeSceneProps) {
             }
           }}
         >
-          <color attach="background" args={['#060b12']} />
+          <color attach="background" args={[ASCENTRA_THEME.color.neutral0]} />
           <SceneRig {...props} />
         </Canvas>
       </div>

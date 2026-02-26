@@ -1,5 +1,6 @@
 import { MetricsStrip } from './MetricsStrip';
 import { type BuildCounts, type BuildMetrics, type Mission, type Phase, type TileKind } from '../hooks/useSimulationModel';
+import { MOVER_THEME } from '../theme/ascentraTheme';
 
 type HumanPanelProps = {
   mission: Mission;
@@ -19,11 +20,7 @@ type HumanPanelProps = {
   onReset: () => void;
 };
 
-const KINDS: Array<{ kind: TileKind; title: string }> = [
-  { kind: 'F', title: 'Fast' },
-  { kind: 'M', title: 'Mid' },
-  { kind: 'S', title: 'Slow' }
-];
+const KINDS: TileKind[] = ['F', 'M', 'S'];
 
 export function HumanPanel({
   mission,
@@ -47,12 +44,12 @@ export function HumanPanel({
   return (
     <aside className="glass-panel">
       <header className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-50">Human Mission</h2>
-        <p className="mt-1 text-sm text-slate-300">Build your pick circuit on the left half and prepare for the 09:00–17:00 run.</p>
+        <h2 className="text-lg font-semibold tracking-[0.01em] text-slate-50">Human Mission</h2>
+        <p className="mt-1 text-sm text-slate-300/95">Build your pick circuit on the left half and prepare for the 09:00–17:00 run.</p>
       </header>
 
-      <section className="rounded-xl border border-borderline bg-panel/70 p-3 backdrop-blur-md">
-        <h3 className="mb-2 text-[0.73rem] uppercase tracking-[0.14em] text-slate-300">Mission Brief</h3>
+      <section className="subpanel">
+        <h3 className="mb-2 text-[0.7rem] uppercase tracking-[0.16em] text-slate-300">Mission Brief</h3>
         <ul className="space-y-1.5 text-sm text-slate-200">
           <li>Peak season window: {mission.startLabel}–{mission.endLabel}</li>
           <li>Target orders: {mission.targetOrders.toLocaleString()}</li>
@@ -60,48 +57,50 @@ export function HumanPanel({
         </ul>
       </section>
 
-      <section className="mt-3 rounded-xl border border-borderline bg-panel/70 p-3 backdrop-blur-md">
-        <h3 className="mb-2 text-[0.73rem] uppercase tracking-[0.14em] text-slate-300">Build Controls</h3>
+      <section className="subpanel mt-3">
+        <h3 className="mb-2 text-[0.7rem] uppercase tracking-[0.16em] text-slate-300">Build Controls</h3>
         <div className="grid gap-2">
-          {KINDS.map((entry) => (
-            <div key={entry.kind} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+          {KINDS.map((kind) => (
+            <div key={kind} className="grid grid-cols-[1fr_1fr_auto] gap-2">
               <button
                 type="button"
                 disabled={!canEdit}
-                onClick={() => onAddTile(entry.kind)}
-                className="rounded-lg border border-borderline bg-slate-900/55 px-3 py-2 text-left text-sm text-slate-100 transition hover:border-blue-300/70 hover:bg-blue-900/30 disabled:cursor-not-allowed disabled:opacity-45"
+                onClick={() => onAddTile(kind)}
+                className="control-btn text-left"
               >
-                Add {entry.title}
+                <span className={`mover-chip ${MOVER_THEME[kind].uiClass}`}>{MOVER_THEME[kind].label}</span>
+                <span className="ml-2">Add</span>
               </button>
               <button
                 type="button"
-                disabled={!canEdit || counts[entry.kind] === 0}
-                onClick={() => onRemoveTile(entry.kind)}
-                className="rounded-lg border border-borderline bg-slate-900/50 px-3 py-2 text-left text-sm text-slate-200 transition hover:border-blue-300/60 hover:bg-blue-900/22 disabled:cursor-not-allowed disabled:opacity-45"
+                disabled={!canEdit || counts[kind] === 0}
+                onClick={() => onRemoveTile(kind)}
+                className="control-btn text-left"
               >
-                Remove {entry.title}
+                <span className={`mover-chip ${MOVER_THEME[kind].uiClass}`}>{MOVER_THEME[kind].label}</span>
+                <span className="ml-2">Remove</span>
               </button>
-              <div className="flex items-center justify-center rounded-lg border border-borderline/70 bg-slate-900/45 px-2 text-sm text-slate-100">
-                {counts[entry.kind]}
+              <div className="flex items-center justify-center rounded-lg border border-borderline/70 bg-slate-900/45 px-2 text-sm text-slate-100 shadow-[inset_0_1px_0_rgba(223,236,255,0.08)]">
+                <span className={`mover-chip ${MOVER_THEME[kind].uiClass}`}>{counts[kind]}</span>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="mt-3 rounded-xl border border-borderline bg-panel/70 p-3 backdrop-blur-md">
-        <h3 className="mb-2 text-[0.73rem] uppercase tracking-[0.14em] text-slate-300">Runtime</h3>
+      <section className="subpanel mt-3">
+        <h3 className="mb-2 text-[0.7rem] uppercase tracking-[0.16em] text-slate-300">Runtime</h3>
         <div className="grid gap-2 text-sm text-slate-200">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-300">Simulation clock</span>
+          <div className="metric-row">
+            <span className="metric-label">Simulation clock</span>
             <strong>{simClockLabel}</strong>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-300">Speed factor</span>
+          <div className="metric-row">
+            <span className="metric-label">Speed factor</span>
             <strong>{simSpeed}x</strong>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-300">Placed locations</span>
+          <div className="metric-row">
+            <span className="metric-label">Placed locations</span>
             <strong>{total}</strong>
           </div>
         </div>
@@ -112,7 +111,7 @@ export function HumanPanel({
           type="button"
           disabled={!humanReady || phase !== 'build'}
           onClick={onReady}
-          className="rounded-lg border border-blue-200/55 bg-blue-700/35 px-3 py-2 text-sm text-slate-50 transition hover:border-blue-100/80 hover:bg-blue-600/45 disabled:cursor-not-allowed disabled:opacity-45"
+          className="control-btn control-btn-active"
         >
           Ready
         </button>
@@ -120,7 +119,7 @@ export function HumanPanel({
           type="button"
           onClick={onStart}
           disabled={!canStartSimulation}
-          className="rounded-lg border border-borderline bg-slate-900/55 px-3 py-2 text-sm text-slate-100 transition hover:border-blue-300/70 hover:bg-blue-900/30 disabled:cursor-not-allowed disabled:opacity-45"
+          className="control-btn"
         >
           Start Simulation
         </button>
@@ -128,14 +127,14 @@ export function HumanPanel({
           type="button"
           onClick={onPause}
           disabled={phase !== 'simulating'}
-          className="rounded-lg border border-borderline bg-slate-900/55 px-3 py-2 text-sm text-slate-100 transition hover:border-blue-300/70 hover:bg-blue-900/30 disabled:cursor-not-allowed disabled:opacity-45"
+          className="control-btn"
         >
           Pause
         </button>
         <button
           type="button"
           onClick={onReset}
-          className="rounded-lg border border-borderline bg-slate-900/55 px-3 py-2 text-sm text-slate-100 transition hover:border-blue-300/70 hover:bg-blue-900/30"
+          className="control-btn"
         >
           Reset
         </button>

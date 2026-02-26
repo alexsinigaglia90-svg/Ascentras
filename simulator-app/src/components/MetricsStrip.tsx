@@ -37,7 +37,7 @@ function AnimatedValue({ value, digits = 1, suffix = '' }: { value: number; digi
 }
 
 export function MetricsStrip({ metrics, score }: MetricsStripProps) {
-  const items = [
+  const items: Array<{ label: string; value: number; digits?: number; suffix?: string }> = [
     { label: 'Travel Distance', value: metrics.travelDistance },
     { label: 'Congestion Penalty', value: metrics.congestionPenalty },
     { label: 'Zoning Score', value: metrics.zoningScore },
@@ -45,17 +45,17 @@ export function MetricsStrip({ metrics, score }: MetricsStripProps) {
   ];
 
   return (
-    <section className="rounded-xl border border-borderline bg-panel/90 p-3 shadow-panel backdrop-blur-md">
+    <section className="subpanel">
       <div className="mb-3 flex items-baseline justify-between">
-        <span className="text-[0.72rem] uppercase tracking-[0.14em] text-slate-300">Efficiency Index</span>
-        <strong className="text-2xl font-semibold text-slate-50 tabular-nums">
+        <span className="text-[0.7rem] uppercase tracking-[0.16em] text-slate-300">Efficiency Index</span>
+        <strong className="text-2xl font-semibold text-slate-50 tabular-nums drop-shadow-[0_0_14px_rgba(126,170,235,0.32)]">
           <AnimatedValue value={score} digits={1} />
         </strong>
       </div>
       <ul className="grid gap-1.5">
         {items.map((item) => (
-          <li key={item.label} className="flex items-center justify-between text-sm text-slate-200">
-            <span className="text-slate-300">{item.label}</span>
+          <li key={item.label} className="metric-row">
+            <span className="metric-label">{item.label}</span>
             <span className="tabular-nums text-slate-100"><AnimatedValue value={item.value} digits={item.digits ?? 1} suffix={item.suffix ?? ''} /></span>
           </li>
         ))}
