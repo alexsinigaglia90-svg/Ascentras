@@ -58,6 +58,15 @@ const PICK_ZONE_WIDTH = BOARD_COLS * CELL_SIZE;
 const PICK_ZONE_DEPTH = BOARD_ROWS * CELL_SIZE;
 const FACILITY_WIDTH = PICK_ZONE_WIDTH * 2.5;
 const FACILITY_DEPTH = PICK_ZONE_DEPTH * 2.55;
+const STAGING_SLOT_HALF_WIDTH = 0.26;
+const STAGING_SLOT_HALF_DEPTH = 0.23;
+
+type BoundsRect = {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+};
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -86,6 +95,38 @@ function sideClamp(cell: GridCell): GridCell {
     col: clamp(cell.col, HUMAN_COL_RANGE.min, HUMAN_COL_RANGE.max),
     row: clamp(cell.row, 0, BOARD_ROWS - 1)
   };
+}
+
+function cellRect(colStart: number, colEnd: number, rowStart: number, rowEnd: number): BoundsRect {
+  const [ax, , az] = cellToWorld({ col: colStart, row: rowStart });
+  const [bx, , bz] = cellToWorld({ col: colEnd, row: rowEnd });
+  return {
+    minX: Math.min(ax, bx) - CELL_SIZE / 2,
+    maxX: Math.max(ax, bx) + CELL_SIZE / 2,
+    minZ: Math.min(az, bz) - CELL_SIZE / 2,
+    maxZ: Math.max(az, bz) + CELL_SIZE / 2
+  };
+}
+
+function pointInsideBounds(point: THREE.Vector3, bounds: BoundsRect): boolean {
+  return point.x >= bounds.minX && point.x <= bounds.maxX && point.z >= bounds.minZ && point.z <= bounds.maxZ;
+}
+
+function slotIntersectsBounds(slot: THREE.Vector3, bounds: BoundsRect): boolean {
+  const slotMinX = slot.x - STAGING_SLOT_HALF_WIDTH;
+  const slotMaxX = slot.x + STAGING_SLOT_HALF_WIDTH;
+  const slotMinZ = slot.z - STAGING_SLOT_HALF_DEPTH;
+  const slotMaxZ = slot.z + STAGING_SLOT_HALF_DEPTH;
+
+  return slotMinX <= bounds.maxX && slotMaxX >= bounds.minX && slotMinZ <= bounds.maxZ && slotMaxZ >= bounds.minZ;
+}
+
+function isValidStagingSlot(slot: THREE.Vector3, stagingZone: BoundsRect, forbiddenBounds: BoundsRect[]): boolean {
+  if (!pointInsideBounds(slot, stagingZone)) {
+    return false;
+  }
+
+  return !forbiddenBounds.some((bounds) => slotIntersectsBounds(slot, bounds));
 }
 
 function hashFromId(id: string): number {
@@ -648,12 +689,14 @@ function StagedPalletInstancedField({
 function StagingLaneMarkings({
   laneSlots,
   overflowSlots,
+  zoneBounds,
   laneColor,
   slotColor,
   overflowColor
 }: {
   laneSlots: THREE.Vector3[][];
   overflowSlots: THREE.Vector3[];
+  zoneBounds: BoundsRect;
   laneColor: string;
   slotColor: string;
   overflowColor: string;
@@ -695,6 +738,14 @@ function StagingLaneMarkings({
 
   return (
     <>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[(zoneBounds.minX + zoneBounds.maxX) / 2, 0.0565, (zoneBounds.minZ + zoneBounds.maxZ) / 2]}
+      >
+        <planeGeometry args={[zoneBounds.maxX - zoneBounds.minX, zoneBounds.maxZ - zoneBounds.minZ]} />
+        <meshBasicMaterial color={laneColor} transparent opacity={0.06} depthWrite={false} />
+      </mesh>
+
       {laneRects.map((lane, index) => (
         <mesh key={`staging-lane-strip-${index}`} rotation={[-Math.PI / 2, 0, 0]} position={[lane.x, 0.057, lane.z]}>
           <planeGeometry args={[0.58, lane.depth]} />
@@ -1304,22 +1355,41 @@ function SceneRig({
     return new THREE.Vector3(x, y, z);
   }, [aiStations.packingTable]);
 
+  const humanPickBounds = useMemo(
+    () => cellRect(HUMAN_COL_RANGE.min, HUMAN_COL_RANGE.max, 0, BOARD_ROWS - 1),
+    []
+  );
+
+  const aiPickBounds = useMemo(
+    () => cellRect(AI_COL_MIN, BOARD_COLS - 1, 0, BOARD_ROWS - 1),
+    []
+  );
+
   const humanStagingSlots = useMemo(() => {
-    const dock = humanStations.docks[1] ?? humanStations.docks[0] ?? humanStations.outbound;
     const laneCount = 3;
     const slotsPerLane = 7;
     const laneGap = 0.74;
     const slotGap = 0.56;
-    const leftBoundaryX = cellToWorld({ col: HUMAN_COL_RANGE.min, row: 0 }, 0)[0] - 0.16;
-    const laneStartX = leftBoundaryX + 0.54;
-    const laneStartZ = cellToWorld({ col: dock.col, row: dock.row + 1.15 }, 0.1)[2];
+    const topBoundaryZ = cellToWorld({ col: 0, row: 0 }, 0.1)[2] - CELL_SIZE / 2;
+    const laneStartX = -FACILITY_WIDTH / 2 + 0.92;
+    const laneStartZ = topBoundaryZ + 2.7;
+    const stagingZone: BoundsRect = {
+      minX: -FACILITY_WIDTH / 2 + 0.6,
+      maxX: humanPickBounds.minX - 0.52,
+      minZ: topBoundaryZ + 0.7,
+      maxZ: topBoundaryZ + 7.2
+    };
+    const forbidden = [humanPickBounds, cellRect(HUMAN_COL_RANGE.min, HUMAN_COL_RANGE.max, 7, 9)];
     const laneSlots: THREE.Vector3[][] = [];
 
     for (let lane = 0; lane < laneCount; lane += 1) {
       const laneX = laneStartX + lane * laneGap;
       const slots: THREE.Vector3[] = [];
       for (let row = 0; row < slotsPerLane; row += 1) {
-        slots.push(new THREE.Vector3(laneX, 0.1, laneStartZ - row * slotGap));
+        const candidate = new THREE.Vector3(laneX, 0.1, laneStartZ - row * slotGap);
+        if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
+          slots.push(candidate);
+        }
       }
       laneSlots.push(slots);
     }
@@ -1329,34 +1399,51 @@ function SceneRig({
     const overflowSlots: THREE.Vector3[] = [];
     for (let col = 0; col < 2; col += 1) {
       for (let row = 0; row < 2; row += 1) {
-        overflowSlots.push(new THREE.Vector3(overflowAnchorX + col * 0.56, 0.1, overflowAnchorZ - row * 0.56));
+        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.56, 0.1, overflowAnchorZ - row * 0.56);
+        if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
+          overflowSlots.push(candidate);
+        }
       }
     }
 
+    const validLaneSlots = laneSlots.filter((lane) => lane.length > 0);
+    const allSlots = [...validLaneSlots.flat(), ...overflowSlots];
+    const corridorAnchorX = validLaneSlots[validLaneSlots.length - 1]?.[0]?.x ?? laneStartX;
+
     return {
-      laneSlots,
+      laneSlots: validLaneSlots,
       overflowSlots,
-      allSlots: [...laneSlots.flat(), ...overflowSlots],
-      corridorX: laneStartX + laneCount * laneGap + 0.2
+      allSlots,
+      corridorX: corridorAnchorX + 0.28,
+      zoneBounds: stagingZone
     };
-  }, [humanStations.docks, humanStations.outbound]);
+  }, [humanPickBounds]);
 
   const aiStagingSlots = useMemo(() => {
-    const dock = aiStations.docks[1] ?? aiStations.docks[0] ?? aiStations.outbound;
     const laneCount = 3;
     const slotsPerLane = 7;
     const laneGap = 0.74;
     const slotGap = 0.56;
-    const leftBoundaryX = cellToWorld({ col: AI_COL_MIN, row: 0 }, 0)[0] + 0.08;
-    const laneStartX = leftBoundaryX + 0.5;
-    const laneStartZ = cellToWorld({ col: dock.col, row: dock.row + 1.15 }, 0.1)[2];
+    const topBoundaryZ = cellToWorld({ col: 0, row: 0 }, 0.1)[2] - CELL_SIZE / 2;
+    const laneStartX = aiPickBounds.minX - 2.7;
+    const laneStartZ = topBoundaryZ + 2.7;
+    const stagingZone: BoundsRect = {
+      minX: aiPickBounds.minX - 2.9,
+      maxX: aiPickBounds.minX - 0.52,
+      minZ: topBoundaryZ + 0.7,
+      maxZ: topBoundaryZ + 7.2
+    };
+    const forbidden = [aiPickBounds, cellRect(AI_COL_MIN, BOARD_COLS - 1, 7, 9)];
     const laneSlots: THREE.Vector3[][] = [];
 
     for (let lane = 0; lane < laneCount; lane += 1) {
       const laneX = laneStartX + lane * laneGap;
       const slots: THREE.Vector3[] = [];
       for (let row = 0; row < slotsPerLane; row += 1) {
-        slots.push(new THREE.Vector3(laneX, 0.1, laneStartZ - row * slotGap));
+        const candidate = new THREE.Vector3(laneX, 0.1, laneStartZ - row * slotGap);
+        if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
+          slots.push(candidate);
+        }
       }
       laneSlots.push(slots);
     }
@@ -1366,17 +1453,25 @@ function SceneRig({
     const overflowSlots: THREE.Vector3[] = [];
     for (let col = 0; col < 2; col += 1) {
       for (let row = 0; row < 2; row += 1) {
-        overflowSlots.push(new THREE.Vector3(overflowAnchorX + col * 0.56, 0.1, overflowAnchorZ - row * 0.56));
+        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.56, 0.1, overflowAnchorZ - row * 0.56);
+        if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
+          overflowSlots.push(candidate);
+        }
       }
     }
 
+    const validLaneSlots = laneSlots.filter((lane) => lane.length > 0);
+    const allSlots = [...validLaneSlots.flat(), ...overflowSlots];
+    const corridorAnchorX = validLaneSlots[validLaneSlots.length - 1]?.[0]?.x ?? laneStartX;
+
     return {
-      laneSlots,
+      laneSlots: validLaneSlots,
       overflowSlots,
-      allSlots: [...laneSlots.flat(), ...overflowSlots],
-      corridorX: laneStartX + laneCount * laneGap + 0.2
+      allSlots,
+      corridorX: corridorAnchorX + 0.28,
+      zoneBounds: stagingZone
     };
-  }, [aiStations.docks, aiStations.outbound]);
+  }, [aiPickBounds]);
 
   const logisticsForklifts = useMemo(() => {
     const humanCount = 1;
@@ -1852,7 +1947,7 @@ function SceneRig({
           }
 
           const currentQueue = side === 'human' ? queueHuman : queueAi;
-          if (runtime.state === 'idle' && currentQueue > 0) {
+          if (runtime.state === 'idle' && currentQueue > 0 && stagingSlots.length > 0) {
             if (side === 'human') {
               queueHuman -= 1;
             } else {
@@ -2084,6 +2179,7 @@ function SceneRig({
       <StagingLaneMarkings
         laneSlots={humanStagingSlots.laneSlots}
         overflowSlots={humanStagingSlots.overflowSlots}
+        zoneBounds={humanStagingSlots.zoneBounds}
         laneColor="#7ea8dc"
         slotColor="#b6cff0"
         overflowColor="#c5d6ef"
@@ -2128,6 +2224,7 @@ function SceneRig({
       <StagingLaneMarkings
         laneSlots={aiStagingSlots.laneSlots}
         overflowSlots={aiStagingSlots.overflowSlots}
+        zoneBounds={aiStagingSlots.zoneBounds}
         laneColor="#7a9fd1"
         slotColor="#afc8e8"
         overflowColor="#bed2ec"
