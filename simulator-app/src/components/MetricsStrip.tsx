@@ -38,11 +38,10 @@ function AnimatedValue({ value, digits = 1, suffix = '' }: { value: number; digi
 
 export function MetricsStrip({ metrics, score }: MetricsStripProps) {
   const items = [
-    { label: 'Throughput', value: metrics.throughput, suffix: '%' },
-    { label: 'Cost Index', value: metrics.costIndex },
-    { label: 'Congestion Risk', value: metrics.congestionRisk, suffix: '%' },
-    { label: 'Scalability', value: metrics.scalability, suffix: '%' },
-    { label: 'Labor Sensitivity', value: metrics.laborSensitivity, suffix: '%' }
+    { label: 'Travel Distance', value: metrics.travelDistance },
+    { label: 'Congestion Penalty', value: metrics.congestionPenalty },
+    { label: 'Zoning Score', value: metrics.zoningScore },
+    { label: 'Tiles Placed', value: metrics.totalTiles, digits: 0 }
   ];
 
   return (
@@ -57,7 +56,7 @@ export function MetricsStrip({ metrics, score }: MetricsStripProps) {
         {items.map((item) => (
           <li key={item.label} className="flex items-center justify-between text-sm text-slate-200">
             <span className="text-slate-300">{item.label}</span>
-            <span className="tabular-nums text-slate-100"><AnimatedValue value={item.value} digits={1} suffix={item.suffix ?? ''} /></span>
+            <span className="tabular-nums text-slate-100"><AnimatedValue value={item.value} digits={item.digits ?? 1} suffix={item.suffix ?? ''} /></span>
           </li>
         ))}
       </ul>

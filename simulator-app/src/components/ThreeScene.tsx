@@ -1,157 +1,351 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Canvas, ThreeEvent, useFrame } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import type { Metrics, AutomationLevel } from '../hooks/useSimulationModel';
+import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
+import {
+  BOARD_COLS,
+  BOARD_ROWS,
+  CELL_SIZE,
+  DEPOT_CELL,
+  type CircuitTile,
+  type GridCell,
+  type Metrics
+} from '../hooks/useSimulationModel';
 import { ErrorBoundary } from './ErrorBoundary';
 
 type ThreeSceneProps = {
+  humanTiles: CircuitTile[];
+  aiTiles: CircuitTile[];
   metrics: Metrics;
-  automationLevel: AutomationLevel;
   botPulseKey: number;
+  spawnDragTileId: string | null;
+  aiActiveTileId: string | null;
+  onCommitHumanTile: (tileId: string, cell: GridCell) => void;
+  onConsumeSpawnDragTile: () => void;
 };
 
-function SceneRig({ metrics, automationLevel, botPulseKey }: ThreeSceneProps) {
-  const zoneMaterials = useRef<THREE.MeshStandardMaterial[]>([]);
-  const conveyorMaterials = useRef<THREE.MeshStandardMaterial[]>([]);
-  const particleRefs = useRef<Array<THREE.Mesh | null>>([]);
-  const pulse = useRef(0);
-  const flowOffset = useRef(0);
-  const { camera } = useThree();
-  const cameraTarget = useRef(new THREE.Vector3(20, 14, 20));
-  const [effectsEnabled, setEffectsEnabled] = useState(true);
+const ORIGIN_X = -((BOARD_COLS - 1) * CELL_SIZE) / 2;
+const ORIGIN_Z = -((BOARD_ROWS - 1) * CELL_SIZE) / 2;
 
-  const paths = useMemo(
-    () => [
-      new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-13, -0.15, -8),
-        new THREE.Vector3(-7, -0.12, -2),
-        new THREE.Vector3(-1, -0.08, -4),
-        new THREE.Vector3(6, -0.1, 2),
-        new THREE.Vector3(13, -0.14, 8)
-      ]),
-      new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-11, -0.15, 10),
-        new THREE.Vector3(-4, -0.1, 6),
-        new THREE.Vector3(3, -0.08, 8),
-        new THREE.Vector3(12, -0.14, 4)
-      ]),
-      new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-10, -0.13, -12),
-        new THREE.Vector3(-2, -0.1, -7),
-        new THREE.Vector3(8, -0.09, -10),
-        new THREE.Vector3(14, -0.11, -6)
-      ])
-    ],
-    []
-  );
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
 
-  useEffect(() => {
-    pulse.current = 1;
-    cameraTarget.current.set(21, 14.6, 19.2);
-  }, [botPulseKey]);
+function cellToWorld(cell: GridCell, y = 0): [number, number, number] {
+  return [ORIGIN_X + cell.col * CELL_SIZE, y, ORIGIN_Z + cell.row * CELL_SIZE];
+}
 
-  useFrame((state, delta) => {
-    const flowSpeed = 0.05 + (metrics.throughput / 100) * 0.22;
-    const glow = 0.14 + (metrics.congestionRisk / 100) * 0.55;
+function worldToCell(point: THREE.Vector3): GridCell {
+  const col = clamp(Math.round((point.x - ORIGIN_X) / CELL_SIZE), 0, BOARD_COLS - 1);
+  const row = clamp(Math.round((point.z - ORIGIN_Z) / CELL_SIZE), 0, BOARD_ROWS - 1);
+  return { col, row };
+}
 
-    const automationFactor =
-      automationLevel === 'Labour Driven' ? 0.36 :
-      automationLevel === 'Selective Automation' ? 0.7 :
-      1;
+function cellKey(cell: GridCell): string {
+  return `${cell.col}:${cell.row}`;
+}
 
-    conveyorMaterials.current.forEach((material, index) => {
-      const visibleFactor = index === 2 ? Math.max(0, (automationFactor - 0.55) * 2.2) : automationFactor;
-      material.emissiveIntensity = 0.18 + visibleFactor * 0.72;
-      material.opacity = 0.35 + visibleFactor * 0.65;
-      material.transparent = true;
-    });
+function makeLabelTexture(label: string): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const context = canvas.getContext('2d');
 
-    zoneMaterials.current.forEach((material, index) => {
-      const pulseTerm = 0.08 * Math.sin(state.clock.elapsedTime * 2.2 + index * 0.8);
-      material.emissiveIntensity = glow + pulseTerm + pulse.current * 0.6;
-    });
+  if (!context) {
+    return new THREE.CanvasTexture(canvas);
+  }
 
-    flowOffset.current += delta * flowSpeed;
-    particleRefs.current.forEach((mesh, index) => {
-      if (!mesh) return;
-      const curve = paths[index % paths.length];
-      const t = (flowOffset.current + index / particleRefs.current.length) % 1;
-      const pos = curve.getPointAt(t);
-      mesh.position.set(pos.x, pos.y, pos.z);
-    });
+  context.clearRect(0, 0, 128, 128);
+  context.fillStyle = 'rgba(4, 8, 14, 0.78)';
+  context.beginPath();
+  context.roundRect(16, 18, 96, 92, 18);
+  context.fill();
+  context.strokeStyle = 'rgba(167, 198, 240, 0.75)';
+  context.lineWidth = 3;
+  context.stroke();
 
-    if (pulse.current > 0) {
-      pulse.current = Math.max(0, pulse.current - delta * 1.6);
-    } else {
-      cameraTarget.current.set(20, 14, 20);
+  context.fillStyle = '#e6f1ff';
+  context.font = '700 56px Inter, Segoe UI, Arial';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(label, 64, 66);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function kindColor(kind: CircuitTile['kind']): { base: string; emissive: string } {
+  if (kind === 'F') return { base: '#67a3ff', emissive: '#4b89f4' };
+  if (kind === 'M') return { base: '#7ea8d8', emissive: '#638bc0' };
+  return { base: '#99a8bb', emissive: '#68778d' };
+}
+
+function GridLines() {
+  const geometry = useMemo(() => {
+    const points: number[] = [];
+
+    for (let col = 0; col <= BOARD_COLS; col += 1) {
+      const x = ORIGIN_X - 0.5 + col * CELL_SIZE;
+      const zStart = ORIGIN_Z - 0.5;
+      const zEnd = ORIGIN_Z - 0.5 + BOARD_ROWS * CELL_SIZE;
+      points.push(x, 0.012, zStart, x, 0.012, zEnd);
     }
 
-    const targetLook = new THREE.Vector3(0, -0.1, 0);
-    camera.position.lerp(cameraTarget.current, 0.03);
-    camera.lookAt(targetLook);
+    for (let row = 0; row <= BOARD_ROWS; row += 1) {
+      const z = ORIGIN_Z - 0.5 + row * CELL_SIZE;
+      const xStart = ORIGIN_X - 0.5;
+      const xEnd = ORIGIN_X - 0.5 + BOARD_COLS * CELL_SIZE;
+      points.push(xStart, 0.012, z, xEnd, 0.012, z);
+    }
+
+    const buffer = new THREE.BufferGeometry();
+    buffer.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    return buffer;
+  }, []);
+
+  return (
+    <lineSegments geometry={geometry}>
+      <lineBasicMaterial color="#95afd7" transparent opacity={0.25} />
+    </lineSegments>
+  );
+}
+
+function TileMesh({
+  tile,
+  y,
+  pulse,
+  shakeOffset,
+  onPointerDown,
+  dragPreviewCell,
+  isDragging
+}: {
+  tile: CircuitTile;
+  y: number;
+  pulse: number;
+  shakeOffset: number;
+  onPointerDown?: (event: ThreeEvent<PointerEvent>) => void;
+  dragPreviewCell?: GridCell | null;
+  isDragging: boolean;
+}) {
+  const [labelTexture] = useState(() => makeLabelTexture(tile.kind));
+  const palette = kindColor(tile.kind);
+
+  const position = useMemo(() => {
+    const activeCell = isDragging && dragPreviewCell ? dragPreviewCell : tile.cell;
+    const [x, baseY, z] = cellToWorld(activeCell, y);
+    return [x + shakeOffset, baseY, z] as [number, number, number];
+  }, [dragPreviewCell, isDragging, shakeOffset, tile.cell, y]);
+
+  return (
+    <group position={position} onPointerDown={onPointerDown}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[0.82, 0.34, 0.82]} />
+        <meshStandardMaterial
+          color={palette.base}
+          emissive={palette.emissive}
+          emissiveIntensity={0.25 + pulse}
+          roughness={0.42}
+          metalness={0.28}
+        />
+      </mesh>
+      <sprite position={[0, 0.42, 0]} scale={[0.44, 0.44, 0.44]}>
+        <spriteMaterial map={labelTexture} transparent depthWrite={false} />
+      </sprite>
+    </group>
+  );
+}
+
+function SceneRig({
+  humanTiles,
+  aiTiles,
+  metrics,
+  botPulseKey,
+  spawnDragTileId,
+  aiActiveTileId,
+  onCommitHumanTile,
+  onConsumeSpawnDragTile
+}: ThreeSceneProps) {
+  const [draggingTileId, setDraggingTileId] = useState<string | null>(null);
+  const [dragPreviewCell, setDragPreviewCell] = useState<GridCell | null>(null);
+  const [shakeState, setShakeState] = useState<{ tileId: string; until: number } | null>(null);
+  const [effectsEnabled, setEffectsEnabled] = useState(true);
+  const aiPulse = useRef(0);
+
+  useEffect(() => {
+    if (spawnDragTileId) {
+      const target = humanTiles.find((tile) => tile.id === spawnDragTileId);
+      if (target) {
+        setDraggingTileId(target.id);
+        setDragPreviewCell(target.cell);
+      }
+      onConsumeSpawnDragTile();
+    }
+  }, [humanTiles, onConsumeSpawnDragTile, spawnDragTileId]);
+
+  useEffect(() => {
+    aiPulse.current = 1;
+  }, [botPulseKey]);
+
+  useFrame((_, delta) => {
+    if (aiPulse.current > 0) {
+      aiPulse.current = Math.max(0, aiPulse.current - delta * 1.85);
+    }
   });
+
+  const occupancy = useMemo(() => {
+    const map = new Set<string>();
+    humanTiles.forEach((tile) => {
+      if (tile.id !== draggingTileId) {
+        map.add(cellKey(tile.cell));
+      }
+    });
+    return map;
+  }, [humanTiles, draggingTileId]);
+
+  const tileById = useMemo(() => {
+    const map = new Map<string, CircuitTile>();
+    humanTiles.forEach((tile) => map.set(tile.id, tile));
+    return map;
+  }, [humanTiles]);
+
+  const onBoardPointerMove = (event: ThreeEvent<PointerEvent>) => {
+    if (!draggingTileId) return;
+    event.stopPropagation();
+    const snapped = worldToCell(event.point);
+    setDragPreviewCell(snapped);
+  };
+
+  const commitDrag = () => {
+    if (!draggingTileId || !dragPreviewCell) {
+      setDraggingTileId(null);
+      setDragPreviewCell(null);
+      return;
+    }
+
+    if (dragPreviewCell.col === DEPOT_CELL.col && dragPreviewCell.row === DEPOT_CELL.row) {
+      setShakeState({ tileId: draggingTileId, until: performance.now() + 360 });
+      setDraggingTileId(null);
+      setDragPreviewCell(null);
+      return;
+    }
+
+    if (occupancy.has(cellKey(dragPreviewCell))) {
+      setShakeState({ tileId: draggingTileId, until: performance.now() + 360 });
+      setDraggingTileId(null);
+      setDragPreviewCell(null);
+      return;
+    }
+
+    onCommitHumanTile(draggingTileId, dragPreviewCell);
+    setDraggingTileId(null);
+    setDragPreviewCell(null);
+  };
+
+  const floorWidth = BOARD_COLS * CELL_SIZE + 4;
+  const floorDepth = BOARD_ROWS * CELL_SIZE + 4;
+
+  const congestionGlow = THREE.MathUtils.lerp(0.15, 0.52, Math.min(1, metrics.congestionPenalty / 16));
 
   return (
     <>
-      <fog attach="fog" args={['#060b12', 22, 70]} />
-      <ambientLight intensity={0.42} color="#a8c2e4" />
-      <hemisphereLight intensity={0.72} color="#dbe8ff" groundColor="#111b2a" position={[0, 16, 0]} />
-      <directionalLight position={[12, 20, 8]} intensity={1.05} color="#d7e7ff" />
-      <directionalLight position={[-14, 10, -12]} intensity={0.62} color="#5e89c7" />
+      <fog attach="fog" args={['#060b12', 20, 52]} />
+      <ambientLight intensity={0.4} color="#a8c2e4" />
+      <hemisphereLight intensity={0.7} color="#dce9ff" groundColor="#101a27" position={[0, 16, 0]} />
+      <directionalLight position={[10, 16, 8]} intensity={0.95} color="#dbe8ff" />
+      <directionalLight position={[-14, 9, -10]} intensity={0.55} color="#5f89c4" />
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.8, 0]} receiveShadow>
-        <planeGeometry args={[90, 90]} />
-        <meshStandardMaterial color="#0d141f" roughness={0.95} metalness={0.08} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]} receiveShadow>
+        <planeGeometry args={[floorWidth, floorDepth]} />
+        <meshStandardMaterial color="#0b121d" roughness={0.94} metalness={0.06} />
       </mesh>
 
-      {[
-        { pos: [-10, -0.45, -3], size: [7, 0.7, 7] },
-        { pos: [0, -0.45, -6], size: [8, 0.75, 5] },
-        { pos: [10, -0.45, -1], size: [6, 0.72, 8] }
-      ].map((zone, idx) => (
-        <mesh key={idx} position={zone.pos as [number, number, number]}>
-          <boxGeometry args={zone.size as [number, number, number]} />
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0, 0]}
+        onPointerMove={onBoardPointerMove}
+        onPointerUp={(event) => {
+          event.stopPropagation();
+          commitDrag();
+        }}
+      >
+        <planeGeometry args={[BOARD_COLS * CELL_SIZE, BOARD_ROWS * CELL_SIZE]} />
+        <meshBasicMaterial visible={false} transparent opacity={0} depthWrite={false} />
+      </mesh>
+
+      <GridLines />
+
+      {draggingTileId && dragPreviewCell ? (
+        <mesh position={cellToWorld(dragPreviewCell, 0.02)}>
+          <boxGeometry args={[0.92, 0.02, 0.92]} />
           <meshStandardMaterial
-            ref={(mat) => {
-              if (mat) zoneMaterials.current[idx] = mat;
-            }}
-            color="#162537"
-            emissive="#4f7dc8"
-            emissiveIntensity={0.22}
-            roughness={0.62}
-            metalness={0.28}
+            color={occupancy.has(cellKey(dragPreviewCell)) ? '#cc6b6b' : '#7da7df'}
+            emissive={occupancy.has(cellKey(dragPreviewCell)) ? '#b85b5b' : '#6f9bd8'}
+            emissiveIntensity={0.42}
+            transparent
+            opacity={0.56}
           />
         </mesh>
-      ))}
+      ) : null}
 
-      {paths.map((curve, idx) => (
-        <mesh key={`tube-${idx}`}>
-          <tubeGeometry args={[curve, 90, 0.13, 8, false]} />
-          <meshStandardMaterial
-            ref={(mat) => {
-              if (mat) conveyorMaterials.current[idx] = mat;
+      <mesh position={cellToWorld(DEPOT_CELL, 0.22)}>
+        <cylinderGeometry args={[0.36, 0.46, 0.44, 24]} />
+        <meshStandardMaterial color="#dbecff" emissive="#7fafe8" emissiveIntensity={0.35} roughness={0.32} metalness={0.42} />
+      </mesh>
+
+      {humanTiles.map((tile) => {
+        const isDragging = draggingTileId === tile.id;
+        const shouldShake = shakeState?.tileId === tile.id && performance.now() < shakeState.until;
+        const shakeOffset = shouldShake ? Math.sin(performance.now() * 0.09) * 0.07 : 0;
+
+        return (
+          <TileMesh
+            key={tile.id}
+            tile={tile}
+            y={0.2}
+            pulse={congestionGlow}
+            shakeOffset={shakeOffset}
+            isDragging={isDragging}
+            dragPreviewCell={dragPreviewCell}
+            onPointerDown={(event) => {
+              event.stopPropagation();
+              setDraggingTileId(tile.id);
+              setDragPreviewCell(tile.cell);
             }}
-            color="#355884"
-            emissive="#74a5e3"
-            emissiveIntensity={0.48}
-            roughness={0.35}
-            metalness={0.72}
           />
-        </mesh>
-      ))}
+        );
+      })}
 
-      {new Array(54).fill(0).map((_, idx) => (
-        <mesh
-          key={`particle-${idx}`}
-          ref={(mesh) => {
-            particleRefs.current[idx] = mesh;
-          }}
-        >
-          <sphereGeometry args={[0.075, 10, 10]} />
-          <meshBasicMaterial color="#a7d0ff" />
-        </mesh>
-      ))}
+      {aiTiles.map((tile) => {
+        const active = tile.id === aiActiveTileId;
+        const pulse = active ? 0.65 * aiPulse.current + 0.12 : 0.08;
+
+        return (
+          <TileMesh
+            key={tile.id}
+            tile={tile}
+            y={0.34}
+            pulse={pulse}
+            shakeOffset={0}
+            isDragging={false}
+          />
+        );
+      })}
+
+      <OrbitControls
+        makeDefault
+        enablePan={false}
+        enableDamping
+        dampingFactor={0.08}
+        minDistance={15}
+        maxDistance={26}
+        minPolarAngle={0.82}
+        maxPolarAngle={1.18}
+        minAzimuthAngle={-0.5}
+        maxAzimuthAngle={0.5}
+        target={[0, 0, 0]}
+      />
 
       {effectsEnabled ? (
         <ErrorBoundary
@@ -162,8 +356,8 @@ function SceneRig({ metrics, automationLevel, botPulseKey }: ThreeSceneProps) {
           fallbackRender={() => null}
         >
           <EffectComposer>
-            <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.6} intensity={0.45} />
-            <Vignette eskil offset={0.18} darkness={0.9} />
+            <Bloom luminanceThreshold={0.18} luminanceSmoothing={0.65} intensity={0.32} />
+            <Vignette eskil offset={0.14} darkness={0.72} />
           </EffectComposer>
         </ErrorBoundary>
       ) : null}
@@ -185,7 +379,7 @@ function supportsWebGL(): boolean {
 
 function BackgroundFallback({ reason }: { reason: string }) {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_18%,rgba(107,145,206,0.16),transparent_44%),radial-gradient(circle_at_85%_80%,rgba(117,146,199,0.12),transparent_46%),linear-gradient(180deg,rgba(6,10,18,0.42),rgba(6,10,18,0.84))]">
+    <div className="pointer-events-none absolute inset-0 z-0 rounded-2xl bg-[radial-gradient(circle_at_16%_20%,rgba(107,145,206,0.16),transparent_44%),radial-gradient(circle_at_86%_82%,rgba(117,146,199,0.12),transparent_46%),linear-gradient(180deg,rgba(6,10,18,0.42),rgba(6,10,18,0.86))]">
       <div className="absolute bottom-3 right-3 rounded-md border border-borderline bg-panel/70 px-3 py-1 text-xs text-slate-300 backdrop-blur-sm">
         3D fallback active: {reason}
       </div>
@@ -200,7 +394,6 @@ export function ThreeScene(props: ThreeSceneProps) {
   useEffect(() => {
     const supported = supportsWebGL();
     setWebglAvailable(supported);
-
     if (!supported) {
       console.error('[ThreeScene] WebGL is unavailable. Rendering fallback background.');
     }
@@ -222,9 +415,9 @@ export function ThreeScene(props: ThreeSceneProps) {
       }}
       fallbackRender={() => <BackgroundFallback reason="Canvas runtime error" />}
     >
-      <div className="pointer-events-none fixed inset-0 z-0">
+      <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl border border-borderline/70 bg-slate-950/35">
         <Canvas
-          camera={{ position: [20, 14, 20], fov: 45 }}
+          camera={{ position: [13.5, 14, 12.5], fov: 43 }}
           gl={{ antialias: true }}
           onCreated={({ gl }) => {
             try {
@@ -240,7 +433,6 @@ export function ThreeScene(props: ThreeSceneProps) {
           <color attach="background" args={['#060b12']} />
           <SceneRig {...props} />
         </Canvas>
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(107,145,206,0.16),transparent_44%),radial-gradient(circle_at_85%_80%,rgba(117,146,199,0.12),transparent_46%),linear-gradient(180deg,rgba(6,10,18,0.26),rgba(6,10,18,0.74))]" />
       </div>
     </ErrorBoundary>
   );

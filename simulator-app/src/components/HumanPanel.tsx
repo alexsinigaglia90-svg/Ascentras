@@ -1,63 +1,62 @@
-import {
-  AUTOMATION_OPTIONS,
-  FULFILMENT_OPTIONS,
-  STORAGE_OPTIONS,
-  type DesignState,
-  type DecisionField,
-  type Metrics
-} from '../hooks/useSimulationModel';
+import { type Metrics, type TileKind } from '../hooks/useSimulationModel';
 import { MetricsStrip } from './MetricsStrip';
 
 type HumanPanelProps = {
-  design: DesignState;
   metrics: Metrics;
-  onDecision: (field: DecisionField, value: string) => void;
+  counts: Record<TileKind, number>;
+  onAddTile: (kind: TileKind) => void;
 };
 
-const GROUPS: Array<{ field: DecisionField; title: string; options: string[] }> = [
-  { field: 'storageModel', title: 'Storage Model', options: STORAGE_OPTIONS },
-  { field: 'fulfilmentLogic', title: 'Fulfilment Logic', options: FULFILMENT_OPTIONS },
-  { field: 'automationLevel', title: 'Automation Level', options: AUTOMATION_OPTIONS }
+const ACTIONS: Array<{ kind: TileKind; label: string }> = [
+  { kind: 'F', label: 'Add Fast' },
+  { kind: 'M', label: 'Add Mid' },
+  { kind: 'S', label: 'Add Slow' }
 ];
 
-export function HumanPanel({ design, metrics, onDecision }: HumanPanelProps) {
+export function HumanPanel({ metrics, counts, onAddTile }: HumanPanelProps) {
   return (
     <aside className="glass-panel">
       <header className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-50">Your Design</h2>
-        <p className="mt-1 text-sm text-slate-300">Choose a strategy and see impact in real time.</p>
+        <h2 className="text-lg font-semibold text-slate-50">Human Builder</h2>
+        <p className="mt-1 text-sm text-slate-300">Spawn tiles and drag them directly in the 3D board.</p>
       </header>
 
-      <div className="space-y-3">
-        {GROUPS.map((group) => (
-          <section key={group.field} className="rounded-xl border border-borderline bg-panel/70 p-3 backdrop-blur-md">
-            <h3 className="mb-2 text-[0.73rem] uppercase tracking-[0.14em] text-slate-300">{group.title}</h3>
-            <div className="grid gap-2">
-              {group.options.map((option) => {
-                const active = design[group.field] === option;
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => onDecision(group.field, option)}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
-                      active
-                        ? 'border-accent bg-blue-500/30 text-slate-50'
-                        : 'border-borderline bg-slate-900/55 text-slate-200 hover:border-blue-300/60'
-                    }`}
-                    aria-pressed={active}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
+      <section className="rounded-xl border border-borderline bg-panel/70 p-3 backdrop-blur-md">
+        <h3 className="mb-2 text-[0.73rem] uppercase tracking-[0.14em] text-slate-300">Pick Circuit Palette</h3>
+        <div className="grid gap-2">
+          {ACTIONS.map((action) => (
+            <button
+              key={action.kind}
+              type="button"
+              onClick={() => onAddTile(action.kind)}
+              className="rounded-lg border border-borderline bg-slate-900/55 px-3 py-2 text-left text-sm text-slate-100 transition hover:border-blue-300/70 hover:bg-blue-900/30"
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-3 rounded-xl border border-borderline bg-panel/70 p-3 backdrop-blur-md">
+        <h3 className="mb-2 text-[0.73rem] uppercase tracking-[0.14em] text-slate-300">Composition</h3>
+        <ul className="space-y-2 text-sm">
+          <li className="flex items-center justify-between border-b border-borderline/60 pb-2">
+            <span className="text-slate-300">Fast Movers (F)</span>
+            <strong className="text-slate-50">{counts.F}</strong>
+          </li>
+          <li className="flex items-center justify-between border-b border-borderline/60 pb-2">
+            <span className="text-slate-300">Mid Movers (M)</span>
+            <strong className="text-slate-50">{counts.M}</strong>
+          </li>
+          <li className="flex items-center justify-between">
+            <span className="text-slate-300">Slow Movers (S)</span>
+            <strong className="text-slate-50">{counts.S}</strong>
+          </li>
+        </ul>
+      </section>
 
       <div className="mt-4">
-        <MetricsStrip metrics={metrics} score={metrics.efficiencyIndex} />
+        <MetricsStrip metrics={metrics} score={metrics.efficiencyScore} />
       </div>
     </aside>
   );

@@ -1,205 +1,384 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-export type StorageModel = 'High Density' | 'High Accessibility' | 'Hybrid';
-export type FulfilmentLogic = 'Wave' | 'Continuous Flow' | 'Batch';
-export type AutomationLevel = 'Labour Driven' | 'Selective Automation' | 'Mechanization Heavy';
+export const BOARD_COLS = 16;
+export const BOARD_ROWS = 10;
+export const CELL_SIZE = 1;
+export const DEPOT_CELL: GridCell = { col: 1, row: 5 };
 
-export type DecisionField = 'storageModel' | 'fulfilmentLogic' | 'automationLevel';
+export type TileKind = 'F' | 'M' | 'S';
 
-export type DesignState = {
-  storageModel: StorageModel;
-  fulfilmentLogic: FulfilmentLogic;
-  automationLevel: AutomationLevel;
+export type GridCell = {
+  col: number;
+  row: number;
+};
+
+export type CircuitTile = {
+  id: string;
+  kind: TileKind;
+  cell: GridCell;
 };
 
 export type Metrics = {
-  throughput: number;
-  costIndex: number;
-  congestionRisk: number;
-  scalability: number;
-  laborSensitivity: number;
-  efficiencyIndex: number;
+  travelDistance: number;
+  congestionPenalty: number;
+  zoningScore: number;
+  efficiencyScore: number;
+  totalTiles: number;
 };
 
-export const STORAGE_OPTIONS: StorageModel[] = ['High Density', 'High Accessibility', 'Hybrid'];
-export const FULFILMENT_OPTIONS: FulfilmentLogic[] = ['Wave', 'Continuous Flow', 'Batch'];
-export const AUTOMATION_OPTIONS: AutomationLevel[] = ['Labour Driven', 'Selective Automation', 'Mechanization Heavy'];
+type Counts = Record<TileKind, number>;
 
-const BASELINE: Omit<Metrics, 'efficiencyIndex'> = {
-  throughput: 58,
-  costIndex: 52,
-  congestionRisk: 50,
-  scalability: 56,
-  laborSensitivity: 54
-};
-
-const EFFECTS: Record<DecisionField, Record<string, Omit<Metrics, 'efficiencyIndex'>>> = {
-  storageModel: {
-    'High Density': { throughput: 9, costIndex: -6, congestionRisk: 11, scalability: 6, laborSensitivity: 8 },
-    'High Accessibility': { throughput: 11, costIndex: 7, congestionRisk: -6, scalability: 5, laborSensitivity: -2 },
-    Hybrid: { throughput: 8, costIndex: 1, congestionRisk: 2, scalability: 9, laborSensitivity: 1 }
-  },
-  fulfilmentLogic: {
-    Wave: { throughput: 6, costIndex: -2, congestionRisk: 8, scalability: 3, laborSensitivity: 5 },
-    'Continuous Flow': { throughput: 12, costIndex: 4, congestionRisk: -4, scalability: 9, laborSensitivity: -1 },
-    Batch: { throughput: 4, costIndex: -5, congestionRisk: 4, scalability: 5, laborSensitivity: 6 }
-  },
-  automationLevel: {
-    'Labour Driven': { throughput: -5, costIndex: -11, congestionRisk: 9, scalability: -4, laborSensitivity: 13 },
-    'Selective Automation': { throughput: 8, costIndex: 2, congestionRisk: -4, scalability: 9, laborSensitivity: -6 },
-    'Mechanization Heavy': { throughput: 15, costIndex: 12, congestionRisk: -9, scalability: 13, laborSensitivity: -12 }
-  }
-};
-
-export const DEFAULT_DESIGN: DesignState = {
-  storageModel: 'Hybrid',
-  fulfilmentLogic: 'Continuous Flow',
-  automationLevel: 'Selective Automation'
-};
+const AI_COUNTS_TARGET: Counts = { F: 6, M: 6, S: 6 };
+const AI_TOTAL_TARGET = 18;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-function withEfficiency(metrics: Omit<Metrics, 'efficiencyIndex'>): Metrics {
-  const efficiencyIndex =
-    metrics.throughput * 0.3 +
-    metrics.scalability * 0.25 +
-    (100 - metrics.costIndex) * 0.2 +
-    (100 - metrics.congestionRisk) * 0.15 +
-    (100 - metrics.laborSensitivity) * 0.1;
-
-  return { ...metrics, efficiencyIndex };
+function cellKey(cell: GridCell): string {
+  return `${cell.col}:${cell.row}`;
 }
 
-export function calculateMetrics(design: DesignState): Metrics {
-  const totals: Omit<Metrics, 'efficiencyIndex'> = { ...BASELINE };
+function manhattanDistance(a: GridCell, b: GridCell): number {
+  return Math.abs(a.col - b.col) + Math.abs(a.row - b.row);
+}
 
-  (Object.keys(design) as DecisionField[]).forEach((field) => {
-    const option = design[field];
-    const effect = EFFECTS[field][option];
-    totals.throughput += effect.throughput;
-    totals.costIndex += effect.costIndex;
-    totals.congestionRisk += effect.congestionRisk;
-    totals.scalability += effect.scalability;
-    totals.laborSensitivity += effect.laborSensitivity;
+function countNeighbors(cells: GridCell[], target: GridCell, radius = 1): number {
+  return cells.reduce((sum, cell) => {
+    if (cell.col === target.col && cell.row === target.row) {
+      return sum;
+    }
+    return sum + (Math.abs(cell.col - target.col) <= radius && Math.abs(cell.row - target.row) <= radius ? 1 : 0);
+  }, 0);
+}
+
+function getCounts(tiles: CircuitTile[]): Counts {
+  const counts: Counts = { F: 0, M: 0, S: 0 };
+  tiles.forEach((tile) => {
+    counts[tile.kind] += 1;
   });
-
-  totals.throughput = clamp(totals.throughput, 25, 100);
-  totals.costIndex = clamp(totals.costIndex, 15, 100);
-  totals.congestionRisk = clamp(totals.congestionRisk, 10, 100);
-  totals.scalability = clamp(totals.scalability, 25, 100);
-  totals.laborSensitivity = clamp(totals.laborSensitivity, 8, 100);
-
-  return withEfficiency(totals);
+  return counts;
 }
 
-function isSameDesign(left: DesignState, right: DesignState): boolean {
-  return (
-    left.storageModel === right.storageModel &&
-    left.fulfilmentLogic === right.fulfilmentLogic &&
-    left.automationLevel === right.automationLevel
-  );
+function scoreDistance(tile: CircuitTile): number {
+  const dist = manhattanDistance(tile.cell, DEPOT_CELL);
+  if (tile.kind === 'F') return dist * 1.35;
+  if (tile.kind === 'M') return dist * 1;
+  return dist * 0.72;
 }
 
-function bruteForceBestDesign(humanDesign: DesignState, humanMetrics: Metrics): { design: DesignState; metrics: Metrics } {
-  const allCombinations: DesignState[] = [];
+function scoreZoning(tile: CircuitTile): number {
+  const dist = manhattanDistance(tile.cell, DEPOT_CELL);
+  if (tile.kind === 'F') {
+    if (dist <= 4) return 2.3;
+    if (dist <= 6) return 0.7;
+    return -1.6;
+  }
+  if (tile.kind === 'M') {
+    if (dist >= 4 && dist <= 8) return 1.7;
+    if (dist >= 3 && dist <= 9) return 0.6;
+    return -0.9;
+  }
+  if (dist >= 7) return 1.8;
+  if (dist >= 5) return 0.5;
+  return -1.4;
+}
 
-  STORAGE_OPTIONS.forEach((storageModel) => {
-    FULFILMENT_OPTIONS.forEach((fulfilmentLogic) => {
-      AUTOMATION_OPTIONS.forEach((automationLevel) => {
-        allCombinations.push({ storageModel, fulfilmentLogic, automationLevel });
-      });
-    });
-  });
-
-  const ranked = allCombinations
-    .map((design) => ({ design, metrics: calculateMetrics(design) }))
-    .sort((a, b) => b.metrics.efficiencyIndex - a.metrics.efficiencyIndex);
-
-  const best = ranked[0];
-
-  if (best.metrics.efficiencyIndex > humanMetrics.efficiencyIndex) {
-    return best;
+function computeMetrics(tiles: CircuitTile[]): Metrics {
+  if (tiles.length === 0) {
+    return {
+      travelDistance: 0,
+      congestionPenalty: 0,
+      zoningScore: 0,
+      efficiencyScore: 0,
+      totalTiles: 0
+    };
   }
 
-  const tieDifferent = ranked.find(
-    (candidate) =>
-      candidate.metrics.efficiencyIndex >= humanMetrics.efficiencyIndex &&
-      !isSameDesign(candidate.design, humanDesign)
+  const weightedTravel = tiles.reduce((sum, tile) => sum + scoreDistance(tile), 0);
+  const travelDistance = weightedTravel / tiles.length;
+
+  let congestionPairs = 0;
+  let fastClusterPenalty = 0;
+
+  for (let index = 0; index < tiles.length; index += 1) {
+    for (let inner = index + 1; inner < tiles.length; inner += 1) {
+      const left = tiles[index];
+      const right = tiles[inner];
+      const manhattan = manhattanDistance(left.cell, right.cell);
+
+      if (manhattan <= 1) {
+        congestionPairs += 1;
+        if (left.kind === 'F' && right.kind === 'F') {
+          fastClusterPenalty += 1.2;
+        }
+      }
+    }
+  }
+
+  const congestionPenalty = congestionPairs + fastClusterPenalty;
+  const zoningScore = tiles.reduce((sum, tile) => sum + scoreZoning(tile), 0) / tiles.length;
+
+  const distanceComponent = clamp(100 - travelDistance * 8.2, 0, 100);
+  const congestionComponent = clamp(100 - congestionPenalty * 7.6, 0, 100);
+  const zoningComponent = clamp(50 + zoningScore * 22, 0, 100);
+  const completionComponent = clamp((tiles.length / AI_TOTAL_TARGET) * 100, 0, 100);
+
+  const efficiencyScore = clamp(
+    distanceComponent * 0.35 + congestionComponent * 0.25 + zoningComponent * 0.3 + completionComponent * 0.1,
+    0,
+    100
   );
 
-  return tieDifferent ?? best;
+  return {
+    travelDistance,
+    congestionPenalty,
+    zoningScore,
+    efficiencyScore,
+    totalTiles: tiles.length
+  };
+}
+
+function worldCells(): GridCell[] {
+  const cells: GridCell[] = [];
+  for (let col = 0; col < BOARD_COLS; col += 1) {
+    for (let row = 0; row < BOARD_ROWS; row += 1) {
+      if (col === DEPOT_CELL.col && row === DEPOT_CELL.row) {
+        continue;
+      }
+      cells.push({ col, row });
+    }
+  }
+  return cells;
+}
+
+function chooseAiCells(kind: TileKind, count: number, occupied: Set<string>, chosenFast: GridCell[]): GridCell[] {
+  const all = worldCells().filter((cell) => !occupied.has(cellKey(cell)));
+  const sortedByDist = all
+    .map((cell) => ({ cell, dist: manhattanDistance(cell, DEPOT_CELL) }))
+    .sort((a, b) => a.dist - b.dist);
+
+  const picked: GridCell[] = [];
+
+  for (let idx = 0; idx < count; idx += 1) {
+    const candidatePool = sortedByDist.filter(({ cell }) => !occupied.has(cellKey(cell)));
+
+    let selected: GridCell | null = null;
+    let bestScore = Number.POSITIVE_INFINITY;
+
+    for (const entry of candidatePool) {
+      const cell = entry.cell;
+      const dist = entry.dist;
+
+      let score = 0;
+
+      if (kind === 'F') {
+        const fastNeighbors = countNeighbors(chosenFast, cell, 1);
+        score = dist * 2.1 + fastNeighbors * 6.5;
+      } else if (kind === 'M') {
+        score = Math.abs(dist - 6.5) * 2 + dist * 0.15;
+      } else {
+        score = (12 - dist) * 2.2;
+      }
+
+      if (score < bestScore) {
+        bestScore = score;
+        selected = cell;
+      }
+    }
+
+    if (!selected) {
+      break;
+    }
+
+    occupied.add(cellKey(selected));
+    picked.push(selected);
+
+    if (kind === 'F') {
+      chosenFast.push(selected);
+    }
+  }
+
+  return picked;
+}
+
+function buildAiPlan(): CircuitTile[] {
+  const occupied = new Set<string>();
+  const chosenFast: GridCell[] = [];
+
+  const fastCells = chooseAiCells('F', AI_COUNTS_TARGET.F, occupied, chosenFast);
+  const midCells = chooseAiCells('M', AI_COUNTS_TARGET.M, occupied, chosenFast);
+  const slowCells = chooseAiCells('S', AI_COUNTS_TARGET.S, occupied, chosenFast);
+
+  const plan: CircuitTile[] = [
+    ...fastCells.map((cell, index) => ({ id: `ai-f-${index + 1}`, kind: 'F' as const, cell })),
+    ...midCells.map((cell, index) => ({ id: `ai-m-${index + 1}`, kind: 'M' as const, cell })),
+    ...slowCells.map((cell, index) => ({ id: `ai-s-${index + 1}`, kind: 'S' as const, cell }))
+  ];
+
+  return plan.sort((left, right) => {
+    const order: Record<TileKind, number> = { F: 0, M: 1, S: 2 };
+    const byKind = order[left.kind] - order[right.kind];
+    if (byKind !== 0) return byKind;
+
+    const leftDist = manhattanDistance(left.cell, DEPOT_CELL);
+    const rightDist = manhattanDistance(right.cell, DEPOT_CELL);
+    return leftDist - rightDist;
+  });
+}
+
+function nextSpawnCell(kind: TileKind, occupied: Set<string>): GridCell {
+  const preferredRows: Record<TileKind, number[]> = {
+    F: [1, 2, 3],
+    M: [4, 5, 6],
+    S: [7, 8, 9]
+  };
+
+  for (const row of preferredRows[kind]) {
+    for (let col = 0; col < BOARD_COLS; col += 1) {
+      const cell = { col, row };
+      if (!occupied.has(cellKey(cell)) && !(cell.col === DEPOT_CELL.col && cell.row === DEPOT_CELL.row)) {
+        return cell;
+      }
+    }
+  }
+
+  for (let row = 0; row < BOARD_ROWS; row += 1) {
+    for (let col = 0; col < BOARD_COLS; col += 1) {
+      const cell = { col, row };
+      if (!occupied.has(cellKey(cell)) && !(cell.col === DEPOT_CELL.col && cell.row === DEPOT_CELL.row)) {
+        return cell;
+      }
+    }
+  }
+
+  return { col: 0, row: 0 };
 }
 
 export function useSimulationModel() {
-  const [humanDesign, setHumanDesign] = useState<DesignState>(DEFAULT_DESIGN);
-  const [botDesign, setBotDesign] = useState<DesignState>(DEFAULT_DESIGN);
-  const [humanMetrics, setHumanMetrics] = useState<Metrics>(() => calculateMetrics(DEFAULT_DESIGN));
-  const [botMetrics, setBotMetrics] = useState<Metrics>(() => calculateMetrics(DEFAULT_DESIGN));
+  const [humanTiles, setHumanTiles] = useState<CircuitTile[]>([]);
+  const [aiTiles, setAiTiles] = useState<CircuitTile[]>([]);
+  const [humanMetrics, setHumanMetrics] = useState<Metrics>(() => computeMetrics([]));
+  const [botMetrics, setBotMetrics] = useState<Metrics>(() => computeMetrics([]));
   const [botThinking, setBotThinking] = useState(false);
   const [botPulseKey, setBotPulseKey] = useState(0);
+  const [spawnDragTileId, setSpawnDragTileId] = useState<string | null>(null);
+  const [aiActiveTileId, setAiActiveTileId] = useState<string | null>(null);
 
-  const timeoutRef = useRef<number | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const tileCounterRef = useRef(0);
 
-  const botStatus = useMemo(
-    () => (botThinking ? 'Evaluating…' : `Resolved · ${botMetrics.efficiencyIndex.toFixed(1)} index`),
-    [botThinking, botMetrics.efficiencyIndex]
-  );
+  const humanCounts = useMemo(() => getCounts(humanTiles), [humanTiles]);
+  const aiCounts = useMemo(() => getCounts(aiTiles), [aiTiles]);
+
+  const botStatus = useMemo(() => {
+    if (botThinking) {
+      return 'Ascentra AI building...';
+    }
+    return `Resolved · ${botMetrics.efficiencyScore.toFixed(1)} score`;
+  }, [botThinking, botMetrics.efficiencyScore]);
 
   useEffect(() => {
-    setHumanMetrics(calculateMetrics(humanDesign));
-  }, [humanDesign]);
+    setHumanMetrics(computeMetrics(humanTiles));
+  }, [humanTiles]);
 
   useEffect(() => {
-    if (timeoutRef.current) {
-      window.clearTimeout(timeoutRef.current);
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
     }
 
+    const plan = buildAiPlan();
+    setAiTiles([]);
+    setAiActiveTileId(null);
     setBotThinking(true);
 
-    timeoutRef.current = window.setTimeout(() => {
-      const best = bruteForceBestDesign(humanDesign, humanMetrics);
-      setBotDesign(best.design);
-      setBotMetrics(best.metrics);
-      setBotThinking(false);
+    let step = 0;
+    intervalRef.current = window.setInterval(() => {
+      const next = plan[step];
+
+      if (!next) {
+        if (intervalRef.current) {
+          window.clearInterval(intervalRef.current);
+        }
+        setBotThinking(false);
+        setAiActiveTileId(null);
+        setBotMetrics(computeMetrics(plan));
+        return;
+      }
+
+      setAiTiles((current) => [...current, next]);
+      setAiActiveTileId(next.id);
       setBotPulseKey((value) => value + 1);
-    }, 600);
+      step += 1;
+
+      if (step >= plan.length && intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        setTimeout(() => {
+          setBotThinking(false);
+          setAiActiveTileId(null);
+          setBotMetrics(computeMetrics(plan));
+        }, 150);
+      }
+    }, 320);
 
     return () => {
-      if (timeoutRef.current) {
-        window.clearTimeout(timeoutRef.current);
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
       }
     };
-  }, [humanDesign, humanMetrics]);
+  }, [humanTiles]);
 
-  const setDecision = (field: DecisionField, value: string) => {
-    setHumanDesign((current) => ({ ...current, [field]: value } as DesignState));
+  const spawnHumanTile = (kind: TileKind) => {
+    tileCounterRef.current += 1;
+    const occupied = new Set(humanTiles.map((tile) => cellKey(tile.cell)));
+    const cell = nextSpawnCell(kind, occupied);
+    const id = `human-${tileCounterRef.current}`;
+
+    setHumanTiles((current) => [...current, { id, kind, cell }]);
+    setSpawnDragTileId(id);
+  };
+
+  const consumeSpawnDragTile = () => {
+    setSpawnDragTileId(null);
+  };
+
+  const commitHumanTile = (tileId: string, cell: GridCell) => {
+    setHumanTiles((current) =>
+      current.map((tile) => (tile.id === tileId ? { ...tile, cell } : tile))
+    );
   };
 
   const reset = () => {
-    if (timeoutRef.current) {
-      window.clearTimeout(timeoutRef.current);
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
     }
 
-    const metrics = calculateMetrics(DEFAULT_DESIGN);
-    setHumanDesign(DEFAULT_DESIGN);
-    setBotDesign(DEFAULT_DESIGN);
-    setHumanMetrics(metrics);
-    setBotMetrics(metrics);
+    tileCounterRef.current = 0;
+    setHumanTiles([]);
+    setAiTiles([]);
+    setHumanMetrics(computeMetrics([]));
+    setBotMetrics(computeMetrics([]));
     setBotThinking(false);
     setBotPulseKey((value) => value + 1);
+    setSpawnDragTileId(null);
+    setAiActiveTileId(null);
   };
 
   return {
-    humanDesign,
-    botDesign,
+    humanTiles,
+    aiTiles,
+    humanCounts,
+    aiCounts,
     humanMetrics,
     botMetrics,
     botStatus,
     botThinking,
     botPulseKey,
-    setDecision,
+    spawnDragTileId,
+    aiActiveTileId,
+    spawnHumanTile,
+    consumeSpawnDragTile,
+    commitHumanTile,
     reset
   };
 }
