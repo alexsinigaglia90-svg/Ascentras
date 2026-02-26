@@ -1,4 +1,4 @@
-import { lazy, Suspense, type KeyboardEvent } from 'react';
+import { lazy, Suspense, useState, type KeyboardEvent } from 'react';
 import { BotPanel } from './components/BotPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HumanPanel } from './components/HumanPanel';
@@ -51,12 +51,34 @@ export default function WarehouseSimulatorPage() {
 
   const humanTotalFte = results ? results.human.requiredFte.pickers + results.human.requiredFte.runners : 0;
   const aiTotalFte = results ? results.ai.requiredFte.pickers + results.ai.requiredFte.runners : 0;
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+
+  const hasProgressToLose =
+    humanTiles.length > 0 ||
+    aiTiles.length > 0 ||
+    phase !== 'build' ||
+    readyPressedOnce ||
+    Boolean(results);
 
   const onBackToSiteKeyDown = (event: KeyboardEvent<HTMLAnchorElement>) => {
     if (event.key === ' ' || event.key === 'Spacebar') {
       event.preventDefault();
       event.currentTarget.click();
     }
+  };
+
+  const requestReset = () => {
+    if (!hasProgressToLose) {
+      reset();
+      return;
+    }
+
+    setResetConfirmOpen(true);
+  };
+
+  const confirmReset = () => {
+    setResetConfirmOpen(false);
+    reset();
   };
 
   return (
@@ -74,8 +96,13 @@ export default function WarehouseSimulatorPage() {
                 ← Back to site
               </a>
               <div>
-              <h1 className="text-xl font-semibold tracking-[0.015em] text-[#0d1b2c]">Build → Ready → Simulate</h1>
-              <p className="mt-1 text-sm font-medium text-[#4d5d72]">Pick Circuit Builder · Human vs Ascentra Engine</p>
+                <nav aria-label="Breadcrumb" className="mb-1 flex items-center gap-2 text-xs font-semibold tracking-[0.08em] text-[#4d5d72]">
+                  <a href="/" className="text-[#2f5f8a] hover:underline focus-visible:underline">Home</a>
+                  <span aria-hidden="true">/</span>
+                  <span aria-current="page" className="text-[#0d1b2c]">Simulator</span>
+                </nav>
+                <h1 className="text-xl font-semibold tracking-[0.015em] text-[#0d1b2c]">Build → Ready → Simulate</h1>
+                <p className="mt-1 text-sm font-medium text-[#4d5d72]">Pick Circuit Builder · Human vs Ascentra Engine</p>
               </div>
             </div>
             <div className="rounded-full border border-borderline/90 bg-white/80 px-4 py-2 text-sm font-semibold text-[#2f5f8a] shadow-[0_6px_14px_rgba(8,23,42,0.12)]">
@@ -100,7 +127,7 @@ export default function WarehouseSimulatorPage() {
             onReady={markReady}
             onStart={startSimulation}
             onPause={pauseSimulation}
-            onReset={reset}
+            onReset={requestReset}
           />
 
           <div className="relative min-h-[420px] rounded-2xl border border-borderline/80 bg-white/58 shadow-[0_10px_24px_rgba(8,23,42,0.12)] backdrop-blur-[1px]">
@@ -164,6 +191,33 @@ export default function WarehouseSimulatorPage() {
           />
         </section>
       </main>
+
+      {resetConfirmOpen ? (
+        <div className="absolute inset-0 z-50 grid place-items-center bg-[#0d1b2c]/32 p-4" role="dialog" aria-modal="true" aria-labelledby="reset-layout-title" aria-describedby="reset-layout-copy">
+          <div className="glass-panel w-full max-w-md p-5">
+            <h2 id="reset-layout-title" className="panel-title text-lg font-semibold">Reset layout?</h2>
+            <p id="reset-layout-copy" className="mt-2 text-sm text-[#4d5d72]">
+              This will clear your current simulator setup and progress.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className="control-btn"
+                onClick={() => setResetConfirmOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="control-btn control-btn-active"
+                onClick={confirmReset}
+              >
+                Reset layout
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
