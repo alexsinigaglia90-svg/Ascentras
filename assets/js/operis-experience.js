@@ -1,14 +1,4 @@
 (function initOperisExperience() {
-  function markPageEntered() {
-    document.body.classList.add('page-enter');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        document.body.classList.add('page-enter-active');
-        document.body.classList.remove('page-enter');
-      });
-    });
-  }
-
   function setupReveals() {
     const revealItems = document.querySelectorAll('.reveal');
     if (!revealItems.length) return;
@@ -355,7 +345,6 @@
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    markPageEntered();
     setupReveals();
     setupCinematicStory();
     setupCinematicCompare();

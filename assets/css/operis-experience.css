@@ -9,6 +9,15 @@
   z-index: 0;
 }
 
+body.operis-page,
+body.operis-page.page-enter,
+body.operis-page.page-enter-active,
+body.operis-page.page-leaving {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
 .operis-wrap {
   width: min(1220px, 92vw);
   margin-inline: auto;
