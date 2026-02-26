@@ -1,78 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Warehouse Strategy Simulator | Ascentra</title>
-  <meta name="description" content="Premium 3D warehouse strategy simulator: Human design versus Ascentra Engine.">
-  <link rel="stylesheet" href="/assets/css/warehouse-simulator.css?v=20260226a">
-</head>
-<body class="wsim-page">
-  <canvas id="wsim-canvas" aria-hidden="true"></canvas>
-  <div class="wsim-bg-layer" aria-hidden="true"></div>
-
-  <main class="wsim-root">
-    <header class="wsim-topbar">
-      <div>
-        <h1>Warehouse Strategy Simulator</h1>
-        <p>Human vs Ascentra Engine</p>
-      </div>
-      <button id="wsim-reset" class="wsim-btn" type="button">Reset</button>
-    </header>
-
-    <section class="wsim-layout" aria-label="Warehouse strategy simulation">
-      <aside class="wsim-panel wsim-human" aria-label="Human strategy builder">
-        <div class="wsim-panel-head">
-          <h2>Your Design</h2>
-          <p>Build your warehouse operating strategy.</p>
-        </div>
-
-        <div class="wsim-card">
-          <h3>Storage Model</h3>
-          <div class="wsim-segment" id="storage-model"></div>
-        </div>
-
-        <div class="wsim-card">
-          <h3>Fulfilment Logic</h3>
-          <div class="wsim-segment" id="fulfilment-logic"></div>
-        </div>
-
-        <div class="wsim-card">
-          <h3>Automation Level</h3>
-          <div class="wsim-segment" id="automation-level"></div>
-        </div>
-
-        <section class="wsim-metrics">
-          <div class="wsim-score-wrap">
-            <span>Efficiency Index</span>
-            <strong id="human-score">0.0</strong>
-          </div>
-          <ul id="human-metrics" class="wsim-metric-list" aria-label="Human live impact metrics"></ul>
-        </section>
-      </aside>
-
-      <aside class="wsim-panel wsim-bot" aria-label="Ascentra engine strategy">
-        <div class="wsim-panel-head">
-          <h2>Ascentra Engine</h2>
-          <p id="bot-status" class="wsim-status">Ready</p>
-        </div>
-
-        <div class="wsim-card">
-          <h3>Engine Configuration</h3>
-          <ul id="bot-config" class="wsim-config"></ul>
-        </div>
-
-        <section class="wsim-metrics">
-          <div class="wsim-score-wrap">
-            <span>Efficiency Index</span>
-            <strong id="bot-score">0.0</strong>
-          </div>
-          <ul id="bot-metrics" class="wsim-metric-list" aria-label="Engine impact metrics"></ul>
-        </section>
-      </aside>
-    </section>
-  </main>
-
-  <script type="module" src="/assets/js/warehouse-simulator.js?v=20260226a"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Warehouse Strategy Simulator</title>
+    <script type="module" crossorigin src="/warehouse-simulator/assets/index-CoHVV5Kj.js"></script>
+    <link rel="stylesheet" crossorigin href="/warehouse-simulator/assets/index-DZJC6lv3.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
