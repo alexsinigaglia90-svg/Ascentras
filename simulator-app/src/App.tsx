@@ -83,7 +83,7 @@ export default function WarehouseSimulatorPage() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-ink text-[var(--as-text-main)]">
-      <main className="relative z-10 grid h-screen grid-rows-[auto_1fr] gap-3 p-3">
+      <main className="relative z-10 grid h-screen grid-rows-[auto_auto_1fr] gap-3 p-3">
         <header className="glass-panel px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -110,6 +110,29 @@ export default function WarehouseSimulatorPage() {
             </div>
           </div>
         </header>
+
+        {results ? (
+          <section className="glass-panel px-4 py-2" aria-label="Simulation results summary">
+            <div className="grid grid-cols-1 gap-2 text-sm text-[var(--as-text-main)] xl:grid-cols-[1fr_auto_1fr] xl:items-center">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--as-text-sub)]">Human</span>
+                <span>Orders {results.human.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</span>
+                <span>Cycle {results.human.kpis.avgCycleTimeSeconds.toFixed(1)}s</span>
+                <span>FTE {humanTotalFte}</span>
+              </div>
+
+              <div className="hidden xl:block h-8 w-px bg-borderline/80" aria-hidden="true" />
+
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 xl:justify-end">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--as-text-sub)]">Ascentra</span>
+                <span>Orders {results.ai.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</span>
+                <span>Cycle {results.ai.kpis.avgCycleTimeSeconds.toFixed(1)}s</span>
+                <span>FTE {aiTotalFte}</span>
+              </div>
+            </div>
+            <p className="mt-1 text-sm font-semibold text-[var(--as-accent-strong)]">{results.conclusion}</p>
+          </section>
+        ) : null}
 
         <section className="grid min-h-0 grid-cols-1 gap-3 xl:grid-cols-[minmax(340px,420px)_1fr_minmax(340px,420px)] xl:items-stretch">
           <HumanPanel
@@ -157,25 +180,6 @@ export default function WarehouseSimulatorPage() {
               </Suspense>
             </ErrorBoundary>
 
-            {results ? (
-              <div className="pointer-events-none absolute inset-x-6 bottom-6 z-20 rounded-xl border border-borderline/90 bg-panel/95 p-4 shadow-panel backdrop-blur-sm">
-                <div className="grid gap-2 text-sm text-[var(--as-text-main)] md:grid-cols-2">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--as-text-sub)]">Human Result</p>
-                    <p>Orders: {results.human.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
-                    <p>Avg cycle: {results.human.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
-                    <p>FTE: {results.human.requiredFte.pickers} pickers + {results.human.requiredFte.runners} runners = {humanTotalFte}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--as-text-sub)]">Ascentra Result</p>
-                    <p>Orders: {results.ai.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
-                    <p>Avg cycle: {results.ai.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
-                    <p>FTE: {results.ai.requiredFte.pickers} pickers + {results.ai.requiredFte.runners} runners = {aiTotalFte}</p>
-                  </div>
-                </div>
-                <p className="mt-2 text-sm font-semibold text-[var(--as-accent-strong)]">{results.conclusion}</p>
-              </div>
-            ) : null}
           </div>
 
           <BotPanel
