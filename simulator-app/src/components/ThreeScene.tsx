@@ -177,6 +177,37 @@ function labelTexture(label: string, accent = '#93bfe9', warm = false): THREE.Ca
   return texture;
 }
 
+function tagTexture(label: string, accent = '#a7c5ea'): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 140;
+  canvas.height = 92;
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = 'rgba(10, 16, 26, 0.76)';
+  context.beginPath();
+  context.roundRect(10, 12, 120, 68, 24);
+  context.fill();
+
+  context.strokeStyle = 'rgba(160, 193, 232, 0.85)';
+  context.lineWidth = 3;
+  context.stroke();
+
+  context.fillStyle = accent;
+  context.font = '700 42px Inter, Segoe UI, Arial';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(label, 70, 48);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
 function BeveledBlock({
   size,
   radius = 0.08,
@@ -320,6 +351,38 @@ function Conveyor({ from, to }: { from: GridCell; to: GridCell }) {
         <boxGeometry args={[length * 0.9, 0.03, 0.04]} />
         <meshStandardMaterial color="#d3ae7b" emissive="#b98f5a" emissiveIntensity={0.2} roughness={0.32} metalness={0.12} />
       </mesh>
+      <mesh position={[0, 0.14, 0.28]}>
+        <boxGeometry args={[length * 0.94, 0.016, 0.024]} />
+        <meshStandardMaterial color="#7e8797" emissive="#6b7790" emissiveIntensity={0.1} roughness={0.36} metalness={0.24} />
+      </mesh>
+      <mesh position={[0, 0.14, -0.28]}>
+        <boxGeometry args={[length * 0.94, 0.016, 0.024]} />
+        <meshStandardMaterial color="#7e8797" emissive="#6b7790" emissiveIntensity={0.1} roughness={0.36} metalness={0.24} />
+      </mesh>
+      {new Array(5).fill(0).map((_, index) => (
+        <group key={`guard-post-${index}`} position={[(-length * 0.44) + index * (length * 0.22), 0.118, 0]}>
+          <mesh position={[0, 0.02, 0.28]}>
+            <boxGeometry args={[0.015, 0.06, 0.015]} />
+            <meshStandardMaterial color="#8d96a8" emissive="#79859f" emissiveIntensity={0.1} roughness={0.34} metalness={0.26} />
+          </mesh>
+          <mesh position={[0, 0.02, -0.28]}>
+            <boxGeometry args={[0.015, 0.06, 0.015]} />
+            <meshStandardMaterial color="#8d96a8" emissive="#79859f" emissiveIntensity={0.1} roughness={0.34} metalness={0.26} />
+          </mesh>
+        </group>
+      ))}
+      <mesh position={[0, 0.048, -0.35]}>
+        <boxGeometry args={[length * 0.86, 0.028, 0.08]} />
+        <meshStandardMaterial color="#5f6f86" emissive="#4f6686" emissiveIntensity={0.12} roughness={0.42} metalness={0.2} />
+      </mesh>
+      <mesh position={[length * 0.44, 0.17, -0.33]}>
+        <boxGeometry args={[0.14, 0.09, 0.03]} />
+        <meshStandardMaterial color="#27384f" emissive="#39597f" emissiveIntensity={0.18} roughness={0.28} metalness={0.22} />
+      </mesh>
+      <mesh position={[length * 0.44, 0.17, -0.314]}>
+        <boxGeometry args={[0.1, 0.056, 0.005]} />
+        <meshStandardMaterial color="#9fc4f0" emissive="#81afe9" emissiveIntensity={0.28} roughness={0.2} metalness={0.2} />
+      </mesh>
       <group ref={stripeRef}>
         {new Array(8).fill(0).map((_, index) => (
           <mesh key={index} castShadow>
@@ -395,6 +458,22 @@ function DioramaStation({ cell, title, accent, scale = [0.9, 0.46, 0.9] as [numb
         <boxGeometry args={[scale[0] * 0.32, 0.07, 0.03]} />
         <meshStandardMaterial color={labelWarm ? '#e5b485' : '#d2b086'} emissive={labelWarm ? '#c88b58' : '#b58f63'} emissiveIntensity={0.14} roughness={0.3} metalness={0.08} />
       </mesh>
+      <mesh position={[scale[0] * 0.34, 0.2, scale[2] * 0.05]}>
+        <boxGeometry args={[0.12, 0.12, 0.04]} />
+        <meshStandardMaterial color="#25374f" emissive="#3a5c84" emissiveIntensity={0.16} roughness={0.32} metalness={0.2} />
+      </mesh>
+      <mesh position={[scale[0] * 0.34, 0.205, scale[2] * 0.075]}>
+        <boxGeometry args={[0.085, 0.06, 0.008]} />
+        <meshStandardMaterial color="#a6c7f2" emissive="#86b4ea" emissiveIntensity={0.28} roughness={0.24} metalness={0.18} />
+      </mesh>
+      <mesh position={[-scale[0] * 0.34, 0.11, 0]}>
+        <boxGeometry args={[0.05, 0.06, scale[2] * 0.76]} />
+        <meshStandardMaterial color="#6f7f95" emissive="#617691" emissiveIntensity={0.09} roughness={0.4} metalness={0.22} />
+      </mesh>
+      <mesh position={[0, 0.5, -scale[2] * 0.24]}>
+        <boxGeometry args={[scale[0] * 0.46, 0.024, 0.028]} />
+        <meshStandardMaterial color="#8d99ad" emissive="#7f8fa8" emissiveIntensity={0.1} roughness={0.36} metalness={0.24} />
+      </mesh>
       <sprite position={[0, 0.55, 0]} scale={[1.2, 0.48, 1]}>
         <spriteMaterial map={texture} transparent depthWrite={false} />
       </sprite>
@@ -403,7 +482,10 @@ function DioramaStation({ cell, title, accent, scale = [0.9, 0.46, 0.9] as [numb
 }
 
 function DockGroup({ docks, loadCounts }: { docks: GridCell[]; loadCounts?: number[] }) {
-  const textures = useMemo(() => docks.map((_, index) => labelTexture(`${index + 1}`)), [docks]);
+  const textures = useMemo(
+    () => docks.map((_, index) => tagTexture(String.fromCharCode(65 + index), '#b6cff0')),
+    [docks]
+  );
 
   useEffect(() => {
     return () => {
@@ -415,6 +497,38 @@ function DockGroup({ docks, loadCounts }: { docks: GridCell[]; loadCounts?: numb
     <>
       {docks.map((dock, index) => (
         <group key={`dock-${dock.col}-${dock.row}`} position={cellToWorld(dock, 0.21)}>
+          {(() => {
+            const load = loadCounts?.[index] ?? 0;
+            const ratio = clamp(load / 28, 0, 1);
+            const greenOn = ratio < 0.45;
+            const amberOn = ratio >= 0.45 && ratio < 0.86;
+            const redOn = ratio >= 0.86;
+            return (
+              <group position={[0.38, 0.08, -0.18]}>
+                <mesh position={[0, 0.12, 0]}>
+                  <boxGeometry args={[0.04, 0.24, 0.04]} />
+                  <meshStandardMaterial color="#5e6e84" emissive="#52667f" emissiveIntensity={0.1} roughness={0.42} metalness={0.22} />
+                </mesh>
+                <mesh position={[0, 0.27, 0]}>
+                  <boxGeometry args={[0.08, 0.16, 0.07]} />
+                  <meshStandardMaterial color="#1f2a3a" emissive="#3a4d69" emissiveIntensity={0.1} roughness={0.34} metalness={0.2} />
+                </mesh>
+                <mesh position={[0, 0.305, 0]}>
+                  <sphereGeometry args={[0.018, 10, 10]} />
+                  <meshStandardMaterial color="#ec7462" emissive="#e36752" emissiveIntensity={redOn ? 0.72 : 0.08} roughness={0.2} metalness={0.16} />
+                </mesh>
+                <mesh position={[0, 0.27, 0]}>
+                  <sphereGeometry args={[0.018, 10, 10]} />
+                  <meshStandardMaterial color="#efc875" emissive="#d7a84e" emissiveIntensity={amberOn ? 0.66 : 0.08} roughness={0.2} metalness={0.16} />
+                </mesh>
+                <mesh position={[0, 0.235, 0]}>
+                  <sphereGeometry args={[0.018, 10, 10]} />
+                  <meshStandardMaterial color="#97d79b" emissive="#73c97d" emissiveIntensity={greenOn ? 0.74 : 0.08} roughness={0.2} metalness={0.16} />
+                </mesh>
+              </group>
+            );
+          })()}
+
           <BeveledBlock
             size={[0.96, 0.36, 0.6]}
             radius={0.08}
@@ -432,6 +546,10 @@ function DockGroup({ docks, loadCounts }: { docks: GridCell[]; loadCounts?: numb
             <planeGeometry args={[0.34, 0.18]} />
             <meshBasicMaterial color="#dce9ff" />
           </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.12, 0]}>
+            <planeGeometry args={[0.74, 0.46]} />
+            <meshBasicMaterial color="#8bb1df" transparent opacity={0.18} depthWrite={false} />
+          </mesh>
           {new Array(Math.min(8, loadCounts?.[index] ?? 0)).fill(0).map((_, stackIndex) => (
             <mesh
               key={`dock-load-${index}-${stackIndex}`}
@@ -446,12 +564,119 @@ function DockGroup({ docks, loadCounts }: { docks: GridCell[]; loadCounts?: numb
               <meshStandardMaterial color="#d9e9ff" emissive="#86b4ea" emissiveIntensity={0.16} roughness={0.28} metalness={0.14} />
             </mesh>
           ))}
-          <sprite position={[0, 0.36, 0]} scale={[0.5, 0.22, 1]}>
+          <sprite position={[0, 0.36, 0]} scale={[0.42, 0.19, 1]}>
             <spriteMaterial map={textures[index]} transparent depthWrite={false} />
           </sprite>
         </group>
       ))}
     </>
+  );
+}
+
+function DetailedPalletStack({
+  fillRatio,
+  seed,
+  accent,
+  active,
+  isEmpty,
+  isReplenishing,
+  requested
+}: {
+  fillRatio: number;
+  seed: number;
+  accent: string;
+  active: boolean;
+  isEmpty: boolean;
+  isReplenishing: boolean;
+  requested: boolean;
+}) {
+  const boxCount = Math.max(1, Math.ceil(fillRatio * 8));
+  const layers = Math.max(1, Math.ceil(boxCount / 4));
+
+  return (
+    <group>
+      <BeveledBlock
+        size={[0.84, 0.024, 0.78]}
+        radius={0.03}
+        color="#7f6247"
+        emissive="#8e6d50"
+        emissiveIntensity={0.06}
+        roughness={0.68}
+        metalness={0.05}
+      />
+      <mesh position={[0, 0.028, 0]}>
+        <boxGeometry args={[0.8, 0.016, 0.74]} />
+        <meshStandardMaterial color="#8e6d50" emissive="#977556" emissiveIntensity={0.05} roughness={0.7} metalness={0.04} />
+      </mesh>
+      {[-0.24, 0, 0.24].map((x, index) => (
+        <mesh key={`stringer-${index}`} position={[x, 0.046, 0]}>
+          <boxGeometry args={[0.11, 0.056, 0.72]} />
+          <meshStandardMaterial color="#73573f" emissive="#85654a" emissiveIntensity={0.04} roughness={0.72} metalness={0.03} />
+        </mesh>
+      ))}
+      {[-0.3, -0.12, 0.12, 0.3].map((z, index) => (
+        <mesh key={`top-slat-${index}`} position={[0, 0.078, z]}>
+          <boxGeometry args={[0.78, 0.018, 0.08]} />
+          <meshStandardMaterial color="#947356" emissive="#9d7c5d" emissiveIntensity={0.05} roughness={0.66} metalness={0.04} />
+        </mesh>
+      ))}
+      {[
+        [-0.3, -0.29],
+        [0.3, -0.29],
+        [-0.3, 0.29],
+        [0.3, 0.29]
+      ].map((pos, index) => (
+        <mesh key={`corner-block-${index}`} position={[pos[0], 0.046, pos[1]]}>
+          <boxGeometry args={[0.08, 0.056, 0.08]} />
+          <meshStandardMaterial color="#6f533d" emissive="#7e6048" emissiveIntensity={0.05} roughness={0.7} metalness={0.03} />
+        </mesh>
+      ))}
+
+      {new Array(boxCount).fill(0).map((_, index) => {
+        const layer = Math.floor(index / 4);
+        const slot = index % 4;
+        const xBase = slot % 2 === 0 ? -0.14 : 0.14;
+        const zBase = slot < 2 ? -0.12 : 0.12;
+        const width = 0.118 + ((seed * 100 + index * 9) % 5) * 0.004;
+        const height = 0.056 + ((seed * 100 + index * 7) % 4) * 0.004;
+        const depth = 0.094 + ((seed * 100 + index * 5) % 4) * 0.004;
+        const jitterX = ((seed * 23 + index * 3) % 10 - 5) * 0.0024;
+        const jitterZ = ((seed * 17 + index * 5) % 10 - 5) * 0.0023;
+        const baseY = 0.108 + layer * 0.068;
+
+        if (layer >= layers) return null;
+
+        return (
+          <mesh
+            key={`stack-box-${index}`}
+            position={[xBase + jitterX, baseY, zBase + jitterZ]}
+            rotation={[0, (seed * 0.22 + index * 0.06) - 0.12, 0]}
+          >
+            <boxGeometry args={[width, height, depth]} />
+            <meshStandardMaterial
+              color={isEmpty ? '#575d68' : '#ece0d1'}
+              emissive={isReplenishing ? '#d6a06d' : requested ? '#c58666' : '#947358'}
+              emissiveIntensity={(active ? 0.08 : 0.04) + (isReplenishing ? 0.08 : requested ? 0.06 : 0.03)}
+              roughness={0.58}
+              metalness={0.05}
+            />
+          </mesh>
+        );
+      })}
+
+      <mesh position={[0, 0.18 + layers * 0.02, 0.15]}>
+        <boxGeometry args={[0.56, 0.008, 0.016]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.24} roughness={0.24} metalness={0.12} />
+      </mesh>
+      <mesh position={[0, 0.18 + layers * 0.02, -0.15]}>
+        <boxGeometry args={[0.56, 0.008, 0.016]} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.22} roughness={0.24} metalness={0.12} />
+      </mesh>
+      <mesh position={[0.17, 0.16 + layers * 0.02, 0.06]}>
+        <planeGeometry args={[0.09, 0.045]} />
+        <meshBasicMaterial color="#e7f1ff" transparent opacity={0.86} />
+      </mesh>
+    </group>
   );
 }
 
@@ -701,6 +926,17 @@ function StagingLaneMarkings({
   slotColor: string;
   overflowColor: string;
 }) {
+  const laneTextures = useMemo(
+    () => laneSlots.map((_, index) => tagTexture(String.fromCharCode(65 + index), '#b7cff0')),
+    [laneSlots]
+  );
+
+  useEffect(() => {
+    return () => {
+      laneTextures.forEach((texture) => texture.dispose());
+    };
+  }, [laneTextures]);
+
   const laneRects = useMemo(
     () =>
       laneSlots
@@ -747,10 +983,25 @@ function StagingLaneMarkings({
       </mesh>
 
       {laneRects.map((lane, index) => (
-        <mesh key={`staging-lane-strip-${index}`} rotation={[-Math.PI / 2, 0, 0]} position={[lane.x, 0.057, lane.z]}>
-          <planeGeometry args={[0.58, lane.depth]} />
-          <meshBasicMaterial color={laneColor} transparent opacity={0.14} depthWrite={false} />
-        </mesh>
+        <group key={`staging-lane-strip-${index}`}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[lane.x, 0.057, lane.z]}>
+            <planeGeometry args={[0.58, lane.depth]} />
+            <meshBasicMaterial color={laneColor} transparent opacity={0.14} depthWrite={false} />
+          </mesh>
+          <mesh position={[lane.x - 0.29, 0.059, lane.z]}>
+            <boxGeometry args={[0.012, 0.004, lane.depth]} />
+            <meshBasicMaterial color={slotColor} transparent opacity={0.54} />
+          </mesh>
+          <mesh position={[lane.x + 0.29, 0.059, lane.z]}>
+            <boxGeometry args={[0.012, 0.004, lane.depth]} />
+            <meshBasicMaterial color={slotColor} transparent opacity={0.54} />
+          </mesh>
+          {laneSlots[index]?.[0] ? (
+            <sprite position={[lane.x, 0.09, laneSlots[index][0].z + 0.34]} scale={[0.22, 0.11, 1]}>
+              <spriteMaterial map={laneTextures[index]} transparent depthWrite={false} />
+            </sprite>
+          ) : null}
+        </group>
       ))}
 
       {laneSlots.map((lane, laneIndex) =>
@@ -894,7 +1145,6 @@ function DioramaPallet({
   const groupRef = useRef<THREE.Group | null>(null);
   const smooth = useRef(new THREE.Vector3());
   const fillRatio = clamp((pallet?.fillLevel ?? 100) / 100, 0, 1);
-  const stackHeight = 0.05 + fillRatio * 0.24;
   const isEmpty = pallet?.isEmpty ?? false;
   const isReplenishing = pallet?.replenishing ?? false;
   const requested = pallet?.replenishmentRequested ?? false;
@@ -938,15 +1188,9 @@ function DioramaPallet({
   return (
     <group ref={groupRef} onPointerDown={onPointerDown} onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
       <group>
-        {[[-0.26, -0.2], [0, -0.2], [0.26, -0.2], [-0.26, 0], [0, 0], [0.26, 0], [-0.26, 0.2], [0, 0.2], [0.26, 0.2]].map((slot, index) => (
-          <mesh key={`pallet-slat-${index}`} position={[slot[0], 0.03, slot[1]]} castShadow>
-            <boxGeometry args={[0.2, 0.024, 0.11]} />
-            <meshStandardMaterial color="#806145" emissive="#8f6d4e" emissiveIntensity={0.04} roughness={0.72} metalness={0.03} />
-          </mesh>
-        ))}
-        <mesh position={[0, 0.056, 0]} castShadow>
-          <boxGeometry args={[0.82, 0.018, 0.78]} />
-          <meshStandardMaterial color={moverTone.tileColor} emissive={moverTone.tileEmissive} emissiveIntensity={0.08 + (active ? 0.05 : 0)} roughness={0.56} metalness={0.08} />
+        <mesh position={[0, 0.096, 0]} castShadow>
+          <boxGeometry args={[0.84, 0.022, 0.8]} />
+          <meshStandardMaterial color={moverTone.tileColor} emissive={moverTone.tileEmissive} emissiveIntensity={0.09 + (active ? 0.06 : 0)} roughness={0.52} metalness={0.1} />
         </mesh>
         <mesh position={[0, 0.068, 0.33]}>
           <boxGeometry args={[0.54, 0.01, 0.03]} />
@@ -956,35 +1200,15 @@ function DioramaPallet({
           <boxGeometry args={[0.54, 0.01, 0.03]} />
           <meshStandardMaterial color={moverTone.tileStrip} emissive={moverTone.tileStrip} emissiveIntensity={0.12} roughness={0.26} metalness={0.08} transparent opacity={0.8} />
         </mesh>
-        <mesh position={[0, 0.09 + stackHeight / 2, 0]} castShadow>
-          <boxGeometry args={[0.6, stackHeight, 0.58]} />
-          <meshStandardMaterial
-            color={isEmpty ? '#565962' : '#e7d7c2'}
-            emissive={isReplenishing ? '#cc9e68' : requested ? '#bd7f60' : '#8d6a4b'}
-            emissiveIntensity={(active ? 0.08 : 0.03) + (isReplenishing ? 0.08 : requested ? 0.06 : 0.03)}
-            roughness={0.6}
-            metalness={0.04}
-          />
-        </mesh>
-        {new Array(Math.max(2, Math.ceil(fillRatio * 8))).fill(0).map((_, index) => {
-          const layer = Math.floor(index / 4);
-          const slot = index % 4;
-          const jitterX = (seed * 0.06 + (index % 2) * 0.012) - 0.03;
-          const jitterZ = (((seed * 17 + index) % 11) / 11 - 0.5) * 0.03;
-          const xBase = slot % 2 === 0 ? -0.14 : 0.14;
-          const zBase = slot < 2 ? -0.12 : 0.12;
-          return (
-            <mesh
-              key={`tile-box-${tile.id}-${index}`}
-              position={[xBase + jitterX, 0.1 + layer * 0.068, zBase + jitterZ]}
-              rotation={[0, (seed * 0.28 + index * 0.05) - 0.1, 0]}
-              castShadow
-            >
-              <boxGeometry args={[0.125, 0.068, 0.102]} />
-              <meshStandardMaterial color="#efe1cf" emissive="#9e7753" emissiveIntensity={0.04} roughness={0.56} metalness={0.04} />
-            </mesh>
-          );
-        })}
+        <DetailedPalletStack
+          fillRatio={fillRatio}
+          seed={seed}
+          accent={moverTone.tileStrip}
+          active={active}
+          isEmpty={isEmpty}
+          isReplenishing={isReplenishing}
+          requested={requested}
+        />
         {requested ? (
           <mesh position={[0.31, 0.13, 0.31]} castShadow>
             <cylinderGeometry args={[0.04, 0.04, 0.03, 14]} />
@@ -1057,13 +1281,18 @@ function OutboundBuffer({ cell, count, accent }: { cell: GridCell; count: number
 
         return (
           <group key={`outbound-stack-${stackIndex}`} position={[0, 0, stackZ]}>
-            <mesh castShadow receiveShadow>
-              <boxGeometry args={[0.58, 0.08, 0.54]} />
-              <meshStandardMaterial color="#6d5a45" emissive="#846a4f" emissiveIntensity={0.08} roughness={0.6} metalness={0.08} />
-            </mesh>
+            <BeveledBlock size={[0.58, 0.08, 0.54]} radius={0.04} color="#6d5a45" emissive="#846a4f" emissiveIntensity={0.08} roughness={0.6} metalness={0.08} />
             <mesh position={[0, 0.05 + fill * 0.18, 0]} castShadow>
               <boxGeometry args={[0.48, 0.08 + fill * 0.36, 0.44]} />
               <meshStandardMaterial color="#d3e5ff" emissive="#84afe6" emissiveIntensity={0.16 + fill * 0.2} roughness={0.34} metalness={0.16} />
+            </mesh>
+            <mesh position={[0, 0.26 + fill * 0.1, 0.13]}>
+              <boxGeometry args={[0.44, 0.006, 0.015]} />
+              <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.22} roughness={0.2} metalness={0.12} />
+            </mesh>
+            <mesh position={[0, 0.26 + fill * 0.1, -0.13]}>
+              <boxGeometry args={[0.44, 0.006, 0.015]} />
+              <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.2} roughness={0.2} metalness={0.12} />
             </mesh>
             {new Array(units).fill(0).map((__, unitIndex) => (
               <mesh
