@@ -16,6 +16,7 @@ type BotPanelProps = {
 
 export function BotPanel({ phase, counts, metrics, activeAiFte, status, explanation, replayEnabled, analyzing, onReplayBuild }: BotPanelProps) {
   const totalPlaced = counts.F + counts.M + counts.S;
+  const totalFte = activeAiFte.pickers + activeAiFte.runners;
 
   return (
     <aside className="glass-panel">
@@ -62,7 +63,7 @@ export function BotPanel({ phase, counts, metrics, activeAiFte, status, explanat
           </div>
           <div className="metric-row">
             <span className="metric-label">Total FTE</span>
-            <strong>{activeAiFte.total}</strong>
+            <strong>{totalFte}</strong>
           </div>
         </div>
       </section>

@@ -58,7 +58,6 @@ export type SimKpis = {
 export type FteResult = {
   pickers: number;
   runners: number;
-  total: number;
 };
 
 export type SideResult = {
@@ -447,7 +446,7 @@ function layoutObjective(
   targetOrders: number
 ): ObjectiveResult {
   const metrics = buildMetrics(tiles, side);
-  const baseFte: FteResult = { pickers: 6, runners: 2, total: 8 };
+  const baseFte: FteResult = { pickers: 6, runners: 2 };
   const kpis = evaluateLayoutRun(side, tiles, demandOrders, objectiveSeed, baseFte, side === 'ai' ? 1.02 : 1);
 
   const completion = clamp((kpis.completedOrders / targetOrders) * 100, 0, 130);
@@ -1069,8 +1068,10 @@ function findRequiredFte(
   seed: number,
   optimizationBoost: number
 ): SideResult {
+  const totalFte = (fte: FteResult) => fte.pickers + fte.runners;
+
   const evaluate = (pickers: number, runners: number) => {
-    return evaluateLayoutRun(side, tiles, demandOrders, seed + pickers * 19 + runners * 41, { pickers, runners, total: pickers + runners }, optimizationBoost);
+    return evaluateLayoutRun(side, tiles, demandOrders, seed + pickers * 19 + runners * 41, { pickers, runners }, optimizationBoost);
   };
 
   let best: { fte: FteResult; kpis: SimKpis } | null = null;
@@ -1085,8 +1086,8 @@ function findRequiredFte(
 
       const kpis = evaluate(pickers, runners);
       if (kpis.completedOrders >= targetOrders) {
-        const fte = { pickers, runners, total };
-        if (!best || total < best.fte.total || (total === best.fte.total && pickers < best.fte.pickers)) {
+        const fte = { pickers, runners };
+        if (!best || total < totalFte(best.fte) || (total === totalFte(best.fte) && pickers < best.fte.pickers)) {
           best = { fte, kpis };
         }
       }
@@ -1104,7 +1105,7 @@ function findRequiredFte(
 
   const fallback = evaluate(18, 8);
   return {
-    requiredFte: { pickers: 18, runners: 8, total: 26 },
+    requiredFte: { pickers: 18, runners: 8 },
     kpis: fallback
   };
 }
@@ -1261,8 +1262,8 @@ export function useSimulationModel() {
 
   const [demandSeed, setDemandSeed] = useState<number | null>(null);
   const [demandOrders, setDemandOrders] = useState<DemandOrder[]>([]);
-  const [activeHumanFte, setActiveHumanFte] = useState<FteResult>({ pickers: 6, runners: 2, total: 8 });
-  const [activeAiFte, setActiveAiFte] = useState<FteResult>({ pickers: 5, runners: 2, total: 7 });
+  const [activeHumanFte, setActiveHumanFte] = useState<FteResult>({ pickers: 6, runners: 2 });
+  const [activeAiFte, setActiveAiFte] = useState<FteResult>({ pickers: 5, runners: 2 });
 
   const timerRef = useRef<number | null>(null);
   const tileCounterRef = useRef(0);
@@ -1533,6 +1534,8 @@ export function useSimulationModel() {
     runAiAnalysis(seed, stream);
   };
 
+  const totalFte = (fte: FteResult) => fte.pickers + fte.runners;
+
   const startSimulation = () => {
     if (phase === 'simulating') return;
     if (phase === 'paused') {
@@ -1545,23 +1548,12 @@ export function useSimulationModel() {
     }
 
     const humanSide = findRequiredFte('human', humanTiles, demandOrders, mission.targetOrders, demandSeed + 3001, 1);
-    const aiRaw = findRequiredFte('ai', aiTiles, demandOrders, mission.targetOrders, demandSeed + 7001, 1.04);
-
-    let aiSide = aiRaw;
-    if (aiSide.requiredFte.total >= humanSide.requiredFte.total) {
-      aiSide = {
-        ...aiRaw,
-        requiredFte: {
-          ...aiRaw.requiredFte,
-          total: Math.max(1, humanSide.requiredFte.total - 1)
-        }
-      };
-    }
+    const aiSide = findRequiredFte('ai', aiTiles, demandOrders, mission.targetOrders, demandSeed + 7001, 1.04);
 
     setActiveHumanFte(humanSide.requiredFte);
     setActiveAiFte(aiSide.requiredFte);
 
-    const fteGap = Math.max(1, humanSide.requiredFte.total - aiSide.requiredFte.total);
+    const fteGap = Math.max(1, totalFte(humanSide.requiredFte) - totalFte(aiSide.requiredFte));
     setResults({
       missionTarget: mission.targetOrders,
       human: humanSide,
@@ -1615,8 +1607,8 @@ export function useSimulationModel() {
       aiTargets: []
     });
 
-    setActiveHumanFte({ pickers: 6, runners: 2, total: 8 });
-    setActiveAiFte({ pickers: 5, runners: 2, total: 7 });
+    setActiveHumanFte({ pickers: 6, runners: 2 });
+    setActiveAiFte({ pickers: 5, runners: 2 });
   };
 
   return {

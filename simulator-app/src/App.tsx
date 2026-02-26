@@ -49,6 +49,9 @@ export default function WarehouseSimulatorPage() {
     reset
   } = useSimulationModel();
 
+  const humanTotalFte = results ? results.human.requiredFte.pickers + results.human.requiredFte.runners : 0;
+  const aiTotalFte = results ? results.ai.requiredFte.pickers + results.ai.requiredFte.runners : 0;
+
   return (
     <div className="relative h-screen w-full overflow-hidden bg-ink text-slate-100">
       <main className="relative z-10 grid h-screen grid-rows-[auto_1fr] gap-3 p-3">
@@ -117,13 +120,13 @@ export default function WarehouseSimulatorPage() {
                     <p className="text-xs uppercase tracking-[0.14em] text-slate-300">Human Result</p>
                     <p>Orders: {results.human.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
                     <p>Avg cycle: {results.human.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
-                    <p>FTE: {results.human.requiredFte.pickers} pickers + {results.human.requiredFte.runners} runners = {results.human.requiredFte.total}</p>
+                    <p>FTE: {results.human.requiredFte.pickers} pickers + {results.human.requiredFte.runners} runners = {humanTotalFte}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs uppercase tracking-[0.14em] text-slate-300">Ascentra Result</p>
                     <p>Orders: {results.ai.kpis.completedOrders.toLocaleString()} / {results.missionTarget.toLocaleString()}</p>
                     <p>Avg cycle: {results.ai.kpis.avgCycleTimeSeconds.toFixed(1)}s</p>
-                    <p>FTE: {results.ai.requiredFte.pickers} pickers + {results.ai.requiredFte.runners} runners = {results.ai.requiredFte.total}</p>
+                    <p>FTE: {results.ai.requiredFte.pickers} pickers + {results.ai.requiredFte.runners} runners = {aiTotalFte}</p>
                   </div>
                 </div>
                 <p className="mt-2 text-sm font-medium text-blue-100">{results.conclusion}</p>
