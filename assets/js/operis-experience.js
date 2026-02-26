@@ -186,6 +186,9 @@
       section.style.setProperty('--operis-cinematic-height', `${Math.max(total, viewport + 220)}px`);
     }
 
+    const measuredStageHeight = Math.max(stage.getBoundingClientRect().height || 0, 320);
+    stage.style.minHeight = `${Math.round(measuredStageHeight)}px`;
+
     applyDynamicHeight();
     section.classList.add('operis-cinematic-ready');
 
@@ -234,6 +237,8 @@
     calculateProgress();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', () => {
+      const nextMeasuredHeight = Math.max(stage.getBoundingClientRect().height || 0, 320);
+      stage.style.minHeight = `${Math.round(nextMeasuredHeight)}px`;
       applyDynamicHeight();
       onScroll();
     });

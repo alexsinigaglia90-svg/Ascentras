@@ -292,6 +292,7 @@ main {
   overflow: hidden;
   display: grid;
   gap: 0.4rem;
+  min-height: clamp(300px, 44vh, 460px);
 }
 
 .cinematic-scene {
