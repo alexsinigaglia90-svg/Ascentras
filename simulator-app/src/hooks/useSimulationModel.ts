@@ -3,6 +3,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 export const BOARD_COLS = 16;
 export const BOARD_ROWS = 10;
 export const CELL_SIZE = 1;
+export const PICK_ZONE_ROW_RANGE = { min: 0, max: 5 };
+export const SAFETY_AISLE_ROW = 6;
+export const MACHINE_ZONE_ROW_RANGE = { min: 7, max: BOARD_ROWS - 1 };
 
 export const HUMAN_COL_RANGE = { min: 0, max: 7 };
 export const AI_COL_RANGE = { min: 8, max: 15 };
@@ -202,27 +205,27 @@ const MISSION: Mission = {
 };
 
 const HUMAN_STATIONS: StationSet = {
-  depot: { col: 1, row: 1 },
-  dropoff: { col: 5, row: 3 },
-  packingTable: { col: 4, row: 7 },
-  machine: { col: 6, row: 7 },
-  outbound: { col: 3, row: 8 },
+  depot: { col: 1, row: 7 },
+  dropoff: { col: 3, row: 7 },
+  packingTable: { col: 4, row: 8 },
+  machine: { col: 6, row: 8 },
+  outbound: { col: 2, row: 9 },
   docks: [
     { col: 1, row: 9 },
-    { col: 3, row: 9 },
-    { col: 6, row: 9 }
+    { col: 4, row: 9 },
+    { col: 7, row: 9 }
   ]
 };
 
 const AI_STATIONS: StationSet = {
-  depot: { col: 9, row: 1 },
-  dropoff: { col: 13, row: 3 },
-  packingTable: { col: 12, row: 7 },
-  machine: { col: 14, row: 7 },
-  outbound: { col: 11, row: 8 },
+  depot: { col: 9, row: 7 },
+  dropoff: { col: 11, row: 7 },
+  packingTable: { col: 12, row: 8 },
+  machine: { col: 14, row: 8 },
+  outbound: { col: 11, row: 9 },
   docks: [
     { col: 9, row: 9 },
-    { col: 11, row: 9 },
+    { col: 12, row: 9 },
     { col: 14, row: 9 }
   ]
 };
@@ -300,6 +303,18 @@ function sideClamp(cell: GridCell, side: Side): GridCell {
     col: clamp(cell.col, cols.min, cols.max),
     row: clamp(cell.row, 0, BOARD_ROWS - 1)
   };
+}
+
+function sidePickClamp(cell: GridCell, side: Side): GridCell {
+  const cols = sideCols(side);
+  return {
+    col: clamp(cell.col, cols.min, cols.max),
+    row: clamp(cell.row, PICK_ZONE_ROW_RANGE.min, PICK_ZONE_ROW_RANGE.max)
+  };
+}
+
+function isPickZoneCell(cell: GridCell): boolean {
+  return cell.row >= PICK_ZONE_ROW_RANGE.min && cell.row <= PICK_ZONE_ROW_RANGE.max;
 }
 
 function blockedCells(side: Side): Set<string> {
@@ -604,7 +619,7 @@ function aiCandidateCells(): GridCell[] {
   const cells: GridCell[] = [];
 
   for (let col = AI_COL_RANGE.min; col <= AI_COL_RANGE.max; col += 1) {
-    for (let row = 0; row < BOARD_ROWS; row += 1) {
+    for (let row = PICK_ZONE_ROW_RANGE.min; row <= PICK_ZONE_ROW_RANGE.max; row += 1) {
       const cell = { col, row };
       if (!blocked.has(cellKey(cell))) {
         cells.push(cell);
@@ -705,6 +720,7 @@ function isAiLayoutValid(tiles: CircuitTile[]): boolean {
   for (const tile of tiles) {
     const key = cellKey(tile.cell);
     if (occupied.has(key)) return false;
+    if (!isPickZoneCell(tile.cell)) return false;
     if (blocked.has(key)) return false;
     if (corridor.has(key)) return false;
     if (buffer.has(key)) return false;
@@ -2205,9 +2221,9 @@ export function useSimulationModel() {
 
     let chosen: GridCell | null = null;
     const preferredRows: Record<TileKind, number[]> = {
-      F: [1, 2, 3],
-      M: [4, 5, 6],
-      S: [7, 8, 0]
+      F: [1, 2],
+      M: [3, 4],
+      S: [5, 0]
     };
 
     for (const row of preferredRows[kind]) {
@@ -2223,7 +2239,7 @@ export function useSimulationModel() {
     }
 
     if (!chosen) {
-      for (let row = 0; row < BOARD_ROWS; row += 1) {
+      for (let row = PICK_ZONE_ROW_RANGE.min; row <= PICK_ZONE_ROW_RANGE.max; row += 1) {
         for (let col = HUMAN_COL_RANGE.min; col <= HUMAN_COL_RANGE.max; col += 1) {
           const cell = { col, row };
           const key = cellKey(cell);
@@ -2266,7 +2282,7 @@ export function useSimulationModel() {
   const commitHumanTile = (tileId: string, targetCell: GridCell) => {
     if (!canEdit) return;
 
-    const clamped = sideClamp(targetCell, 'human');
+    const clamped = sidePickClamp(targetCell, 'human');
     const blocked = blockedCells('human');
     if (blocked.has(cellKey(clamped))) return;
 

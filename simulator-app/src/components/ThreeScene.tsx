@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
@@ -9,6 +9,9 @@ import {
   BOARD_ROWS,
   CELL_SIZE,
   HUMAN_COL_RANGE,
+  PICK_ZONE_ROW_RANGE,
+  SAFETY_AISLE_ROW,
+  MACHINE_ZONE_ROW_RANGE,
   type AgentVisual,
   type BoxVisual,
   type CircuitTile,
@@ -93,7 +96,7 @@ function cellKey(cell: GridCell): string {
 function sideClamp(cell: GridCell): GridCell {
   return {
     col: clamp(cell.col, HUMAN_COL_RANGE.min, HUMAN_COL_RANGE.max),
-    row: clamp(cell.row, 0, BOARD_ROWS - 1)
+    row: clamp(cell.row, PICK_ZONE_ROW_RANGE.min, PICK_ZONE_ROW_RANGE.max)
   };
 }
 
@@ -277,13 +280,15 @@ function BeveledBlock({
 function GridLines() {
   const geometry = useMemo(() => {
     const points: number[] = [];
+    const zoneStartZ = GRID_MIN_Z + PICK_ZONE_ROW_RANGE.min * CELL_SIZE;
+    const zoneEndZ = GRID_MIN_Z + (PICK_ZONE_ROW_RANGE.max + 1) * CELL_SIZE;
 
     for (let col = 0; col <= BOARD_COLS; col += 1) {
       const x = GRID_MIN_X + col * CELL_SIZE;
-      points.push(x, 0.01, GRID_MIN_Z, x, 0.01, GRID_MIN_Z + BOARD_ROWS * CELL_SIZE);
+      points.push(x, 0.01, zoneStartZ, x, 0.01, zoneEndZ);
     }
 
-    for (let row = 0; row <= BOARD_ROWS; row += 1) {
+    for (let row = PICK_ZONE_ROW_RANGE.min; row <= PICK_ZONE_ROW_RANGE.max + 1; row += 1) {
       const z = GRID_MIN_Z + row * CELL_SIZE;
       points.push(GRID_MIN_X, 0.01, z, GRID_MIN_X + BOARD_COLS * CELL_SIZE, 0.01, z);
     }
@@ -832,18 +837,48 @@ function FinishedPalletUnit({
 }) {
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
-      <mesh castShadow>
-        <boxGeometry args={[0.52, 0.06, 0.46]} />
-        <meshStandardMaterial color="#7f6044" emissive="#8d6c4c" emissiveIntensity={0.05} roughness={0.68} metalness={0.04} />
+      <mesh position={[0, 0.022, 0]} castShadow>
+        <boxGeometry args={[0.56, 0.024, 0.48]} />
+        <meshStandardMaterial color="#75583f" emissive="#87674a" emissiveIntensity={0.06} roughness={0.64} metalness={0.05} />
       </mesh>
-      <mesh position={[0, 0.08, 0]} castShadow>
-        <boxGeometry args={[0.46, 0.12, 0.4]} />
-        <meshStandardMaterial color={wrappedColor} emissive="#96b9e6" emissiveIntensity={0.12} roughness={0.34} metalness={0.1} />
+      {[-0.19, 0, 0.19].map((x, index) => (
+        <mesh key={`finished-stringer-${index}`} position={[x, 0.046, 0]} castShadow>
+          <boxGeometry args={[0.09, 0.044, 0.45]} />
+          <meshStandardMaterial color="#6b5039" emissive="#7f5f45" emissiveIntensity={0.05} roughness={0.68} metalness={0.04} />
+        </mesh>
+      ))}
+      {[-0.17, 0, 0.17].map((z, index) => (
+        <mesh key={`finished-slat-${index}`} position={[0, 0.068, z]} castShadow>
+          <boxGeometry args={[0.52, 0.018, 0.07]} />
+          <meshStandardMaterial color="#917055" emissive="#9c795b" emissiveIntensity={0.05} roughness={0.62} metalness={0.04} />
+        </mesh>
+      ))}
+
+      <mesh position={[0, 0.116, 0]} castShadow>
+        <boxGeometry args={[0.46, 0.11, 0.4]} />
+        <meshStandardMaterial color={wrappedColor} emissive="#9abce8" emissiveIntensity={0.14} roughness={0.32} metalness={0.1} />
       </mesh>
-      <mesh position={[0, 0.082, 0]}>
-        <boxGeometry args={[0.42, 0.125, 0.032]} />
-        <meshStandardMaterial color={strapColor} emissive={strapColor} emissiveIntensity={0.16} roughness={0.24} metalness={0.12} />
+      {[-0.12, 0.12].map((x, index) => (
+        <mesh key={`finished-band-${index}`} position={[x, 0.118, 0]}>
+          <boxGeometry args={[0.02, 0.115, 0.4]} />
+          <meshStandardMaterial color={strapColor} emissive={strapColor} emissiveIntensity={0.2} roughness={0.2} metalness={0.16} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.118, 0]}>
+        <boxGeometry args={[0.42, 0.12, 0.03]} />
+        <meshStandardMaterial color={strapColor} emissive={strapColor} emissiveIntensity={0.18} roughness={0.22} metalness={0.14} />
       </mesh>
+      <mesh position={[0.17, 0.116, 0.08]}>
+        <planeGeometry args={[0.085, 0.042]} />
+        <meshBasicMaterial color="#edf5ff" transparent opacity={0.92} />
+      </mesh>
+
+      {[[-0.11, -0.09], [0.11, -0.09], [-0.11, 0.09], [0.11, 0.09]].map((offset, index) => (
+        <mesh key={`finished-box-${index}`} position={[offset[0], 0.16, offset[1]]} castShadow>
+          <boxGeometry args={[0.12, 0.07, 0.1]} />
+          <meshStandardMaterial color="#e7eef9" emissive="#97b9e8" emissiveIntensity={0.14} roughness={0.42} metalness={0.08} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -859,54 +894,24 @@ function StagedPalletInstancedField({
   wrappedColor: string;
   strapColor: string;
 }) {
-  const baseRef = useRef<THREE.InstancedMesh | null>(null);
-  const wrapRef = useRef<THREE.InstancedMesh | null>(null);
-  const strapRef = useRef<THREE.InstancedMesh | null>(null);
-
-  useLayoutEffect(() => {
-    const maxCount = Math.min(count, slots.length);
-    const transform = new THREE.Object3D();
-
-    for (let index = 0; index < maxCount; index += 1) {
-      const slot = slots[index];
-      const yaw = ((index % 5) - 2) * 0.015;
-
-      transform.position.set(slot.x, slot.y, slot.z);
-      transform.rotation.set(0, yaw, 0);
-      transform.updateMatrix();
-      baseRef.current?.setMatrixAt(index, transform.matrix);
-
-      transform.position.set(slot.x, slot.y + 0.08, slot.z);
-      transform.updateMatrix();
-      wrapRef.current?.setMatrixAt(index, transform.matrix);
-
-      transform.position.set(slot.x, slot.y + 0.082, slot.z);
-      transform.updateMatrix();
-      strapRef.current?.setMatrixAt(index, transform.matrix);
-    }
-
-    if (baseRef.current) baseRef.current.instanceMatrix.needsUpdate = true;
-    if (wrapRef.current) wrapRef.current.instanceMatrix.needsUpdate = true;
-    if (strapRef.current) strapRef.current.instanceMatrix.needsUpdate = true;
-  }, [count, slots]);
-
   const visibleCount = Math.min(count, slots.length);
-  if (visibleCount <= 0) return null;
 
   return (
     <>
-      <instancedMesh ref={baseRef} args={[undefined, undefined, visibleCount]} castShadow>
-        <boxGeometry args={[0.52, 0.06, 0.46]} />
-        <meshStandardMaterial color="#7f6044" emissive="#8d6c4c" emissiveIntensity={0.05} roughness={0.68} metalness={0.04} />
-      </instancedMesh>
-      <instancedMesh ref={wrapRef} args={[undefined, undefined, visibleCount]} castShadow>
-        <boxGeometry args={[0.46, 0.12, 0.4]} />
-        <meshStandardMaterial color={wrappedColor} emissive="#96b9e6" emissiveIntensity={0.12} roughness={0.34} metalness={0.1} />
-      </instancedMesh>
-      <instancedMesh ref={strapRef} args={[undefined, undefined, visibleCount]}>
-        <boxGeometry args={[0.42, 0.125, 0.032]} />
-        <meshStandardMaterial color={strapColor} emissive={strapColor} emissiveIntensity={0.16} roughness={0.24} metalness={0.12} />
-      </instancedMesh>
+      {new Array(visibleCount).fill(0).map((_, index) => {
+        const slot = slots[index];
+        const yaw = ((index % 5) - 2) * 0.015;
+        const stripeTone = index % 3 === 0 ? '#6fa1df' : index % 3 === 1 ? strapColor : '#74c7a1';
+        return (
+          <FinishedPalletUnit
+            key={`staged-pallet-${index}`}
+            position={[slot.x, slot.y, slot.z]}
+            rotationY={yaw}
+            wrappedColor={wrappedColor}
+            strapColor={stripeTone}
+          />
+        );
+      })}
     </>
   );
 }
@@ -1446,18 +1451,21 @@ function AscentraWallSign({ position }: { position: [number, number, number] }) 
 
   return (
     <group position={position}>
-      <mesh position={[0, 0.55, -0.08]}>
-        <boxGeometry args={[5.4, 1.72, 0.14]} />
-        <meshStandardMaterial color="#3a2b1f" emissive="#4f3a2a" emissiveIntensity={0.08} roughness={0.56} metalness={0.18} />
+      <mesh position={[0, 0.55, -0.09]}>
+        <boxGeometry args={[5.7, 1.96, 0.16]} />
+        <meshStandardMaterial color="#203145" emissive="#2f4a68" emissiveIntensity={0.2} roughness={0.34} metalness={0.28} />
       </mesh>
-      <mesh position={[0, 0.55, -0.004]}>
-        <boxGeometry args={[5.12, 1.44, 0.05]} />
-        <meshStandardMaterial color="#b18858" emissive="#d0a870" emissiveIntensity={0.24} roughness={0.26} metalness={0.14} />
+      <mesh position={[0, 0.55, -0.008]}>
+        <boxGeometry args={[5.36, 1.62, 0.05]} />
+        <meshStandardMaterial color="#eaf2ff" emissive="#f5f9ff" emissiveIntensity={0.78} roughness={0.16} metalness={0.18} />
       </mesh>
-      <mesh position={[0, 0.55, 0.015]}>
-        <boxGeometry args={[5.18, 1.5, 0.01]} />
-        <meshBasicMaterial color="#f0ca94" transparent opacity={0.22} depthWrite={false} />
+      <mesh position={[0, 0.55, 0.012]}>
+        <boxGeometry args={[5.42, 1.68, 0.012]} />
+        <meshBasicMaterial color="#f6fbff" transparent opacity={0.34} depthWrite={false} />
       </mesh>
+      <pointLight position={[0, 0.68, 0.22]} color="#f7fbff" intensity={0.9} distance={9} decay={1.5} />
+      <pointLight position={[-1.7, 0.6, 0.2]} color="#edf7ff" intensity={0.58} distance={6.3} decay={1.65} />
+      <pointLight position={[1.7, 0.6, 0.2]} color="#edf7ff" intensity={0.58} distance={6.3} decay={1.65} />
 
       <group position={[0, 0.55, 0.078]}>
         {letters.map((char, index) => {
@@ -1470,18 +1478,94 @@ function AscentraWallSign({ position }: { position: [number, number, number] }) 
                 height={0.72}
                 depth={0.065}
                 stroke={0.072}
-                color="#f3e5cf"
-                emissive="#cda06a"
-                emissiveIntensity={0.2}
+                color="#f8fcff"
+                emissive="#ffffff"
+                emissiveIntensity={0.7}
               />
               <mesh position={[0, 0, -0.028]}>
                 <boxGeometry args={[letterWidth * 0.98, 0.76, 0.012]} />
-                <meshBasicMaterial color="#c08f5f" transparent opacity={0.12} depthWrite={false} />
+                <meshBasicMaterial color="#ffffff" transparent opacity={0.2} depthWrite={false} />
               </mesh>
             </group>
           );
         })}
       </group>
+    </group>
+  );
+}
+
+function WarehouseShellDetails() {
+  const columns = [-17.4, -13.2, -9, -4.8, -0.6, 3.6, 7.8, 12, 16.2];
+  const rearTrussZ = -12.4;
+  const frontRailZ = 5.85;
+
+  return (
+    <group>
+      {columns.map((x, index) => (
+        <group key={`shell-column-${index}`} position={[x, 1.2, rearTrussZ]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.24, 2.38, 0.24]} />
+            <meshStandardMaterial color="#5d738f" emissive="#5a7596" emissiveIntensity={0.14} roughness={0.34} metalness={0.24} />
+          </mesh>
+          <mesh position={[0, 1.22, 0]}>
+            <boxGeometry args={[0.34, 0.12, 0.34]} />
+            <meshStandardMaterial color="#8aaad1" emissive="#89acd9" emissiveIntensity={0.2} roughness={0.24} metalness={0.2} />
+          </mesh>
+        </group>
+      ))}
+
+      {[-1.2, 1.2].map((y, index) => (
+        <mesh key={`rear-beam-${index}`} position={[0, 1.2 + y, rearTrussZ]}>
+          <boxGeometry args={[34.8, 0.18, 0.18]} />
+          <meshStandardMaterial color="#647b97" emissive="#6984a6" emissiveIntensity={0.12} roughness={0.3} metalness={0.24} />
+        </mesh>
+      ))}
+
+      <mesh position={[0, 2.36, -7.2]}>
+        <boxGeometry args={[31.8, 0.14, 0.2]} />
+        <meshStandardMaterial color="#7d92ad" emissive="#7995b8" emissiveIntensity={0.14} roughness={0.28} metalness={0.24} />
+      </mesh>
+      <mesh position={[0, 2.22, -7.45]}>
+        <boxGeometry args={[31.8, 0.06, 0.06]} />
+        <meshStandardMaterial color="#9fc0e6" emissive="#8fb6e4" emissiveIntensity={0.2} roughness={0.2} metalness={0.22} />
+      </mesh>
+
+      {[-9.8, -3.2, 3.4, 10].map((x, index) => (
+        <group key={`safety-rail-${index}`} position={[x, 0.16, frontRailZ]}>
+          <mesh position={[0, 0.2, 0]}>
+            <boxGeometry args={[4.8, 0.04, 0.04]} />
+            <meshStandardMaterial color="#d7e8ff" emissive="#b3cff2" emissiveIntensity={0.22} roughness={0.24} metalness={0.2} />
+          </mesh>
+          <mesh position={[0, 0.34, 0]}>
+            <boxGeometry args={[4.8, 0.04, 0.04]} />
+            <meshStandardMaterial color="#d7e8ff" emissive="#b3cff2" emissiveIntensity={0.2} roughness={0.24} metalness={0.2} />
+          </mesh>
+          {[-2.3, -0.75, 0.75, 2.3].map((post, postIndex) => (
+            <mesh key={`safety-post-${index}-${postIndex}`} position={[post, 0.2, 0]}>
+              <boxGeometry args={[0.05, 0.36, 0.05]} />
+              <meshStandardMaterial color="#b8d3f5" emissive="#95b9e8" emissiveIntensity={0.18} roughness={0.3} metalness={0.2} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+
+      {[
+        [-15.6, 0.1, 4.8],
+        [-12.8, 0.1, 5.2],
+        [12.8, 0.1, 5.1],
+        [15.6, 0.1, 4.7]
+      ].map((pos, index) => (
+        <group key={`cone-${index}`} position={pos as [number, number, number]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.02, 0.08, 0.24, 12]} />
+            <meshStandardMaterial color="#efaa57" emissive="#d88b39" emissiveIntensity={0.22} roughness={0.3} metalness={0.08} />
+          </mesh>
+          <mesh position={[0, -0.11, 0]}>
+            <cylinderGeometry args={[0.1, 0.1, 0.04, 16]} />
+            <meshStandardMaterial color="#445a77" emissive="#50698a" emissiveIntensity={0.1} roughness={0.52} metalness={0.16} />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }
@@ -1747,30 +1831,33 @@ function SceneRig({
   }, [aiStations.packingTable]);
 
   const humanPickBounds = useMemo(
-    () => cellRect(HUMAN_COL_RANGE.min, HUMAN_COL_RANGE.max, 0, BOARD_ROWS - 1),
+    () => cellRect(HUMAN_COL_RANGE.min, HUMAN_COL_RANGE.max, PICK_ZONE_ROW_RANGE.min, PICK_ZONE_ROW_RANGE.max),
     []
   );
 
   const aiPickBounds = useMemo(
-    () => cellRect(AI_COL_MIN, BOARD_COLS - 1, 0, BOARD_ROWS - 1),
+    () => cellRect(AI_COL_MIN, BOARD_COLS - 1, PICK_ZONE_ROW_RANGE.min, PICK_ZONE_ROW_RANGE.max),
     []
   );
 
   const humanStagingSlots = useMemo(() => {
     const laneCount = 3;
-    const slotsPerLane = 7;
-    const laneGap = 0.74;
-    const slotGap = 0.56;
-    const topBoundaryZ = cellToWorld({ col: 0, row: 0 }, 0.1)[2] - CELL_SIZE / 2;
-    const laneStartX = -FACILITY_WIDTH / 2 + 0.92;
-    const laneStartZ = topBoundaryZ + 2.7;
+    const slotsPerLane = 6;
+    const laneGap = 0.86;
+    const slotGap = 0.58;
+    const frontEdgeZ = cellToWorld({ col: 0, row: BOARD_ROWS - 1 }, 0.1)[2] + CELL_SIZE / 2;
+    const laneStartX = humanPickBounds.minX + 0.75;
+    const laneStartZ = frontEdgeZ + 1.3;
     const stagingZone: BoundsRect = {
-      minX: -FACILITY_WIDTH / 2 + 0.6,
-      maxX: humanPickBounds.minX - 0.52,
-      minZ: topBoundaryZ + 0.7,
-      maxZ: topBoundaryZ + 7.2
+      minX: humanPickBounds.minX + 0.5,
+      maxX: humanPickBounds.maxX - 0.5,
+      minZ: frontEdgeZ + 0.55,
+      maxZ: frontEdgeZ + 4.7
     };
-    const forbidden = [humanPickBounds, cellRect(HUMAN_COL_RANGE.min, HUMAN_COL_RANGE.max, 7, 9)];
+    const forbidden = [
+      humanPickBounds,
+      cellRect(HUMAN_COL_RANGE.min, HUMAN_COL_RANGE.max, MACHINE_ZONE_ROW_RANGE.min, MACHINE_ZONE_ROW_RANGE.max)
+    ];
     const laneSlots: THREE.Vector3[][] = [];
 
     for (let lane = 0; lane < laneCount; lane += 1) {
@@ -1785,12 +1872,12 @@ function SceneRig({
       laneSlots.push(slots);
     }
 
-    const overflowAnchorX = laneStartX + laneCount * laneGap + 0.58;
-    const overflowAnchorZ = laneStartZ - 0.58;
+    const overflowAnchorX = stagingZone.maxX - 0.88;
+    const overflowAnchorZ = frontEdgeZ + 1.2;
     const overflowSlots: THREE.Vector3[] = [];
     for (let col = 0; col < 2; col += 1) {
       for (let row = 0; row < 2; row += 1) {
-        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.56, 0.1, overflowAnchorZ - row * 0.56);
+        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.52, 0.1, overflowAnchorZ + row * 0.58);
         if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
           overflowSlots.push(candidate);
         }
@@ -1799,32 +1886,35 @@ function SceneRig({
 
     const validLaneSlots = laneSlots.filter((lane) => lane.length > 0);
     const allSlots = [...validLaneSlots.flat(), ...overflowSlots];
-    const corridorAnchorX = validLaneSlots[validLaneSlots.length - 1]?.[0]?.x ?? laneStartX;
+    const corridorAnchorX = validLaneSlots[0]?.[0]?.x ?? laneStartX;
 
     return {
       laneSlots: validLaneSlots,
       overflowSlots,
       allSlots,
-      corridorX: corridorAnchorX + 0.28,
+      corridorX: corridorAnchorX - 0.36,
       zoneBounds: stagingZone
     };
   }, [humanPickBounds]);
 
   const aiStagingSlots = useMemo(() => {
     const laneCount = 3;
-    const slotsPerLane = 7;
-    const laneGap = 0.74;
-    const slotGap = 0.56;
-    const topBoundaryZ = cellToWorld({ col: 0, row: 0 }, 0.1)[2] - CELL_SIZE / 2;
-    const laneStartX = aiPickBounds.minX - 2.7;
-    const laneStartZ = topBoundaryZ + 2.7;
+    const slotsPerLane = 6;
+    const laneGap = 0.86;
+    const slotGap = 0.58;
+    const frontEdgeZ = cellToWorld({ col: 0, row: BOARD_ROWS - 1 }, 0.1)[2] + CELL_SIZE / 2;
+    const laneStartX = aiPickBounds.minX + 0.75;
+    const laneStartZ = frontEdgeZ + 1.3;
     const stagingZone: BoundsRect = {
-      minX: aiPickBounds.minX - 2.9,
-      maxX: aiPickBounds.minX - 0.52,
-      minZ: topBoundaryZ + 0.7,
-      maxZ: topBoundaryZ + 7.2
+      minX: aiPickBounds.minX + 0.5,
+      maxX: aiPickBounds.maxX - 0.5,
+      minZ: frontEdgeZ + 0.55,
+      maxZ: frontEdgeZ + 4.7
     };
-    const forbidden = [aiPickBounds, cellRect(AI_COL_MIN, BOARD_COLS - 1, 7, 9)];
+    const forbidden = [
+      aiPickBounds,
+      cellRect(AI_COL_MIN, BOARD_COLS - 1, MACHINE_ZONE_ROW_RANGE.min, MACHINE_ZONE_ROW_RANGE.max)
+    ];
     const laneSlots: THREE.Vector3[][] = [];
 
     for (let lane = 0; lane < laneCount; lane += 1) {
@@ -1839,12 +1929,12 @@ function SceneRig({
       laneSlots.push(slots);
     }
 
-    const overflowAnchorX = laneStartX + laneCount * laneGap + 0.58;
-    const overflowAnchorZ = laneStartZ - 0.58;
+    const overflowAnchorX = stagingZone.maxX - 0.88;
+    const overflowAnchorZ = frontEdgeZ + 1.2;
     const overflowSlots: THREE.Vector3[] = [];
     for (let col = 0; col < 2; col += 1) {
       for (let row = 0; row < 2; row += 1) {
-        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.56, 0.1, overflowAnchorZ - row * 0.56);
+        const candidate = new THREE.Vector3(overflowAnchorX + col * 0.52, 0.1, overflowAnchorZ + row * 0.58);
         if (isValidStagingSlot(candidate, stagingZone, forbidden)) {
           overflowSlots.push(candidate);
         }
@@ -1853,13 +1943,13 @@ function SceneRig({
 
     const validLaneSlots = laneSlots.filter((lane) => lane.length > 0);
     const allSlots = [...validLaneSlots.flat(), ...overflowSlots];
-    const corridorAnchorX = validLaneSlots[validLaneSlots.length - 1]?.[0]?.x ?? laneStartX;
+    const corridorAnchorX = validLaneSlots[0]?.[0]?.x ?? laneStartX;
 
     return {
       laneSlots: validLaneSlots,
       overflowSlots,
       allSlots,
-      corridorX: corridorAnchorX + 0.28,
+      corridorX: corridorAnchorX - 0.36,
       zoneBounds: stagingZone
     };
   }, [aiPickBounds]);
@@ -2138,10 +2228,10 @@ function SceneRig({
   }, [visualState.humanPallets, visualState.aiPallets]);
 
   useEffect(() => {
-    camera.position.set(18.6, 14.8, 18.6);
+    camera.position.set(20.8, 15.6, 21.2);
     const controls = controlsRef.current;
     if (controls) {
-      controls.target.set(0, 0.24, 0);
+      controls.target.set(0, 0.24, 1.2);
       controls.update();
     }
   }, [camera]);
@@ -2441,12 +2531,12 @@ function SceneRig({
         <meshStandardMaterial color="#122033" emissive="#223b5b" emissiveIntensity={0.03} roughness={0.8} metalness={0.08} transparent opacity={0.13} depthWrite={false} />
       </mesh>
 
-      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={0} rowEnd={6} color="#6ea4df" opacity={0.065} />
-      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={0} rowEnd={6} color="#9bb7dc" opacity={0.058} />
-      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={7} rowEnd={7} color="#d29267" opacity={0.08} />
-      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={7} rowEnd={7} color="#d29267" opacity={0.08} />
-      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={8} rowEnd={9} color="#84b1e7" opacity={0.075} />
-      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={8} rowEnd={9} color="#84b1e7" opacity={0.075} />
+      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={PICK_ZONE_ROW_RANGE.min} rowEnd={PICK_ZONE_ROW_RANGE.max} color="#dc6f6f" opacity={0.1} />
+      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={PICK_ZONE_ROW_RANGE.min} rowEnd={PICK_ZONE_ROW_RANGE.max} color="#cf6666" opacity={0.096} />
+      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={SAFETY_AISLE_ROW} rowEnd={SAFETY_AISLE_ROW} color="#efe2bf" opacity={0.08} />
+      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={SAFETY_AISLE_ROW} rowEnd={SAFETY_AISLE_ROW} color="#efe2bf" opacity={0.08} />
+      <ZoneOverlay colStart={HUMAN_COL_RANGE.min} colEnd={HUMAN_COL_RANGE.max} rowStart={MACHINE_ZONE_ROW_RANGE.min} rowEnd={MACHINE_ZONE_ROW_RANGE.max} color="#cf9a67" opacity={0.085} />
+      <ZoneOverlay colStart={AI_COL_MIN} colEnd={BOARD_COLS - 1} rowStart={MACHINE_ZONE_ROW_RANGE.min} rowEnd={MACHINE_ZONE_ROW_RANGE.max} color="#c88e5d" opacity={0.085} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.052, 0]} receiveShadow>
         <planeGeometry args={[FACILITY_WIDTH - 0.5, FACILITY_DEPTH - 0.5]} />
@@ -2463,20 +2553,22 @@ function SceneRig({
         <meshBasicMaterial color="#8ea8cc" transparent opacity={0.018} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.056, -8.4]} receiveShadow>
-        <planeGeometry args={[PICK_ZONE_WIDTH - 0.4, 5]} />
-        <meshBasicMaterial color="#7c9fcf" transparent opacity={0.015} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.056, -6.9]} receiveShadow>
+        <planeGeometry args={[PICK_ZONE_WIDTH - 0.5, 4.8]} />
+        <meshBasicMaterial color="#cf6a6a" transparent opacity={0.028} />
       </mesh>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.056, 6.4]} receiveShadow>
-        <planeGeometry args={[PICK_ZONE_WIDTH - 0.5, 3.8]} />
-        <meshBasicMaterial color="#b7cceb" transparent opacity={0.022} />
-      </mesh>
+      {[-4, 4].map((x, index) => (
+        <mesh key={`safety-aisle-line-${index}`} position={[x, 0.09, 1.5]}>
+          <boxGeometry args={[0.07, 0.01, 8.6]} />
+          <meshStandardMaterial color="#e8ddb8" emissive="#d2c398" emissiveIntensity={0.18} roughness={0.28} metalness={0.12} transparent opacity={0.72} />
+        </mesh>
+      ))}
 
-      {[-6, -3, 0, 3, 6].map((x, index) => (
-        <mesh key={`dock-mark-${index}`} position={[x, 0.09, 6.4]}>
-          <boxGeometry args={[0.08, 0.01, 2.8]} />
-          <meshStandardMaterial color="#a6c0e6" emissive="#86addf" emissiveIntensity={0.28} roughness={0.24} metalness={0.18} transparent opacity={0.62} />
+      {[-7.5, -0.5, 0.5, 7.5].map((x, index) => (
+        <mesh key={`staging-green-line-${index}`} position={[x, 0.09, 8.65]}>
+          <boxGeometry args={[0.09, 0.01, 4.7]} />
+          <meshStandardMaterial color="#82d197" emissive="#70c88b" emissiveIntensity={0.46} roughness={0.2} metalness={0.2} transparent opacity={0.88} />
         </mesh>
       ))}
 
@@ -2496,6 +2588,7 @@ function SceneRig({
       </mesh>
 
       <AscentraWallSign position={[0, 0.62, -FACILITY_DEPTH / 2 + 0.43]} />
+      <WarehouseShellDetails />
 
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
@@ -2578,9 +2671,9 @@ function SceneRig({
         laneSlots={humanStagingSlots.laneSlots}
         overflowSlots={humanStagingSlots.overflowSlots}
         zoneBounds={humanStagingSlots.zoneBounds}
-        laneColor="#7ea8dc"
-        slotColor="#b6cff0"
-        overflowColor="#c5d6ef"
+        laneColor="#6bc081"
+        slotColor="#9be3ae"
+        overflowColor="#b8e9c2"
       />
 
       {logisticsForklifts.human.map((runtime) => (
@@ -2623,9 +2716,9 @@ function SceneRig({
         laneSlots={aiStagingSlots.laneSlots}
         overflowSlots={aiStagingSlots.overflowSlots}
         zoneBounds={aiStagingSlots.zoneBounds}
-        laneColor="#7a9fd1"
-        slotColor="#afc8e8"
-        overflowColor="#bed2ec"
+        laneColor="#5fbc79"
+        slotColor="#95dfab"
+        overflowColor="#b4e7bf"
       />
 
       {logisticsForklifts.ai.map((runtime) => (
@@ -2724,7 +2817,7 @@ function SceneRig({
         maxPolarAngle={1.14}
         minAzimuthAngle={Math.PI / 4 - 0.35}
         maxAzimuthAngle={Math.PI / 4 + 0.35}
-        target={[0, 0.24, 0]}
+        target={[0, 0.24, 1.2]}
       />
 
       {effectsEnabled && !performanceMode ? (
@@ -2799,7 +2892,7 @@ export function ThreeScene(props: ThreeSceneProps) {
           key={performanceMode ? 'performance' : 'quality'}
           shadows={false}
           dpr={performanceMode ? [1, 1.2] : [1, 1.5]}
-          camera={{ position: [18.6, 14.8, 18.6], fov: 30 }}
+          camera={{ position: [20.8, 15.6, 21.2], fov: 30 }}
           gl={{ antialias: !performanceMode, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
             try {
