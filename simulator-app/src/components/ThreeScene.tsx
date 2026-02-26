@@ -49,6 +49,10 @@ type ThreeSceneProps = {
 
 const ORIGIN_X = -((BOARD_COLS - 1) * CELL_SIZE) / 2;
 const ORIGIN_Z = -((BOARD_ROWS - 1) * CELL_SIZE) / 2;
+const GRID_MIN_X = ORIGIN_X - CELL_SIZE / 2;
+const GRID_MIN_Z = ORIGIN_Z - CELL_SIZE / 2;
+const GRID_MAX_X = GRID_MIN_X + BOARD_COLS * CELL_SIZE;
+const GRID_MAX_Z = GRID_MIN_Z + BOARD_ROWS * CELL_SIZE;
 const PICK_ZONE_WIDTH = BOARD_COLS * CELL_SIZE;
 const PICK_ZONE_DEPTH = BOARD_ROWS * CELL_SIZE;
 const FACILITY_WIDTH = PICK_ZONE_WIDTH * 2.5;
@@ -63,9 +67,12 @@ function cellToWorld(cell: GridCell, y = 0): [number, number, number] {
 }
 
 function worldToCell(point: THREE.Vector3): GridCell {
+  const clampedX = clamp(point.x, GRID_MIN_X, GRID_MAX_X - 0.000001);
+  const clampedZ = clamp(point.z, GRID_MIN_Z, GRID_MAX_Z - 0.000001);
+
   return {
-    col: clamp(Math.round((point.x - ORIGIN_X) / CELL_SIZE), 0, BOARD_COLS - 1),
-    row: clamp(Math.round((point.z - ORIGIN_Z) / CELL_SIZE), 0, BOARD_ROWS - 1)
+    col: clamp(Math.floor((clampedX - GRID_MIN_X) / CELL_SIZE), 0, BOARD_COLS - 1),
+    row: clamp(Math.floor((clampedZ - GRID_MIN_Z) / CELL_SIZE), 0, BOARD_ROWS - 1)
   };
 }
 
@@ -191,13 +198,13 @@ function GridLines() {
     const points: number[] = [];
 
     for (let col = 0; col <= BOARD_COLS; col += 1) {
-      const x = ORIGIN_X - 0.5 + col * CELL_SIZE;
-      points.push(x, 0.01, ORIGIN_Z - 0.5, x, 0.01, ORIGIN_Z - 0.5 + BOARD_ROWS * CELL_SIZE);
+      const x = GRID_MIN_X + col * CELL_SIZE;
+      points.push(x, 0.01, GRID_MIN_Z, x, 0.01, GRID_MIN_Z + BOARD_ROWS * CELL_SIZE);
     }
 
     for (let row = 0; row <= BOARD_ROWS; row += 1) {
-      const z = ORIGIN_Z - 0.5 + row * CELL_SIZE;
-      points.push(ORIGIN_X - 0.5, 0.01, z, ORIGIN_X - 0.5 + BOARD_COLS * CELL_SIZE, 0.01, z);
+      const z = GRID_MIN_Z + row * CELL_SIZE;
+      points.push(GRID_MIN_X, 0.01, z, GRID_MIN_X + BOARD_COLS * CELL_SIZE, 0.01, z);
     }
 
     const buffer = new THREE.BufferGeometry();
@@ -1373,10 +1380,10 @@ function SceneRig({
         enabled={!controlsLockedByDrag}
         enableRotate={false}
         enablePan={false}
-        panSpeed={0.2}
+        panSpeed={0}
         enableZoom={!controlsLockedByDrag}
         enableDamping
-        dampingFactor={0.08}
+        dampingFactor={controlsLockedByDrag ? 0 : 0.08}
         minDistance={18.4}
         maxDistance={24.2}
         minPolarAngle={0.96}
