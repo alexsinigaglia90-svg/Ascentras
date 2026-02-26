@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
@@ -539,6 +539,196 @@ function Forklift({ cell, heading }: { cell: GridCell; heading: number }) {
   );
 }
 
+type LogisticsSide = 'human' | 'ai';
+
+type LogisticsForkliftRuntime = {
+  id: string;
+  side: LogisticsSide;
+  from: THREE.Vector3;
+  to: THREE.Vector3;
+  progress: number;
+  state: 'idle' | 'to-stage' | 'to-pack-return';
+  carrying: boolean;
+  trailPhase: number;
+};
+
+function FinishedPalletUnit({
+  position,
+  rotationY = 0,
+  wrappedColor = '#dcecff',
+  strapColor = '#7da8de'
+}: {
+  position: [number, number, number];
+  rotationY?: number;
+  wrappedColor?: string;
+  strapColor?: string;
+}) {
+  return (
+    <group position={position} rotation={[0, rotationY, 0]}>
+      <mesh castShadow>
+        <boxGeometry args={[0.52, 0.06, 0.46]} />
+        <meshStandardMaterial color="#7f6044" emissive="#8d6c4c" emissiveIntensity={0.05} roughness={0.68} metalness={0.04} />
+      </mesh>
+      <mesh position={[0, 0.08, 0]} castShadow>
+        <boxGeometry args={[0.46, 0.12, 0.4]} />
+        <meshStandardMaterial color={wrappedColor} emissive="#96b9e6" emissiveIntensity={0.12} roughness={0.34} metalness={0.1} />
+      </mesh>
+      <mesh position={[0, 0.082, 0]}>
+        <boxGeometry args={[0.42, 0.125, 0.032]} />
+        <meshStandardMaterial color={strapColor} emissive={strapColor} emissiveIntensity={0.16} roughness={0.24} metalness={0.12} />
+      </mesh>
+    </group>
+  );
+}
+
+function StagedPalletInstancedField({
+  slots,
+  count,
+  wrappedColor,
+  strapColor
+}: {
+  slots: THREE.Vector3[];
+  count: number;
+  wrappedColor: string;
+  strapColor: string;
+}) {
+  const baseRef = useRef<THREE.InstancedMesh | null>(null);
+  const wrapRef = useRef<THREE.InstancedMesh | null>(null);
+  const strapRef = useRef<THREE.InstancedMesh | null>(null);
+
+  useLayoutEffect(() => {
+    const maxCount = Math.min(count, slots.length);
+    const transform = new THREE.Object3D();
+
+    for (let index = 0; index < maxCount; index += 1) {
+      const slot = slots[index];
+      const yaw = ((index % 5) - 2) * 0.015;
+
+      transform.position.set(slot.x, slot.y, slot.z);
+      transform.rotation.set(0, yaw, 0);
+      transform.updateMatrix();
+      baseRef.current?.setMatrixAt(index, transform.matrix);
+
+      transform.position.set(slot.x, slot.y + 0.08, slot.z);
+      transform.updateMatrix();
+      wrapRef.current?.setMatrixAt(index, transform.matrix);
+
+      transform.position.set(slot.x, slot.y + 0.082, slot.z);
+      transform.updateMatrix();
+      strapRef.current?.setMatrixAt(index, transform.matrix);
+    }
+
+    if (baseRef.current) baseRef.current.instanceMatrix.needsUpdate = true;
+    if (wrapRef.current) wrapRef.current.instanceMatrix.needsUpdate = true;
+    if (strapRef.current) strapRef.current.instanceMatrix.needsUpdate = true;
+  }, [count, slots]);
+
+  const visibleCount = Math.min(count, slots.length);
+  if (visibleCount <= 0) return null;
+
+  return (
+    <>
+      <instancedMesh ref={baseRef} args={[undefined, undefined, visibleCount]} castShadow>
+        <boxGeometry args={[0.52, 0.06, 0.46]} />
+        <meshStandardMaterial color="#7f6044" emissive="#8d6c4c" emissiveIntensity={0.05} roughness={0.68} metalness={0.04} />
+      </instancedMesh>
+      <instancedMesh ref={wrapRef} args={[undefined, undefined, visibleCount]} castShadow>
+        <boxGeometry args={[0.46, 0.12, 0.4]} />
+        <meshStandardMaterial color={wrappedColor} emissive="#96b9e6" emissiveIntensity={0.12} roughness={0.34} metalness={0.1} />
+      </instancedMesh>
+      <instancedMesh ref={strapRef} args={[undefined, undefined, visibleCount]}>
+        <boxGeometry args={[0.42, 0.125, 0.032]} />
+        <meshStandardMaterial color={strapColor} emissive={strapColor} emissiveIntensity={0.16} roughness={0.24} metalness={0.12} />
+      </instancedMesh>
+    </>
+  );
+}
+
+function LogisticsForklift({
+  runtime,
+  color,
+  glow
+}: {
+  runtime: LogisticsForkliftRuntime;
+  color: string;
+  glow: string;
+}) {
+  const ref = useRef<THREE.Group | null>(null);
+  const beaconRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const glowRef = useRef<THREE.PointLight | null>(null);
+  const headingRef = useRef(0);
+  const trailRef = useRef<THREE.MeshBasicMaterial | null>(null);
+  const tempPosition = useRef(new THREE.Vector3());
+
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+
+    tempPosition.current.lerpVectors(runtime.from, runtime.to, clamp(runtime.progress, 0, 1));
+    const bob = 0.006 * Math.sin(clock.elapsedTime * 4.8 + runtime.trailPhase);
+    ref.current.position.set(tempPosition.current.x, tempPosition.current.y + bob, tempPosition.current.z);
+
+    const direction = runtime.to.clone().sub(runtime.from);
+    if (direction.lengthSq() > 0.0001) {
+      const targetHeading = Math.atan2(direction.x, direction.z);
+      let deltaHeading = targetHeading - headingRef.current;
+      while (deltaHeading > Math.PI) deltaHeading -= Math.PI * 2;
+      while (deltaHeading < -Math.PI) deltaHeading += Math.PI * 2;
+      headingRef.current += deltaHeading * 0.16;
+      ref.current.rotation.y = headingRef.current;
+    }
+
+    const pulse = 0.5 + 0.5 * Math.sin(clock.elapsedTime * 5.6 + runtime.trailPhase * 2);
+    if (beaconRef.current) {
+      beaconRef.current.emissiveIntensity = 0.24 + pulse * 0.42;
+    }
+    if (glowRef.current) {
+      glowRef.current.intensity = 0.22 + pulse * 0.3;
+      glowRef.current.distance = 1.25 + pulse * 0.4;
+    }
+    if (trailRef.current) {
+      trailRef.current.opacity = runtime.carrying ? 0.08 + pulse * 0.06 : 0;
+    }
+  });
+
+  return (
+    <group ref={ref}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[0.48, 0.13, 0.31]} />
+        <meshStandardMaterial color={color} emissive={glow} emissiveIntensity={0.12} roughness={0.36} metalness={0.18} />
+      </mesh>
+      <mesh position={[0.09, 0.14, 0]} castShadow>
+        <boxGeometry args={[0.18, 0.18, 0.22]} />
+        <meshStandardMaterial color="#314b6b" emissive="#4f719f" emissiveIntensity={0.12} roughness={0.34} metalness={0.22} />
+      </mesh>
+      <mesh position={[-0.24, 0.08, 0]} castShadow>
+        <boxGeometry args={[0.16, 0.03, 0.2]} />
+        <meshStandardMaterial color="#8fb7ea" emissive="#7ca4da" emissiveIntensity={0.16} roughness={0.28} metalness={0.16} />
+      </mesh>
+      {runtime.carrying ? (
+        <group position={[-0.26, 0.12, 0]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.16, 0.04, 0.14]} />
+            <meshStandardMaterial color="#7f6044" roughness={0.68} metalness={0.04} />
+          </mesh>
+          <mesh position={[0, 0.05, 0]} castShadow>
+            <boxGeometry args={[0.14, 0.08, 0.12]} />
+            <meshStandardMaterial color="#dcecff" emissive="#96b9e6" emissiveIntensity={0.14} roughness={0.34} metalness={0.1} />
+          </mesh>
+        </group>
+      ) : null}
+      <mesh position={[0.22, 0.22, 0]} castShadow>
+        <cylinderGeometry args={[0.028, 0.028, 0.03, 14]} />
+        <meshStandardMaterial ref={beaconRef} color="#9fc4f2" emissive="#86b4ea" emissiveIntensity={0.28} roughness={0.2} metalness={0.16} />
+      </mesh>
+      <pointLight ref={glowRef} position={[0.22, 0.2, 0]} color="#9ec3f0" intensity={0.3} distance={1.5} decay={1.9} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.08, 0.01, 0]}>
+        <planeGeometry args={[0.52, 0.22]} />
+        <meshBasicMaterial ref={trailRef} color="#9ec3ef" transparent opacity={0} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
 function DioramaPallet({
   tile,
   pallet,
@@ -1007,13 +1197,85 @@ function SceneRig({
     human: humanStations.docks.map(() => 0),
     ai: aiStations.docks.map(() => 0)
   }));
+  const [finishedQueue, setFinishedQueue] = useState({ human: 0, ai: 0 });
+  const [stagedFinished, setStagedFinished] = useState({ human: 0, ai: 0 });
   const [effectsEnabled, setEffectsEnabled] = useState(true);
   const deliveredBoxRefs = useRef<Set<string>>(new Set());
   const deliveredDockRefs = useRef<Set<string>>(new Set());
+  const packedRefs = useRef<{ human: Set<string>; ai: Set<string> }>({ human: new Set<string>(), ai: new Set<string>() });
+  const finishedQueueRef = useRef({ human: 0, ai: 0 });
+  const stagedFinishedRef = useRef({ human: 0, ai: 0 });
   const lowFpsStreakRef = useRef(0);
   const fpsWindowRef = useRef({ elapsed: 0, frames: 0 });
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const controlsLockedByDrag = canEdit && draggingTileId !== null;
+
+  const humanPackingOutput = useMemo(() => {
+    const [x, y, z] = cellToWorld({ col: humanStations.packingTable.col + 0.8, row: humanStations.packingTable.row }, 0.12);
+    return new THREE.Vector3(x, y, z);
+  }, [humanStations.packingTable]);
+
+  const aiPackingOutput = useMemo(() => {
+    const [x, y, z] = cellToWorld({ col: aiStations.packingTable.col + 0.8, row: aiStations.packingTable.row }, 0.12);
+    return new THREE.Vector3(x, y, z);
+  }, [aiStations.packingTable]);
+
+  const humanStagingSlots = useMemo(() => {
+    const dock = humanStations.docks[1] ?? humanStations.docks[0] ?? humanStations.outbound;
+    const [x, y, z] = cellToWorld({ col: dock.col - 0.9, row: dock.row - 0.3 }, 0.1);
+    const slots: THREE.Vector3[] = [];
+    for (let lane = 0; lane < 4; lane += 1) {
+      for (let row = 0; row < 6; row += 1) {
+        for (let level = 0; level < 4; level += 1) {
+          slots.push(new THREE.Vector3(x - lane * 0.62, y + level * 0.14, z - row * 0.56 + (lane % 2) * 0.08));
+        }
+      }
+    }
+    return slots;
+  }, [humanStations.docks, humanStations.outbound]);
+
+  const aiStagingSlots = useMemo(() => {
+    const dock = aiStations.docks[1] ?? aiStations.docks[0] ?? aiStations.outbound;
+    const [x, y, z] = cellToWorld({ col: dock.col + 0.9, row: dock.row - 0.3 }, 0.1);
+    const slots: THREE.Vector3[] = [];
+    for (let lane = 0; lane < 4; lane += 1) {
+      for (let row = 0; row < 6; row += 1) {
+        for (let level = 0; level < 4; level += 1) {
+          slots.push(new THREE.Vector3(x + lane * 0.62, y + level * 0.14, z - row * 0.56 + (lane % 2) * 0.08));
+        }
+      }
+    }
+    return slots;
+  }, [aiStations.docks, aiStations.outbound]);
+
+  const logisticsForklifts = useMemo(() => {
+    const humanCount = 1;
+    const aiCount = performanceMode ? 1 : 2;
+
+    const humanRuntimes: LogisticsForkliftRuntime[] = new Array(humanCount).fill(0).map((_, index) => ({
+      id: `human-logistics-forklift-${index}`,
+      side: 'human' as const,
+      from: humanPackingOutput.clone(),
+      to: humanPackingOutput.clone(),
+      progress: 1,
+      state: 'idle',
+      carrying: false,
+      trailPhase: index * 0.9 + 0.2
+    }));
+
+    const aiRuntimes: LogisticsForkliftRuntime[] = new Array(aiCount).fill(0).map((_, index) => ({
+      id: `ai-logistics-forklift-${index}`,
+      side: 'ai' as const,
+      from: aiPackingOutput.clone(),
+      to: aiPackingOutput.clone(),
+      progress: 1,
+      state: 'idle',
+      carrying: false,
+      trailPhase: index * 1.1 + 0.7
+    }));
+
+    return { human: humanRuntimes, ai: aiRuntimes };
+  }, [humanPackingOutput, aiPackingOutput, performanceMode]);
 
   const floorTexture = useMemo(() => {
     const canvas = document.createElement('canvas');
@@ -1289,10 +1551,65 @@ function SceneRig({
         human: humanStations.docks.map(() => 0),
         ai: aiStations.docks.map(() => 0)
       });
+      setFinishedQueue({ human: 0, ai: 0 });
+      setStagedFinished({ human: 0, ai: 0 });
+      finishedQueueRef.current = { human: 0, ai: 0 };
+      stagedFinishedRef.current = { human: 0, ai: 0 };
       deliveredBoxRefs.current.clear();
       deliveredDockRefs.current.clear();
+      packedRefs.current.human.clear();
+      packedRefs.current.ai.clear();
     }
   }, [phase, humanStations.docks, aiStations.docks]);
+
+  useEffect(() => {
+    if (phase !== 'simulating') {
+      packedRefs.current.human.clear();
+      packedRefs.current.ai.clear();
+      return;
+    }
+
+    const nextHumanPacked = new Set<string>();
+    const nextAiPacked = new Set<string>();
+    let humanPackedIncrement = 0;
+    let aiPackedIncrement = 0;
+
+    visualState.humanBoxes.forEach((box, index) => {
+      const key = `h-packed:${box.id}:${index}`;
+      const atPacking = manhattan(box.cell, humanStations.packingTable) <= 1;
+      if (atPacking) {
+        nextHumanPacked.add(key);
+        if (!packedRefs.current.human.has(key)) {
+          humanPackedIncrement += 1;
+        }
+      }
+    });
+
+    visualState.aiBoxes.forEach((box, index) => {
+      const key = `a-packed:${box.id}:${index}`;
+      const atPacking = manhattan(box.cell, aiStations.packingTable) <= 1;
+      if (atPacking) {
+        nextAiPacked.add(key);
+        if (!packedRefs.current.ai.has(key)) {
+          aiPackedIncrement += 1;
+        }
+      }
+    });
+
+    if (humanPackedIncrement > 0 || aiPackedIncrement > 0) {
+      setFinishedQueue((current) => {
+        const next = {
+          human: clamp(current.human + humanPackedIncrement, 0, 220),
+          ai: clamp(current.ai + aiPackedIncrement, 0, 220)
+        };
+        finishedQueueRef.current = next;
+        return next;
+      });
+    }
+
+    packedRefs.current.human = nextHumanPacked;
+    packedRefs.current.ai = nextAiPacked;
+  }, [phase, visualState.humanBoxes, visualState.aiBoxes, humanStations.packingTable, aiStations.packingTable]);
 
   useEffect(() => {
     if (phase !== 'simulating') {
@@ -1366,6 +1683,78 @@ function SceneRig({
   }, [phase, visualState.humanBoxes, visualState.aiBoxes, humanStations.outbound, aiStations.outbound, humanStations.docks, aiStations.docks]);
 
   useFrame((_, delta) => {
+    if (phase === 'simulating') {
+      let queueHuman = finishedQueueRef.current.human;
+      let queueAi = finishedQueueRef.current.ai;
+      let stagedHuman = stagedFinishedRef.current.human;
+      let stagedAi = stagedFinishedRef.current.ai;
+
+      (['human', 'ai'] as LogisticsSide[]).forEach((side) => {
+        const runtimes = side === 'human' ? logisticsForklifts.human : logisticsForklifts.ai;
+        const packingPoint = side === 'human' ? humanPackingOutput : aiPackingOutput;
+        const stagingSlots = side === 'human' ? humanStagingSlots : aiStagingSlots;
+        const speed = side === 'ai' ? (performanceMode ? 1.12 : 1.28) : (performanceMode ? 0.9 : 1.02);
+        let reservedDrops = 0;
+
+        runtimes.forEach((runtime) => {
+          if (runtime.state !== 'idle') {
+            const distance = Math.max(0.01, runtime.from.distanceTo(runtime.to));
+            runtime.progress = clamp(runtime.progress + (delta * speed) / distance, 0, 1);
+          }
+
+          if (runtime.state === 'to-stage' && runtime.progress >= 1) {
+            runtime.carrying = false;
+            runtime.state = 'to-pack-return';
+            runtime.from = runtime.to.clone();
+            runtime.to = packingPoint.clone();
+            runtime.progress = 0;
+            if (side === 'human') {
+              stagedHuman = clamp(stagedHuman + 1, 0, humanStagingSlots.length);
+            } else {
+              stagedAi = clamp(stagedAi + 1, 0, aiStagingSlots.length);
+            }
+          } else if (runtime.state === 'to-pack-return' && runtime.progress >= 1) {
+            runtime.state = 'idle';
+            runtime.from = packingPoint.clone();
+            runtime.to = packingPoint.clone();
+            runtime.progress = 1;
+          }
+
+          const currentQueue = side === 'human' ? queueHuman : queueAi;
+          if (runtime.state === 'idle' && currentQueue > 0) {
+            if (side === 'human') {
+              queueHuman -= 1;
+            } else {
+              queueAi -= 1;
+            }
+
+            const currentStaged = side === 'human' ? stagedHuman : stagedAi;
+            const slotIndex = clamp(currentStaged + reservedDrops, 0, stagingSlots.length - 1);
+            reservedDrops += 1;
+            const targetSlot = stagingSlots[slotIndex];
+
+            runtime.carrying = true;
+            runtime.state = 'to-stage';
+            runtime.from = packingPoint.clone();
+            runtime.to = targetSlot.clone();
+            runtime.progress = 0;
+          }
+        });
+      });
+
+      if (queueHuman !== finishedQueueRef.current.human || queueAi !== finishedQueueRef.current.ai) {
+        const nextQueue = { human: queueHuman, ai: queueAi };
+        finishedQueueRef.current = nextQueue;
+        setFinishedQueue(nextQueue);
+      }
+
+      if (stagedHuman !== stagedFinishedRef.current.human || stagedAi !== stagedFinishedRef.current.ai) {
+        const nextStaged = { human: stagedHuman, ai: stagedAi };
+        stagedFinishedRef.current = nextStaged;
+        setStagedFinished(nextStaged);
+      }
+    }
+
     if (performanceMode) {
       fpsWindowRef.current.elapsed = 0;
       fpsWindowRef.current.frames = 0;
@@ -1376,22 +1765,20 @@ function SceneRig({
     fpsWindowRef.current.elapsed += delta;
     fpsWindowRef.current.frames += 1;
 
-    if (fpsWindowRef.current.elapsed < 1) {
-      return;
-    }
-
-    const averageFps = fpsWindowRef.current.frames / fpsWindowRef.current.elapsed;
-    if (averageFps < 42) {
-      lowFpsStreakRef.current += 1;
-      if (lowFpsStreakRef.current >= 2) {
-        onAutoPerformanceMode();
+    if (fpsWindowRef.current.elapsed >= 1) {
+      const averageFps = fpsWindowRef.current.frames / fpsWindowRef.current.elapsed;
+      if (averageFps < 42) {
+        lowFpsStreakRef.current += 1;
+        if (lowFpsStreakRef.current >= 2) {
+          onAutoPerformanceMode();
+        }
+      } else {
+        lowFpsStreakRef.current = 0;
       }
-    } else {
-      lowFpsStreakRef.current = 0;
-    }
 
-    fpsWindowRef.current.elapsed = 0;
-    fpsWindowRef.current.frames = 0;
+      fpsWindowRef.current.elapsed = 0;
+      fpsWindowRef.current.frames = 0;
+    }
   });
 
   const overheadLampPositions = performanceMode ? [-14.8, -8.8, 0, 8.8, 14.8] : [-14.8, -11.8, -8.8, 8.8, 11.8, 14.8];
@@ -1558,6 +1945,32 @@ function SceneRig({
       <DockGroup docks={humanStations.docks} loadCounts={dockFill.human} />
       <Conveyor from={humanStations.packingTable} to={humanStations.machine} />
 
+      {new Array(Math.min(finishedQueue.human, 6)).fill(0).map((_, index) => {
+        const offsetX = (index % 2) * 0.32;
+        const offsetZ = Math.floor(index / 2) * 0.28;
+        const base = humanPackingOutput;
+        return (
+          <FinishedPalletUnit
+            key={`human-queue-finished-${index}`}
+            position={[base.x + offsetX, base.y + 0.01, base.z + offsetZ]}
+            rotationY={0.05 * (index % 3)}
+            wrappedColor="#e8f2ff"
+            strapColor="#8cb7ea"
+          />
+        );
+      })}
+
+      <StagedPalletInstancedField
+        slots={humanStagingSlots}
+        count={stagedFinished.human}
+        wrappedColor="#e7f2ff"
+        strapColor="#8ab6ea"
+      />
+
+      {logisticsForklifts.human.map((runtime) => (
+        <LogisticsForklift key={runtime.id} runtime={runtime} color="#8bb3e6" glow="#7ca4db" />
+      ))}
+
       <DioramaStation cell={aiStations.depot} title="Depot" accent="#b88f63" />
       <DioramaStation cell={aiStations.dropoff} title="Drop" accent="#b88f63" />
       <DioramaStation cell={aiStations.packingTable} title="Packing" accent="#cf9d67" />
@@ -1567,6 +1980,32 @@ function SceneRig({
       <OutboundBuffer cell={aiStations.outbound} count={outboundFill.ai} accent="#8cb8ef" />
       <DockGroup docks={aiStations.docks} loadCounts={dockFill.ai} />
       <Conveyor from={aiStations.packingTable} to={aiStations.machine} />
+
+      {new Array(Math.min(finishedQueue.ai, 8)).fill(0).map((_, index) => {
+        const offsetX = (index % 2) * 0.32;
+        const offsetZ = Math.floor(index / 2) * 0.28;
+        const base = aiPackingOutput;
+        return (
+          <FinishedPalletUnit
+            key={`ai-queue-finished-${index}`}
+            position={[base.x + offsetX, base.y + 0.01, base.z + offsetZ]}
+            rotationY={0.06 * (index % 4)}
+            wrappedColor="#def0ff"
+            strapColor="#76a5df"
+          />
+        );
+      })}
+
+      <StagedPalletInstancedField
+        slots={aiStagingSlots}
+        count={stagedFinished.ai}
+        wrappedColor="#e1efff"
+        strapColor="#79a7e0"
+      />
+
+      {logisticsForklifts.ai.map((runtime) => (
+        <LogisticsForklift key={runtime.id} runtime={runtime} color="#7fa9df" glow="#6999d4" />
+      ))}
 
       {humanTiles.map((tile) => (
         <DioramaPallet
