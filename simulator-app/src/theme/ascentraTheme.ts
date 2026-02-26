@@ -2,13 +2,13 @@ import type { TileKind } from '../hooks/useSimulationModel';
 
 export const ASCENTRA_THEME = {
   color: {
-    accent: '#86afe8',
-    accentStrong: '#5f91da',
-    neutral0: '#070d16',
-    neutral1: '#0d1725',
-    neutral2: '#162335',
-    border: '#a2c3ec42',
-    glow: '#7ca7e0'
+    accent: '#d6b27a',
+    accentStrong: '#c79758',
+    neutral0: '#15100d',
+    neutral1: '#221a14',
+    neutral2: '#31251d',
+    border: '#f0d7b347',
+    glow: '#d0a86e'
   },
   radius: {
     panel: 1.05,
@@ -36,33 +36,33 @@ export const MOVER_THEME: Record<TileKind, {
   F: {
     label: 'Fast',
     uiClass: 'mover-chip-fast',
-    tileColor: '#3ea2ff',
-    tileEmissive: '#2d85e8',
-    tileStrip: '#90d2ff'
+    tileColor: '#d08657',
+    tileEmissive: '#a95f37',
+    tileStrip: '#e2b084'
   },
   M: {
     label: 'Mid',
     uiClass: 'mover-chip-mid',
-    tileColor: '#6ea3e4',
-    tileEmissive: '#4f85c7',
-    tileStrip: '#a8c9ef'
+    tileColor: '#9e8661',
+    tileEmissive: '#7f6a4a',
+    tileStrip: '#c5ad87'
   },
   S: {
     label: 'Slow',
     uiClass: 'mover-chip-slow',
-    tileColor: '#7f95b3',
-    tileEmissive: '#5f7390',
-    tileStrip: '#b6c4d7'
+    tileColor: '#66778d',
+    tileEmissive: '#4e5f74',
+    tileStrip: '#8da1ba'
   }
 };
 
 export const STATION_THEME = {
-  base: '#1f3046',
-  housing: '#2c3f58',
-  top: '#8eb2df',
-  strip: '#95c0ee',
-  led: '#9dd2ff',
-  conveyorBase: '#27384e',
-  conveyorTrack: '#3e5778',
-  conveyorStripe: '#98c7ff'
+  base: '#4b3b2f',
+  housing: '#655244',
+  top: '#b99467',
+  strip: '#d3aa79',
+  led: '#f0d1a1',
+  conveyorBase: '#4a433a',
+  conveyorTrack: '#665b4e',
+  conveyorStripe: '#c9a26f'
 } as const;
