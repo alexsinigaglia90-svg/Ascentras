@@ -170,24 +170,29 @@
     if (mobile || reduced) {
       section.classList.remove('operis-cinematic-ready');
       section.style.removeProperty('--operis-cinematic-height');
+      section.style.removeProperty('--operis-cinematic-stage-height');
       scenes.forEach((scene, index) => scene.classList.toggle('is-active', index === 0));
       dots.forEach((dot, index) => dot.classList.toggle('is-active', index === 0));
       progress.style.width = '33%';
       return;
     }
 
+    function applyStageHeight() {
+      const largestScene = scenes.reduce((maxHeight, scene) => Math.max(maxHeight, scene.scrollHeight || 0), 0);
+      const stageHeight = Math.max(300, Math.min(460, Math.round(largestScene + 64)));
+      section.style.setProperty('--operis-cinematic-stage-height', `${stageHeight}px`);
+      return stageHeight;
+    }
+
     function applyDynamicHeight() {
       const viewport = window.innerHeight || document.documentElement.clientHeight || 900;
       const stickyOffset = 92;
-      const stageHeight = Math.max(stage.offsetHeight || 0, Math.min(680, Math.round(viewport * 0.72)));
+      const stageHeight = applyStageHeight();
       const sceneSteps = Math.max(1, scenes.length - 1);
       const scrollPerStep = Math.max(260, Math.round(viewport * 0.42));
       const total = stageHeight + stickyOffset + sceneSteps * scrollPerStep + 96;
       section.style.setProperty('--operis-cinematic-height', `${Math.max(total, viewport + 220)}px`);
     }
-
-    const measuredStageHeight = Math.max(stage.getBoundingClientRect().height || 0, 320);
-    stage.style.minHeight = `${Math.round(measuredStageHeight)}px`;
 
     applyDynamicHeight();
     section.classList.add('operis-cinematic-ready');
@@ -237,8 +242,6 @@
     calculateProgress();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', () => {
-      const nextMeasuredHeight = Math.max(stage.getBoundingClientRect().height || 0, 320);
-      stage.style.minHeight = `${Math.round(nextMeasuredHeight)}px`;
       applyDynamicHeight();
       onScroll();
     });

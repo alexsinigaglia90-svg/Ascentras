@@ -292,7 +292,11 @@ main {
   overflow: hidden;
   display: grid;
   gap: 0.4rem;
-  min-height: clamp(300px, 44vh, 460px);
+  min-height: 0;
+}
+
+.operis-cinematic.operis-cinematic-ready .cinematic-stage {
+  min-height: var(--operis-cinematic-stage-height, 340px);
 }
 
 .cinematic-scene {
