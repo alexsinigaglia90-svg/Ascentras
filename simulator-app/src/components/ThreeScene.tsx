@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Metrics, AutomationLevel } from '../hooks/useSimulationModel';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -96,9 +95,10 @@ function SceneRig({ metrics, automationLevel, botPulseKey }: ThreeSceneProps) {
   return (
     <>
       <fog attach="fog" args={['#060b12', 22, 70]} />
-      <ambientLight intensity={0.45} color="#9eb7df" />
-      <directionalLight position={[12, 20, 8]} intensity={1.15} color="#dce8ff" />
-      <directionalLight position={[-14, 10, -12]} intensity={0.7} color="#5e89c7" />
+      <ambientLight intensity={0.42} color="#a8c2e4" />
+      <hemisphereLight intensity={0.72} color="#dbe8ff" groundColor="#111b2a" position={[0, 16, 0]} />
+      <directionalLight position={[12, 20, 8]} intensity={1.05} color="#d7e7ff" />
+      <directionalLight position={[-14, 10, -12]} intensity={0.62} color="#5e89c7" />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.8, 0]} receiveShadow>
         <planeGeometry args={[90, 90]} />
@@ -152,8 +152,6 @@ function SceneRig({ metrics, automationLevel, botPulseKey }: ThreeSceneProps) {
           <meshBasicMaterial color="#a7d0ff" />
         </mesh>
       ))}
-
-      <Environment preset="city" />
 
       {effectsEnabled ? (
         <ErrorBoundary
