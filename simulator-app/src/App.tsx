@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type KeyboardEvent } from 'react';
 import { BotPanel } from './components/BotPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HumanPanel } from './components/HumanPanel';
@@ -52,14 +52,31 @@ export default function WarehouseSimulatorPage() {
   const humanTotalFte = results ? results.human.requiredFte.pickers + results.human.requiredFte.runners : 0;
   const aiTotalFte = results ? results.ai.requiredFte.pickers + results.ai.requiredFte.runners : 0;
 
+  const onBackToSiteKeyDown = (event: KeyboardEvent<HTMLAnchorElement>) => {
+    if (event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault();
+      event.currentTarget.click();
+    }
+  };
+
   return (
     <div className="relative h-screen w-full overflow-hidden bg-ink text-[#0d1b2c]">
       <main className="relative z-10 grid h-screen grid-rows-[auto_1fr] gap-3 p-3">
         <header className="glass-panel px-4 py-3">
           <div className="flex items-center justify-between gap-4">
-            <div>
+            <div className="flex items-center gap-3">
+              <a
+                href="/"
+                className="control-btn"
+                onKeyDown={onBackToSiteKeyDown}
+                aria-label="Back to main site"
+              >
+                ← Back to site
+              </a>
+              <div>
               <h1 className="text-xl font-semibold tracking-[0.015em] text-[#0d1b2c]">Build → Ready → Simulate</h1>
               <p className="mt-1 text-sm font-medium text-[#4d5d72]">Pick Circuit Builder · Human vs Ascentra Engine</p>
+              </div>
             </div>
             <div className="rounded-full border border-borderline/90 bg-white/80 px-4 py-2 text-sm font-semibold text-[#2f5f8a] shadow-[0_6px_14px_rgba(8,23,42,0.12)]">
               Clock {simClockLabel}
