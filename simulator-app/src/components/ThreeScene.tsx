@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, ThreeEvent, useFrame } from '@react-three/fiber';
+import { Canvas, ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
@@ -289,6 +289,14 @@ function StationObject({ cell, title, accent, scale = [0.88, 0.42, 0.88] as [num
 }
 
 function DockGroup({ docks }: { docks: GridCell[] }) {
+  const textures = useMemo(() => docks.map((_, index) => labelTexture(`${index + 1}`)), [docks]);
+
+  useEffect(() => {
+    return () => {
+      textures.forEach((texture) => texture.dispose());
+    };
+  }, [textures]);
+
   return (
     <>
       {docks.map((dock, index) => (
@@ -307,7 +315,7 @@ function DockGroup({ docks }: { docks: GridCell[] }) {
             <meshBasicMaterial color="#dce9ff" />
           </mesh>
           <sprite position={[0, 0.36, 0]} scale={[0.5, 0.22, 1]}>
-            <spriteMaterial map={labelTexture(`${index + 1}`)} transparent depthWrite={false} />
+            <spriteMaterial map={textures[index]} transparent depthWrite={false} />
           </sprite>
         </group>
       ))}
@@ -365,7 +373,10 @@ function Tile({
 
     const ease = 1 - Math.exp(-delta * 10);
     smooth.current.lerp(target, ease);
-    groupRef.current.position.copy(smooth.current);
+    const bobAmplitude = active ? 0.022 : hover ? 0.016 : 0.008;
+    const bob = bobAmplitude * Math.sin(performance.now() * 0.003 + tile.cell.col * 0.5 + tile.cell.row * 0.34);
+    groupRef.current.position.set(smooth.current.x, smooth.current.y + bob, smooth.current.z);
+    groupRef.current.rotation.y = (active ? 0.03 : hover ? 0.018 : 0) * Math.sin(performance.now() * 0.0018 + tile.cell.col * 0.2);
   });
 
   return (
@@ -394,6 +405,81 @@ function manhattan(a: GridCell, b: GridCell) {
   return Math.abs(a.col - b.col) + Math.abs(a.row - b.row);
 }
 
+function ActiveTarget({ target, index }: { target: GridCell; index: number }) {
+  const groupRef = useRef<THREE.Group | null>(null);
+  const ringRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const auraRef = useRef<THREE.MeshBasicMaterial | null>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const pulse = 0.5 + 0.5 * Math.sin(clock.elapsedTime * 3.2 + index * 0.37);
+    const scale = 0.92 + pulse * 0.2;
+    groupRef.current.scale.setScalar(scale);
+    groupRef.current.position.y = 0.06 + pulse * 0.016;
+
+    if (ringRef.current) {
+      ringRef.current.emissiveIntensity = 0.34 + pulse * 0.42;
+      ringRef.current.opacity = 0.38 + pulse * 0.26;
+    }
+
+    if (auraRef.current) {
+      auraRef.current.opacity = 0.09 + pulse * 0.09;
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={cellToWorld(target, 0.06)}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.2, 0.38, 20]} />
+        <meshBasicMaterial ref={auraRef} color="#9bc2f6" transparent opacity={0.14} depthWrite={false} />
+      </mesh>
+      <mesh castShadow>
+        <torusGeometry args={[0.22, 0.028, 10, 20]} />
+        <meshStandardMaterial ref={ringRef} color="#b7cdf2" emissive="#95b7e6" emissiveIntensity={0.36} transparent opacity={0.58} roughness={0.22} metalness={0.28} />
+      </mesh>
+    </group>
+  );
+}
+
+function AgentOrb({ agent }: { agent: AgentVisual }) {
+  const ref = useRef<THREE.Mesh | null>(null);
+  const smooth = useRef(new THREE.Vector3());
+
+  const target = useMemo(() => {
+    const [x, y, z] = cellToWorld(agent.cell, 0.22);
+    return new THREE.Vector3(x, y, z);
+  }, [agent.cell]);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    if (smooth.current.lengthSq() === 0) {
+      smooth.current.copy(target);
+      ref.current.position.copy(target);
+    }
+  }, [target]);
+
+  useFrame(({ clock }, delta) => {
+    if (!ref.current) return;
+    const ease = 1 - Math.exp(-delta * 10.5);
+    smooth.current.lerp(target, ease);
+    const bob = 0.01 * Math.sin(clock.elapsedTime * 4.6 + agent.cell.col * 0.31 + agent.cell.row * 0.22);
+    ref.current.position.set(smooth.current.x, smooth.current.y + bob, smooth.current.z);
+  });
+
+  return (
+    <mesh ref={ref} castShadow>
+      <sphereGeometry args={[agent.role === 'picker' ? 0.16 : 0.14, 16, 16]} />
+      <meshStandardMaterial
+        color={agent.role === 'picker' ? '#7cb3ff' : '#b8d3ff'}
+        emissive={agent.role === 'picker' ? '#5e95e7' : '#8db0e2'}
+        emissiveIntensity={agent.role === 'picker' ? 0.46 : 0.32}
+        roughness={0.3}
+        metalness={0.2}
+      />
+    </mesh>
+  );
+}
+
 function SceneRig({
   phase,
   canEdit,
@@ -408,11 +494,56 @@ function SceneRig({
   onRemoveHumanTileById,
   onConsumeSpawnDragTile
 }: ThreeSceneProps) {
+  const { camera } = useThree();
   const [draggingTileId, setDraggingTileId] = useState<string | null>(null);
   const [previewCell, setPreviewCell] = useState<GridCell | null>(null);
   const [hoverTileId, setHoverTileId] = useState<string | null>(null);
   const [focusCell, setFocusCell] = useState<GridCell | null>(null);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
+  const controlsRef = useRef<THREE.EventDispatcher | null>(null);
+
+  const floorTexture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    context.fillStyle = '#0d1725';
+    context.fillRect(0, 0, 256, 256);
+    context.strokeStyle = 'rgba(154, 188, 236, 0.08)';
+    context.lineWidth = 1;
+
+    for (let index = 0; index <= 16; index += 1) {
+      const offset = index * 16;
+      context.beginPath();
+      context.moveTo(offset, 0);
+      context.lineTo(offset, 256);
+      context.stroke();
+
+      context.beginPath();
+      context.moveTo(0, offset);
+      context.lineTo(256, offset);
+      context.stroke();
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(2.2, 1.6);
+    texture.anisotropy = 4;
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      floorTexture.dispose();
+    };
+  }, [floorTexture]);
 
   const blockedHuman = useMemo(() => {
     const blocked = new Set<string>([
@@ -516,32 +647,55 @@ function SceneRig({
 
   const aiPulse = aiActiveTileId ? 0.35 : 0;
 
+  useFrame(({ clock }, delta) => {
+    const focusBoost = phase === 'simulating' ? 0.5 : 0;
+    const desiredTarget = new THREE.Vector3(0, 0.25 + focusBoost * 0.08, 0);
+    const activeDrift = aiActiveTileId ? Math.sin(clock.elapsedTime * 1.5) * 0.14 : 0;
+    const desiredPosition = new THREE.Vector3(13.2 + activeDrift, 10.0 + focusBoost * 0.5, 13.2 + activeDrift * 0.6);
+    const ease = 1 - Math.exp(-delta * 1.7);
+
+    camera.position.lerp(desiredPosition, ease * 0.18);
+
+    const controls = controlsRef.current as (THREE.EventDispatcher & { target?: THREE.Vector3; update?: () => void }) | null;
+    if (controls?.target) {
+      controls.target.lerp(desiredTarget, ease * 0.24);
+      controls.update?.();
+    }
+  });
+
   return (
     <>
-      <fog attach="fog" args={['#0a1220', 20, 50]} />
-      <ambientLight intensity={0.36} color="#a8c2e4" />
-      <hemisphereLight intensity={0.74} color="#dce9ff" groundColor="#111b2a" position={[0, 16, 0]} />
+      <fog attach="fog" args={['#0b1422', 16, 44]} />
+      <ambientLight intensity={0.34} color="#acc7eb" />
+      <hemisphereLight intensity={0.68} color="#e0eeff" groundColor="#0f1a2a" position={[0, 18, 0]} />
       <directionalLight
         castShadow
-        position={[10, 15, 8]}
-        intensity={0.92}
-        color="#dbe8ff"
+        position={[12, 14, 10]}
+        intensity={0.95}
+        color="#e1efff"
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
         shadow-camera-near={2}
-        shadow-camera-far={45}
+        shadow-camera-far={50}
         shadow-camera-left={-14}
         shadow-camera-right={14}
         shadow-camera-top={12}
         shadow-camera-bottom={-12}
-        shadow-radius={3}
-        shadow-bias={-0.00015}
+        shadow-radius={3.5}
+        shadow-bias={-0.00012}
       />
-      <directionalLight position={[-12, 9, -11]} intensity={0.5} color="#5f89c4" />
+      <directionalLight position={[-13, 8, -10]} intensity={0.4} color="#5f89c4" />
+      <pointLight position={[-5.4, 2.6, 0]} intensity={0.4} distance={18} color="#8ab4ec" />
+      <pointLight position={[5.4, 2.6, 0]} intensity={0.38} distance={18} color="#9fc0ea" />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]} receiveShadow>
         <planeGeometry args={[floorWidth, floorDepth]} />
-        <meshStandardMaterial color="#0b121d" roughness={0.94} metalness={0.06} />
+        <meshStandardMaterial color="#0a121d" roughness={0.86} metalness={0.1} map={floorTexture} />
+      </mesh>
+
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.055, 0]} receiveShadow>
+        <planeGeometry args={[floorWidth - 0.4, floorDepth - 0.4]} />
+        <meshStandardMaterial color="#132238" emissive="#1b2f4b" emissiveIntensity={0.08} roughness={0.72} metalness={0.14} transparent opacity={0.22} depthWrite={false} />
       </mesh>
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-4, 0.005, 0]} receiveShadow>
@@ -578,7 +732,7 @@ function SceneRig({
       {focusCell ? (
         <mesh position={cellToWorld(draggingTileId ? sideClamp(focusCell) : focusCell, 0.01)}>
           <boxGeometry args={[0.98, 0.01, 0.98]} />
-          <meshStandardMaterial color="#9bb8e2" emissive="#7fa4da" emissiveIntensity={0.2} transparent opacity={0.16} />
+          <meshStandardMaterial color="#a7c3ea" emissive="#88afe2" emissiveIntensity={0.24} transparent opacity={0.2} />
         </mesh>
       ) : null}
 
@@ -661,10 +815,7 @@ function SceneRig({
       ))}
 
       {[...visualState.humanTargets, ...visualState.aiTargets].map((target, index) => (
-        <mesh key={`target-${index}-${target.col}-${target.row}`} position={cellToWorld(target, 0.06)} castShadow>
-          <torusGeometry args={[0.22, 0.028, 10, 20]} />
-          <meshStandardMaterial color="#b7cdf2" emissive="#95b7e6" emissiveIntensity={0.28} transparent opacity={0.5} />
-        </mesh>
+        <ActiveTarget key={`target-${index}-${target.col}-${target.row}`} target={target} index={index} />
       ))}
 
       {[...visualState.humanBoxes, ...visualState.aiBoxes].map((box) => (
@@ -675,30 +826,22 @@ function SceneRig({
       ))}
 
       {[...visualState.humanAgents, ...visualState.aiAgents].map((agent) => (
-        <mesh key={agent.id} position={cellToWorld(agent.cell, 0.22)} castShadow>
-          <sphereGeometry args={[agent.role === 'picker' ? 0.16 : 0.14, 16, 16]} />
-          <meshStandardMaterial
-            color={agent.role === 'picker' ? '#7cb3ff' : '#b8d3ff'}
-            emissive={agent.role === 'picker' ? '#5e95e7' : '#8db0e2'}
-            emissiveIntensity={agent.role === 'picker' ? 0.46 : 0.32}
-            roughness={0.3}
-            metalness={0.2}
-          />
-        </mesh>
+        <AgentOrb key={agent.id} agent={agent} />
       ))}
 
       <OrbitControls
+        ref={controlsRef}
         makeDefault
         enablePan={false}
         enableDamping
-        dampingFactor={0.08}
-        minDistance={14}
-        maxDistance={22}
-        minPolarAngle={0.86}
-        maxPolarAngle={1.14}
-        minAzimuthAngle={-0.36}
-        maxAzimuthAngle={0.36}
-        target={[0, 0.28, 0]}
+        dampingFactor={0.09}
+        minDistance={14.5}
+        maxDistance={19.6}
+        minPolarAngle={0.9}
+        maxPolarAngle={1.12}
+        minAzimuthAngle={0.42}
+        maxAzimuthAngle={0.92}
+        target={[0, 0.32, 0]}
       />
 
       {effectsEnabled ? (
@@ -770,7 +913,7 @@ export function ThreeScene(props: ThreeSceneProps) {
       <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl border border-borderline/70 bg-slate-950/35">
         <Canvas
           shadows
-          camera={{ position: [11.8, 11.2, 10.6], fov: 40 }}
+          camera={{ position: [13.2, 10, 13.2], fov: 36 }}
           gl={{ antialias: true }}
           onCreated={({ gl }) => {
             try {
