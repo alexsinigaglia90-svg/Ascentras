@@ -571,16 +571,18 @@ function layoutObjective(
   const metricCongestionPenalty = clamp(metrics.congestionPenalty * 2.6, 0, 26);
   const spatialPenalty = side === 'ai' ? aiSpatialRulesPenalty(tiles) : 0;
   const stationBalancePenalty = side === 'ai' ? aiStationBalancePenalty(tiles) : 0;
+  const congestionRiskPenalty = side === 'ai' ? aiCongestionRiskPenalty(tiles) : 0;
 
   const score =
     metrics.efficiencyScore * 0.5 +
     completion * 0.28 +
     cycleScore * 0.1 +
-    congestionScore * 0.12 -
-    travelPenalty * 1.6 -
-    metricCongestionPenalty * 2.1 -
-    spatialPenalty * 5.2 -
-    stationBalancePenalty * 4.1;
+    congestionScore * 0.08 -
+    travelPenalty * 1.75 -
+    metricCongestionPenalty * 2.5 -
+    spatialPenalty * 5.8 -
+    stationBalancePenalty * 4.4 -
+    congestionRiskPenalty * 5.2;
 
   return {
     score,
@@ -1120,6 +1122,39 @@ function aiStationBalancePenalty(tiles: CircuitTile[]): number {
   return penalty;
 }
 
+function aiCongestionRiskPenalty(tiles: CircuitTile[]): number {
+  if (tiles.length === 0) return 0;
+
+  let penalty = 0;
+  const rowCounts = new Map<number, number>();
+  const colCounts = new Map<number, number>();
+
+  tiles.forEach((tile) => {
+    rowCounts.set(tile.cell.row, (rowCounts.get(tile.cell.row) ?? 0) + 1);
+    colCounts.set(tile.cell.col, (colCounts.get(tile.cell.col) ?? 0) + 1);
+  });
+
+  for (const count of rowCounts.values()) {
+    if (count > 3) penalty += (count - 3) * 0.48;
+    if (count > 5) penalty += (count - 5) * 0.86;
+  }
+
+  for (const count of colCounts.values()) {
+    if (count > 4) penalty += (count - 4) * 0.38;
+  }
+
+  for (let i = 0; i < tiles.length; i += 1) {
+    for (let j = i + 1; j < tiles.length; j += 1) {
+      const dist = manhattan(tiles[i].cell, tiles[j].cell);
+      if (dist === 1) {
+        penalty += tiles[i].kind === tiles[j].kind ? 0.42 : 0.24;
+      }
+    }
+  }
+
+  return penalty;
+}
+
 function aiSpatialRulesPenalty(tiles: CircuitTile[]): number {
   if (tiles.length === 0) return 0;
 
@@ -1236,7 +1271,38 @@ function randomNeighbor(layout: CircuitTile[], candidateCells: GridCell[], rng: 
       return layout;
     }
 
-    const replacement = freeCells[Math.floor(rng() * freeCells.length)];
+    const movingTile = next[tileIndex];
+    const scoredMoves = freeCells
+      .map((cell) => {
+        let localRisk = 0;
+        for (let i = 0; i < next.length; i += 1) {
+          if (i === tileIndex) continue;
+          const other = next[i];
+          const dist = manhattan(cell, other.cell);
+          if (dist === 0) {
+            localRisk += 10;
+          } else if (dist === 1) {
+            localRisk += movingTile.kind === other.kind ? 1.2 : 0.72;
+          } else if (dist === 2) {
+            localRisk += movingTile.kind === 'F' && other.kind === 'F' ? 0.46 : 0.18;
+          }
+        }
+
+        const rowBias = Math.max(0, next.filter((tile, index) => index !== tileIndex && tile.cell.row === cell.row).length - 2) * 0.44;
+        const colBias = Math.max(0, next.filter((tile, index) => index !== tileIndex && tile.cell.col === cell.col).length - 3) * 0.24;
+        const stationBias =
+          movingTile.kind === 'F'
+            ? Math.abs(manhattan(cell, AI_STATIONS.dropoff) - 2.2) * 0.42
+            : movingTile.kind === 'M'
+              ? Math.abs(manhattan(cell, AI_STATIONS.packingTable) - 3.6) * 0.3
+              : Math.abs(manhattan(cell, AI_STATIONS.dropoff) - 6.6) * 0.34;
+
+        return { cell, score: localRisk + rowBias + colBias + stationBias };
+      })
+      .sort((left, right) => left.score - right.score);
+
+    const choiceWindow = Math.min(8, scoredMoves.length);
+    const replacement = scoredMoves[Math.floor(rng() * choiceWindow)].cell;
     next[tileIndex].cell = { ...replacement };
     return isAiLayoutValid(next) ? next : layout;
   }
