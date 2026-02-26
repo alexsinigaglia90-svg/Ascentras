@@ -15,6 +15,7 @@ export default function WarehouseSimulatorPage() {
     phase,
     canEdit,
     humanReady,
+    canStartSimulation,
     simSpeed,
     simClockLabel,
 
@@ -26,6 +27,10 @@ export default function WarehouseSimulatorPage() {
     botMetrics,
     spawnDragTileId,
     aiActiveTileId,
+    aiStatus,
+    aiExplanation,
+    aiAnalyzing,
+    readyPressedOnce,
     humanStations,
     aiStations,
     visualState,
@@ -67,6 +72,7 @@ export default function WarehouseSimulatorPage() {
             counts={humanCounts}
             metrics={humanMetrics}
             humanReady={humanReady}
+            canStartSimulation={canStartSimulation}
             simClockLabel={simClockLabel}
             simSpeed={simSpeed}
             onAddTile={spawnHumanTile}
@@ -130,6 +136,10 @@ export default function WarehouseSimulatorPage() {
             counts={aiCounts}
             metrics={botMetrics}
             activeAiFte={activeAiFte}
+            status={aiStatus}
+            explanation={aiExplanation}
+            replayEnabled={readyPressedOnce}
+            analyzing={aiAnalyzing}
             onReplayBuild={setAiBuildReplayPulse}
           />
         </section>

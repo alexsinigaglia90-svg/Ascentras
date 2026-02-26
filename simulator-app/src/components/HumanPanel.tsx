@@ -8,6 +8,7 @@ type HumanPanelProps = {
   counts: BuildCounts;
   metrics: BuildMetrics;
   humanReady: boolean;
+  canStartSimulation: boolean;
   simClockLabel: string;
   simSpeed: number;
   onAddTile: (kind: TileKind) => void;
@@ -31,6 +32,7 @@ export function HumanPanel({
   counts,
   metrics,
   humanReady,
+  canStartSimulation,
   simClockLabel,
   simSpeed,
   onAddTile,
@@ -117,7 +119,7 @@ export function HumanPanel({
         <button
           type="button"
           onClick={onStart}
-          disabled={phase !== 'ready' && phase !== 'paused'}
+          disabled={!canStartSimulation}
           className="rounded-lg border border-borderline bg-slate-900/55 px-3 py-2 text-sm text-slate-100 transition hover:border-blue-300/70 hover:bg-blue-900/30 disabled:cursor-not-allowed disabled:opacity-45"
         >
           Start Simulation

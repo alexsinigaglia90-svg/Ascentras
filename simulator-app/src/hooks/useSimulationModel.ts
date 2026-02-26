@@ -687,12 +687,17 @@ function formatSimClock(minute: number): string {
 export function useSimulationModel() {
   const [phase, setPhase] = useState<Phase>('build');
   const [humanTiles, setHumanTiles] = useState<CircuitTile[]>([]);
-  const [aiTiles] = useState<CircuitTile[]>(() => aiPlacementPlan());
+  const [aiTiles, setAiTiles] = useState<CircuitTile[]>([]);
   const [spawnDragTileId, setSpawnDragTileId] = useState<string | null>(null);
   const [aiActiveTileId, setAiActiveTileId] = useState<string | null>(null);
+  const [aiStatus, setAiStatus] = useState('Waiting for your design');
+  const [aiExplanation, setAiExplanation] = useState('Place your 18 locations and press Ready to trigger Ascentra analysis.');
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [readyPressedOnce, setReadyPressedOnce] = useState(false);
+  const [aiBuildComplete, setAiBuildComplete] = useState(false);
 
   const [humanMetrics, setHumanMetrics] = useState<BuildMetrics>(() => buildMetrics([], HUMAN_STATIONS));
-  const [botMetrics, setBotMetrics] = useState<BuildMetrics>(() => buildMetrics(aiPlacementPlan(), AI_STATIONS));
+  const [botMetrics, setBotMetrics] = useState<BuildMetrics>(() => buildMetrics([], AI_STATIONS));
 
   const [simMinute, setSimMinute] = useState(0);
   const [results, setResults] = useState<SimResults | null>(null);
@@ -713,6 +718,8 @@ export function useSimulationModel() {
 
   const timerRef = useRef<number | null>(null);
   const tileCounterRef = useRef(0);
+  const aiTimeoutsRef = useRef<number[]>([]);
+  const aiBuildIntervalRef = useRef<number | null>(null);
 
   const humanCounts = useMemo(() => getCounts(humanTiles), [humanTiles]);
   const aiCounts = useMemo(() => getCounts(aiTiles), [aiTiles]);
@@ -722,8 +729,23 @@ export function useSimulationModel() {
     [humanCounts, humanTiles.length]
   );
 
+  const canStartSimulation = useMemo(
+    () => (phase === 'ready' || phase === 'paused') && aiBuildComplete,
+    [phase, aiBuildComplete]
+  );
+
   const mission = MISSION;
   const canEdit = phase === 'build';
+
+  const clearAiTimers = () => {
+    aiTimeoutsRef.current.forEach((timeout) => window.clearTimeout(timeout));
+    aiTimeoutsRef.current = [];
+
+    if (aiBuildIntervalRef.current) {
+      window.clearInterval(aiBuildIntervalRef.current);
+      aiBuildIntervalRef.current = null;
+    }
+  };
 
   useEffect(() => {
     setHumanMetrics(buildMetrics(humanTiles, HUMAN_STATIONS));
@@ -788,6 +810,10 @@ export function useSimulationModel() {
     }
   }, [phase, simMinute]);
 
+  useEffect(() => () => {
+    clearAiTimers();
+  }, []);
+
   const spawnHumanTile = (kind: TileKind) => {
     if (!canEdit) return;
 
@@ -840,23 +866,75 @@ export function useSimulationModel() {
     });
   };
 
-  const setAiBuildReplayPulse = () => {
-    const plan = aiPlacementPlan();
+  const runAiBuildAnimation = (plan: CircuitTile[]) => {
+    clearAiTimers();
+    setAiTiles([]);
+    setAiBuildComplete(false);
+
     let index = 0;
-    const replay = window.setInterval(() => {
+    aiBuildIntervalRef.current = window.setInterval(() => {
       const tile = plan[index];
-      setAiActiveTileId(tile?.id ?? null);
-      index += 1;
-      if (index >= plan.length) {
-        window.clearInterval(replay);
-        setTimeout(() => setAiActiveTileId(null), 180);
+      if (!tile) {
+        if (aiBuildIntervalRef.current) {
+          window.clearInterval(aiBuildIntervalRef.current);
+          aiBuildIntervalRef.current = null;
+        }
+        setAiActiveTileId(null);
+        setAiBuildComplete(true);
+        setAiAnalyzing(false);
+        setAiStatus('AI ready');
+        setAiExplanation('Layout synthesized in the AI half. Simulation can now start.');
+        return;
       }
-    }, 260);
+
+      setAiTiles((current) => [...current, tile]);
+      setAiActiveTileId(tile.id);
+      index += 1;
+    }, 150);
+  };
+
+  const startAiAnalysisAndBuild = () => {
+    const plan = aiPlacementPlan();
+    setReadyPressedOnce(true);
+    setAiTiles([]);
+    setAiBuildComplete(false);
+    setAiAnalyzing(true);
+    setAiStatus('Analyzing your layout...');
+    setAiExplanation('Evaluating fast/mid/slow balance, aisle protection, and station flow.');
+
+    clearAiTimers();
+
+    const t1 = window.setTimeout(() => {
+      setAiStatus('Optimizing travel paths...');
+      setAiExplanation('Running weighted demand model and congestion checks.');
+    }, 1050);
+
+    const t2 = window.setTimeout(() => {
+      setAiStatus('Finalizing AI build...');
+      setAiExplanation('Preparing placement sequence for execution in AI half.');
+    }, 2200);
+
+    const t3 = window.setTimeout(() => {
+      setAiStatus('Building AI layout...');
+      setAiExplanation('Placing locations now.');
+      runAiBuildAnimation(plan);
+    }, 3200);
+
+    aiTimeoutsRef.current = [t1, t2, t3];
+  };
+
+  const setAiBuildReplayPulse = () => {
+    if (!readyPressedOnce) return;
+    setAiStatus('Replaying AI build...');
+    setAiExplanation('Reconstructing AI placement sequence.');
+    runAiBuildAnimation(aiPlacementPlan());
   };
 
   const markReady = () => {
     if (!humanReady) return;
+    if (phase !== 'build') return;
     setPhase('ready');
+    startAiAnalysisAndBuild();
   };
 
   const startSimulation = () => {
@@ -867,7 +945,7 @@ export function useSimulationModel() {
       return;
     }
 
-    if (phase !== 'ready' && phase !== 'finished') {
+    if (!canStartSimulation && phase !== 'finished') {
       return;
     }
 
@@ -915,6 +993,8 @@ export function useSimulationModel() {
   };
 
   const reset = () => {
+    clearAiTimers();
+
     if (timerRef.current) {
       window.clearInterval(timerRef.current);
       timerRef.current = null;
@@ -923,6 +1003,7 @@ export function useSimulationModel() {
     tileCounterRef.current = 0;
     setPhase('build');
     setHumanTiles([]);
+    setAiTiles([]);
     setHumanOrders([]);
     setAiOrders([]);
     setResults(null);
@@ -936,6 +1017,11 @@ export function useSimulationModel() {
     });
     setSpawnDragTileId(null);
     setAiActiveTileId(null);
+    setAiStatus('Waiting for your design');
+    setAiExplanation('Place your 18 locations and press Ready to trigger Ascentra analysis.');
+    setAiAnalyzing(false);
+    setReadyPressedOnce(false);
+    setAiBuildComplete(false);
     setSimMinute(0);
     setActiveHumanFte({ pickers: 6, runners: 2, total: 8 });
     setActiveAiFte({ pickers: 5, runners: 2, total: 7 });
@@ -946,6 +1032,7 @@ export function useSimulationModel() {
     phase,
     canEdit,
     humanReady,
+    canStartSimulation,
     simSpeed: SIM_SPEED,
     simMinute,
     simClockLabel: formatSimClock(simMinute),
@@ -958,6 +1045,10 @@ export function useSimulationModel() {
     botMetrics,
     spawnDragTileId,
     aiActiveTileId,
+    aiStatus,
+    aiExplanation,
+    aiAnalyzing,
+    readyPressedOnce,
 
     humanStations: HUMAN_STATIONS,
     aiStations: AI_STATIONS,

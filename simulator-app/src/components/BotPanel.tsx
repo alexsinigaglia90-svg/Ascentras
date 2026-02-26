@@ -6,19 +6,24 @@ type BotPanelProps = {
   counts: BuildCounts;
   metrics: BuildMetrics;
   activeAiFte: FteResult;
+  status: string;
+  explanation: string;
+  replayEnabled: boolean;
+  analyzing: boolean;
   onReplayBuild: () => void;
 };
 
-export function BotPanel({ phase, counts, metrics, activeAiFte, onReplayBuild }: BotPanelProps) {
+export function BotPanel({ phase, counts, metrics, activeAiFte, status, explanation, replayEnabled, analyzing, onReplayBuild }: BotPanelProps) {
   const totalPlaced = counts.F + counts.M + counts.S;
 
   return (
     <aside className="glass-panel">
       <header className="mb-4">
         <h2 className="text-lg font-semibold text-slate-50">Ascentra Engine</h2>
-        <p className="mt-1 inline-flex w-fit items-center rounded-full border border-blue-300/40 bg-blue-900/35 px-3 py-1 text-xs tracking-[0.08em] text-blue-100">
-          AI ready
+        <p className={`mt-1 inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs tracking-[0.08em] ${analyzing ? 'bot-thinking border-blue-300/40 bg-blue-900/35 text-blue-100' : 'border-blue-300/40 bg-blue-900/35 text-blue-100'}`}>
+          {status}
         </p>
+        <p className="mt-2 text-xs text-slate-300">{explanation}</p>
       </header>
 
       <section className="rounded-xl border border-borderline bg-panel/70 p-3 backdrop-blur-md">
@@ -64,7 +69,7 @@ export function BotPanel({ phase, counts, metrics, activeAiFte, onReplayBuild }:
       <button
         type="button"
         onClick={onReplayBuild}
-        disabled={phase === 'simulating'}
+        disabled={phase === 'simulating' || !replayEnabled}
         className="mt-3 w-full rounded-lg border border-borderline bg-slate-900/55 px-3 py-2 text-sm text-slate-100 transition hover:border-blue-300/70 hover:bg-blue-900/30 disabled:cursor-not-allowed disabled:opacity-45"
       >
         Replay AI build
