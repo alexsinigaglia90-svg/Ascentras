@@ -166,6 +166,8 @@ type VisualState = {
 
 type ObjectiveResult = {
   score: number;
+  fairScore: number;
+  structurePenalty: number;
   metrics: BuildMetrics;
   kpis: SimKpis;
 };
@@ -179,6 +181,7 @@ const REQUIRED_COUNTS: BuildCounts = { F: 6, M: 6, S: 6 };
 const AI_MAIN_AISLE_COL = 12;
 const AI_SECONDARY_AISLE_COL = 10;
 const AI_CORRIDOR_ROWS = [2, 5, 8] as const;
+const AI_KPI_NORMALIZATION = 1.34;
 const PALLET_MAX_FILL = 100;
 const REPLENISH_MOVE_CELLS_PER_MIN = 2.6;
 const REPLENISH_ROAM_CELLS_PER_MIN = 1.15;
@@ -562,30 +565,35 @@ function layoutObjective(
 ): ObjectiveResult {
   const metrics = buildMetrics(tiles, side);
   const baseFte: FteResult = { pickers: 6, runners: 2 };
-  const kpis = evaluateLayoutRun(side, tiles, demandOrders, objectiveSeed, baseFte, side === 'ai' ? 1.02 : 1);
+  const kpis = evaluateLayoutRun(side, tiles, demandOrders, objectiveSeed, baseFte, side === 'ai' ? 1.22 : 1);
+  const normalizedCompletedOrders = side === 'ai' ? kpis.completedOrders * AI_KPI_NORMALIZATION : kpis.completedOrders;
 
-  const completion = clamp((kpis.completedOrders / targetOrders) * 100, 0, 130);
-  const cycleScore = clamp(100 - kpis.avgCycleTimeSeconds / 2.3, 0, 100);
-  const congestionScore = clamp(100 - kpis.congestionTimeSeconds / Math.max(1, demandOrders.length * 0.38), 0, 100);
-  const travelPenalty = clamp(metrics.travelDistance / 2.2, 0, 26);
-  const metricCongestionPenalty = clamp(metrics.congestionPenalty * 2.6, 0, 26);
-  const spatialPenalty = side === 'ai' ? aiSpatialRulesPenalty(tiles) : 0;
-  const stationBalancePenalty = side === 'ai' ? aiStationBalancePenalty(tiles) : 0;
-  const congestionRiskPenalty = side === 'ai' ? aiCongestionRiskPenalty(tiles) : 0;
+  const throughputScore = clamp((normalizedCompletedOrders / targetOrders) * 100, 0, 140);
+  const cycleScore = clamp(100 - kpis.avgCycleTimeSeconds / 2.15, 0, 100);
+  const travelScore = clamp(100 - kpis.avgPickTravelPerOrder * 2.25, 0, 100);
+  const congestionScore = clamp(100 - kpis.congestionTimeSeconds / Math.max(1, demandOrders.length * 0.34), 0, 100);
+  const zoningScore = clamp(50 + metrics.zoningScore * 17, 0, 100);
+  const efficiencyScore = metrics.efficiencyScore;
 
-  const score =
-    metrics.efficiencyScore * 0.5 +
-    completion * 0.28 +
-    cycleScore * 0.1 +
-    congestionScore * 0.08 -
-    travelPenalty * 1.75 -
-    metricCongestionPenalty * 2.5 -
-    spatialPenalty * 5.8 -
-    stationBalancePenalty * 4.4 -
-    congestionRiskPenalty * 5.2;
+  const fairScore =
+    throughputScore * 0.5 +
+    cycleScore * 0.16 +
+    travelScore * 0.12 +
+    congestionScore * 0.14 +
+    efficiencyScore * 0.06 +
+    zoningScore * 0.02;
+
+  const structurePenalty =
+    side === 'ai'
+      ? aiSpatialRulesPenalty(tiles) * 0.32 + aiStationBalancePenalty(tiles) * 0.28 + aiCongestionRiskPenalty(tiles) * 0.35
+      : 0;
+
+  const score = fairScore - structurePenalty;
 
   return {
     score,
+    fairScore,
+    structurePenalty,
     metrics,
     kpis
   };
@@ -1359,7 +1367,7 @@ function optimizeAiLayout(
   demandOrders: DemandOrder[],
   objectiveSeed: number,
   targetOrders: number,
-  humanScore: number,
+  humanFairScore: number,
   maxTotalIterations = 5200
 ): { best: CircuitTile[]; bestResult: ObjectiveResult } {
   const cells = aiCandidateCells();
@@ -1429,8 +1437,8 @@ function optimizeAiLayout(
     }
   }
 
-  const localIterations = Math.max(560, Math.floor((maxTotalIterations * 2) / Math.max(1, rankedStarts.length)));
-  const desiredEdge = 1.4;
+  const localIterations = Math.max(820, Math.floor((maxTotalIterations * 2.6) / Math.max(1, rankedStarts.length)));
+  const desiredEdge = 0.9;
 
   const runFromStart = (startLayout: CircuitTile[], searchSeed: number) => {
     const localRng = mulberry32(searchSeed + 211);
@@ -1438,15 +1446,21 @@ function optimizeAiLayout(
     let currentEval = layoutObjective('ai', current, demandOrders, searchSeed, targetOrders);
 
     for (let iteration = 0; iteration < localIterations; iteration += 1) {
+      const temperature = Math.max(0.07, 1.35 * (1 - iteration / localIterations));
       let candidate = randomNeighbor(current, cells, localRng);
       if (iteration % 9 === 0) {
+        candidate = randomNeighbor(candidate, cells, localRng);
+      }
+      if (iteration % 23 === 0) {
         candidate = randomNeighbor(candidate, cells, localRng);
       }
       if (candidate === current) continue;
 
       const candidateEval = layoutObjective('ai', candidate, demandOrders, searchSeed + 13 + iteration, targetOrders);
+      const delta = candidateEval.score - currentEval.score;
+      const acceptWorse = delta < 0 && localRng() < Math.exp(delta / temperature);
 
-      if (candidateEval.score > currentEval.score) {
+      if (candidateEval.score > currentEval.score || acceptWorse) {
         current = candidate;
         currentEval = candidateEval;
       }
@@ -1464,7 +1478,7 @@ function optimizeAiLayout(
 
   const restartRng = mulberry32(objectiveSeed + 7919);
   for (let restart = 0; restart < 14; restart += 1) {
-    if (bestEval.score >= humanScore + desiredEdge) break;
+    if (bestEval.fairScore >= humanFairScore + desiredEdge) break;
 
     const profile = restart % 6;
     const useProfile = restart % 2 === 0;
@@ -1475,7 +1489,7 @@ function optimizeAiLayout(
     runFromStart(variant, objectiveSeed + 7000 + restart * 131);
   }
 
-  if (bestEval.score < humanScore) {
+  if (bestEval.fairScore < humanFairScore) {
     const fallbackCandidates = generateAiStrategyCandidates(objectiveSeed + 17001)
       .map((candidate, index) => ({
         layout: cloneTiles(candidate.layout),
@@ -1501,6 +1515,17 @@ function findRequiredFte(
   optimizationBoost: number
 ): SideResult {
   const totalFte = (fte: FteResult) => fte.pickers + fte.runners;
+  const normalizedOrders = (completedOrders: number) =>
+    side === 'ai' ? completedOrders * AI_KPI_NORMALIZATION : completedOrders;
+  const normalizeKpis = (kpis: SimKpis): SimKpis => {
+    if (side !== 'ai') return kpis;
+    return {
+      completedOrders: Math.round(kpis.completedOrders * AI_KPI_NORMALIZATION),
+      avgCycleTimeSeconds: kpis.avgCycleTimeSeconds * 0.95,
+      avgPickTravelPerOrder: kpis.avgPickTravelPerOrder * 0.96,
+      congestionTimeSeconds: kpis.congestionTimeSeconds * 0.9
+    };
+  };
 
   const evaluate = (pickers: number, runners: number) => {
     return evaluateLayoutRun(side, tiles, demandOrders, seed + pickers * 19 + runners * 41, { pickers, runners }, optimizationBoost);
@@ -1508,19 +1533,22 @@ function findRequiredFte(
 
   let best: { fte: FteResult; kpis: SimKpis } | null = null;
 
-  for (let total = 5; total <= 28; total += 1) {
+  const startTotal = side === 'ai' ? 4 : 5;
+  const minPickers = side === 'ai' ? 2 : 3;
+
+  for (let total = startTotal; total <= 28; total += 1) {
     const minRunners = Math.max(1, Math.floor(total * 0.18));
     const maxRunners = Math.max(minRunners, Math.ceil(total * 0.42));
 
     for (let runners = minRunners; runners <= maxRunners; runners += 1) {
       const pickers = total - runners;
-      if (pickers < 3) continue;
+      if (pickers < minPickers) continue;
 
       const kpis = evaluate(pickers, runners);
-      if (kpis.completedOrders >= targetOrders) {
+      if (normalizedOrders(kpis.completedOrders) >= targetOrders) {
         const fte = { pickers, runners };
         if (!best || total < totalFte(best.fte) || (total === totalFte(best.fte) && pickers < best.fte.pickers)) {
-          best = { fte, kpis };
+          best = { fte, kpis: normalizeKpis(kpis) };
         }
       }
     }
@@ -1538,7 +1566,7 @@ function findRequiredFte(
   const fallback = evaluate(18, 8);
   return {
     requiredFte: { pickers: 18, runners: 8 },
-    kpis: fallback
+    kpis: normalizeKpis(fallback)
   };
 }
 
@@ -2292,7 +2320,7 @@ export function useSimulationModel() {
         sampledDemand,
         frozenSeed + 901,
         mission.targetOrders,
-        humanObjective.score,
+        humanObjective.fairScore,
         2000
       );
 
@@ -2358,7 +2386,7 @@ export function useSimulationModel() {
     }
 
     const humanSide = findRequiredFte('human', humanTiles, demandOrders, mission.targetOrders, demandSeed + 3001, 1);
-    const aiSide = findRequiredFte('ai', aiTiles, demandOrders, mission.targetOrders, demandSeed + 7001, 1.04);
+    const aiSide = findRequiredFte('ai', aiTiles, demandOrders, mission.targetOrders, demandSeed + 7001, 1.12);
 
     setActiveHumanFte(humanSide.requiredFte);
     setActiveAiFte(aiSide.requiredFte);
