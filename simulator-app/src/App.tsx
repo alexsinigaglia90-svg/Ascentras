@@ -138,7 +138,7 @@ export default function WarehouseSimulatorPage() {
             activeAiFte={activeAiFte}
             status={aiStatus}
             explanation={aiExplanation}
-            replayEnabled={readyPressedOnce}
+            replayEnabled={readyPressedOnce && !aiAnalyzing}
             analyzing={aiAnalyzing}
             onReplayBuild={setAiBuildReplayPulse}
           />

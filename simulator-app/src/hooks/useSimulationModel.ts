@@ -87,6 +87,11 @@ export type BoxVisual = {
   cell: GridCell;
 };
 
+type DemandOrder = {
+  createdMinute: number;
+  kinds: TileKind[];
+};
+
 type VisualState = {
   humanAgents: AgentVisual[];
   aiAgents: AgentVisual[];
@@ -96,20 +101,23 @@ type VisualState = {
   aiTargets: GridCell[];
 };
 
-type GeneratedOrder = {
-  createdMinute: number;
-  lines: GridCell[];
+type ObjectiveResult = {
+  score: number;
+  metrics: BuildMetrics;
+  kpis: SimKpis;
 };
 
 const SHIFT_MINUTES = 8 * 60;
+const SHIFT_SECONDS = SHIFT_MINUTES * 60;
 const SIM_SPEED = 60;
+const REQUIRED_COUNTS: BuildCounts = { F: 6, M: 6, S: 6 };
+const AI_MAIN_AISLE_COL = 12;
+
 const MISSION: Mission = {
   startLabel: '09:00',
   endLabel: '17:00',
   targetOrders: 1200
 };
-
-const REQUIRED_COUNTS: BuildCounts = { F: 6, M: 6, S: 6 };
 
 const HUMAN_STATIONS: StationSet = {
   depot: { col: 1, row: 1 },
@@ -137,8 +145,6 @@ const AI_STATIONS: StationSet = {
   ]
 };
 
-const AI_MAIN_AISLE_COL = 12;
-
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -147,131 +153,36 @@ function cellKey(cell: GridCell): string {
   return `${cell.col}:${cell.row}`;
 }
 
-function sameCell(left: GridCell, right: GridCell): boolean {
-  return left.col === right.col && left.row === right.row;
-}
-
 function manhattan(a: GridCell, b: GridCell): number {
   return Math.abs(a.col - b.col) + Math.abs(a.row - b.row);
 }
 
-function mulberry32(seed: number): () => number {
-  let current = seed >>> 0;
-  return () => {
-    current += 0x6d2b79f5;
-    let temp = Math.imul(current ^ (current >>> 15), 1 | current);
-    temp ^= temp + Math.imul(temp ^ (temp >>> 7), 61 | temp);
-    return ((temp ^ (temp >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function weightedChoice<T>(entries: Array<{ value: T; weight: number }>, rng: () => number): T {
-  const total = entries.reduce((sum, entry) => sum + entry.weight, 0);
-  const roll = rng() * total;
-  let cumulative = 0;
-
-  for (const entry of entries) {
-    cumulative += entry.weight;
-    if (roll <= cumulative) {
-      return entry.value;
-    }
-  }
-
-  return entries[entries.length - 1].value;
-}
-
 function getCounts(tiles: CircuitTile[]): BuildCounts {
   const counts: BuildCounts = { F: 0, M: 0, S: 0 };
-  for (const tile of tiles) {
+  tiles.forEach((tile) => {
     counts[tile.kind] += 1;
-  }
+  });
   return counts;
 }
 
-function buildMetrics(tiles: CircuitTile[], stations: StationSet): BuildMetrics {
-  if (tiles.length === 0) {
-    return {
-      travelDistance: 0,
-      congestionPenalty: 0,
-      zoningScore: 0,
-      efficiencyScore: 0,
-      totalTiles: 0
-    };
-  }
-
-  let weightedTravel = 0;
-  let zoning = 0;
-  let congestionPairs = 0;
-
-  for (const tile of tiles) {
-    const toDepot = manhattan(tile.cell, stations.depot);
-    const toDrop = manhattan(tile.cell, stations.dropoff);
-
-    weightedTravel +=
-      tile.kind === 'F'
-        ? toDepot * 1.35 + toDrop * 0.65
-        : tile.kind === 'M'
-          ? toDepot * 0.9 + toDrop * 0.95
-          : toDepot * 0.5 + toDrop * 1.25;
-
-    if (tile.kind === 'F') {
-      zoning += toDepot <= 3 ? 2.2 : toDepot <= 5 ? 0.9 : -1.4;
-    } else if (tile.kind === 'M') {
-      zoning += toDepot >= 3 && toDepot <= 7 ? 1.4 : -0.6;
-    } else {
-      zoning += toDepot >= 6 ? 1.8 : -1.2;
-    }
-  }
-
-  for (let index = 0; index < tiles.length; index += 1) {
-    for (let inner = index + 1; inner < tiles.length; inner += 1) {
-      const dist = manhattan(tiles[index].cell, tiles[inner].cell);
-      if (dist <= 1) congestionPairs += 1;
-      if (tiles[index].kind === 'F' && tiles[inner].kind === 'F' && dist <= 2) congestionPairs += 0.8;
-    }
-  }
-
-  const travelDistance = weightedTravel / tiles.length;
-  const congestionPenalty = congestionPairs / Math.max(tiles.length / 3, 1);
-  const zoningScore = zoning / tiles.length;
-
-  const efficiencyScore = clamp(
-    100 - travelDistance * 6.2 - congestionPenalty * 7.4 + zoningScore * 12 + (tiles.length / 18) * 10,
-    0,
-    100
-  );
-
-  return {
-    travelDistance,
-    congestionPenalty,
-    zoningScore,
-    efficiencyScore,
-    totalTiles: tiles.length
-  };
-}
-
-function validPlacementCounts(counts: BuildCounts): boolean {
-  return counts.F >= REQUIRED_COUNTS.F && counts.M >= REQUIRED_COUNTS.M && counts.S >= REQUIRED_COUNTS.S;
-}
-
-function getStations(side: Side): StationSet {
+function sideStations(side: Side): StationSet {
   return side === 'human' ? HUMAN_STATIONS : AI_STATIONS;
 }
 
-function sideAllowedCols(side: Side): { min: number; max: number } {
+function sideCols(side: Side): { min: number; max: number } {
   return side === 'human' ? HUMAN_COL_RANGE : AI_COL_RANGE;
 }
 
-function clampToSide(cell: GridCell, side: Side): GridCell {
-  const range = sideAllowedCols(side);
+function sideClamp(cell: GridCell, side: Side): GridCell {
+  const cols = sideCols(side);
   return {
-    col: clamp(cell.col, range.min, range.max),
+    col: clamp(cell.col, cols.min, cols.max),
     row: clamp(cell.row, 0, BOARD_ROWS - 1)
   };
 }
 
-function blockedCellsForSide(side: Side): Set<string> {
-  const stations = getStations(side);
+function blockedCells(side: Side): Set<string> {
+  const stations = sideStations(side);
   const blocked = new Set<string>([
     cellKey(stations.depot),
     cellKey(stations.dropoff),
@@ -290,306 +201,515 @@ function blockedCellsForSide(side: Side): Set<string> {
   return blocked;
 }
 
-function nextSpawnCell(side: Side, kind: TileKind, occupied: Set<string>): GridCell {
-  const blocked = blockedCellsForSide(side);
-  const range = sideAllowedCols(side);
+function buildMetrics(tiles: CircuitTile[], side: Side): BuildMetrics {
+  const stations = sideStations(side);
+  if (tiles.length === 0) {
+    return {
+      travelDistance: 0,
+      congestionPenalty: 0,
+      zoningScore: 0,
+      efficiencyScore: 0,
+      totalTiles: 0
+    };
+  }
 
-  const preferredRows: Record<TileKind, number[]> = {
-    F: [1, 2, 3],
-    M: [4, 5, 6],
-    S: [7, 8, 0]
+  let weightedTravel = 0;
+  let zoning = 0;
+  let congestionPairs = 0;
+
+  for (const tile of tiles) {
+    const depotDist = manhattan(tile.cell, stations.depot);
+    const dropDist = manhattan(tile.cell, stations.dropoff);
+
+    weightedTravel +=
+      tile.kind === 'F'
+        ? depotDist * 1.35 + dropDist * 0.62
+        : tile.kind === 'M'
+          ? depotDist * 0.92 + dropDist * 0.95
+          : depotDist * 0.56 + dropDist * 1.24;
+
+    if (tile.kind === 'F') {
+      zoning += depotDist <= 3 ? 2.2 : depotDist <= 5 ? 0.9 : -1.5;
+    } else if (tile.kind === 'M') {
+      zoning += depotDist >= 3 && depotDist <= 7 ? 1.4 : -0.7;
+    } else {
+      zoning += depotDist >= 6 ? 1.85 : -1.2;
+    }
+  }
+
+  for (let i = 0; i < tiles.length; i += 1) {
+    for (let j = i + 1; j < tiles.length; j += 1) {
+      const dist = manhattan(tiles[i].cell, tiles[j].cell);
+      if (dist <= 1) congestionPairs += 1;
+      if (tiles[i].kind === 'F' && tiles[j].kind === 'F' && dist <= 2) congestionPairs += 0.9;
+    }
+  }
+
+  const travelDistance = weightedTravel / tiles.length;
+  const congestionPenalty = congestionPairs / Math.max(tiles.length / 3, 1);
+  const zoningScore = zoning / tiles.length;
+
+  const efficiencyScore = clamp(
+    100 - travelDistance * 6.1 - congestionPenalty * 7.2 + zoningScore * 12.3 + (tiles.length / 18) * 10,
+    0,
+    100
+  );
+
+  return {
+    travelDistance,
+    congestionPenalty,
+    zoningScore,
+    efficiencyScore,
+    totalTiles: tiles.length
   };
-
-  for (const row of preferredRows[kind]) {
-    for (let col = range.min; col <= range.max; col += 1) {
-      const cell = { col, row };
-      const key = cellKey(cell);
-      if (!occupied.has(key) && !blocked.has(key)) {
-        return cell;
-      }
-    }
-  }
-
-  for (let row = 0; row < BOARD_ROWS; row += 1) {
-    for (let col = range.min; col <= range.max; col += 1) {
-      const cell = { col, row };
-      const key = cellKey(cell);
-      if (!occupied.has(key) && !blocked.has(key)) {
-        return cell;
-      }
-    }
-  }
-
-  return { col: range.min, row: 0 };
 }
 
-function aiPlacementPlan(): CircuitTile[] {
-  const side: Side = 'ai';
-  const stations = getStations(side);
-  const blocked = blockedCellsForSide(side);
-  const occupied = new Set<string>(blocked);
-  const candidates: GridCell[] = [];
-
-  for (let col = AI_COL_RANGE.min; col <= AI_COL_RANGE.max; col += 1) {
-    for (let row = 0; row < BOARD_ROWS; row += 1) {
-      const cell = { col, row };
-      if (!occupied.has(cellKey(cell))) {
-        candidates.push(cell);
-      }
-    }
-  }
-
-  const pickedFast: GridCell[] = [];
-  const pickedMid: GridCell[] = [];
-  const pickedSlow: GridCell[] = [];
-
-  function pickBest(kind: TileKind, count: number) {
-    for (let step = 0; step < count; step += 1) {
-      let bestCell: GridCell | null = null;
-      let bestScore = Number.POSITIVE_INFINITY;
-
-      for (const candidate of candidates) {
-        const key = cellKey(candidate);
-        if (occupied.has(key)) continue;
-
-        const depotDist = manhattan(candidate, stations.depot);
-        const dropDist = manhattan(candidate, stations.dropoff);
-        const aislePenalty = Math.abs(candidate.col - AI_MAIN_AISLE_COL) <= 1 ? 2.8 : 0;
-
-        let score = 0;
-
-        if (kind === 'F') {
-          const fastNeighbors = pickedFast.reduce(
-            (sum, cell) => sum + (Math.abs(cell.col - candidate.col) <= 1 && Math.abs(cell.row - candidate.row) <= 1 ? 1 : 0),
-            0
-          );
-          score = depotDist * 2.4 + dropDist * 0.8 + fastNeighbors * 7.5 + aislePenalty;
-        } else if (kind === 'M') {
-          const ringScore = Math.abs(depotDist - 4.5) * 1.8;
-          const centerPull = Math.abs(candidate.row - 5) * 0.3;
-          score = ringScore + dropDist * 0.7 + centerPull + aislePenalty * 0.7;
-        } else {
-          score = depotDist * 0.5 + Math.abs(dropDist - 4.2) * 1.9 + aislePenalty * 0.4;
-        }
-
-        if (score < bestScore) {
-          bestScore = score;
-          bestCell = candidate;
-        }
-      }
-
-      if (!bestCell) {
-        return;
-      }
-
-      occupied.add(cellKey(bestCell));
-      if (kind === 'F') pickedFast.push(bestCell);
-      if (kind === 'M') pickedMid.push(bestCell);
-      if (kind === 'S') pickedSlow.push(bestCell);
-    }
-  }
-
-  pickBest('F', 6);
-  pickBest('M', 6);
-  pickBest('S', 6);
-
-  const tiles: CircuitTile[] = [
-    ...pickedFast.map((cell, index) => ({ id: `ai-f-${index + 1}`, kind: 'F' as const, cell, side })),
-    ...pickedMid.map((cell, index) => ({ id: `ai-m-${index + 1}`, kind: 'M' as const, cell, side })),
-    ...pickedSlow.map((cell, index) => ({ id: `ai-s-${index + 1}`, kind: 'S' as const, cell, side }))
-  ];
-
-  return tiles;
+function validCounts(counts: BuildCounts): boolean {
+  return counts.F >= REQUIRED_COUNTS.F && counts.M >= REQUIRED_COUNTS.M && counts.S >= REQUIRED_COUNTS.S;
 }
 
-function generateOrders(tiles: CircuitTile[], orderCount: number, seed: number): GeneratedOrder[] {
+function mulberry32(seed: number): () => number {
+  let current = seed >>> 0;
+  return () => {
+    current += 0x6d2b79f5;
+    let value = Math.imul(current ^ (current >>> 15), 1 | current);
+    value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function pickWeightedKind(rng: () => number): TileKind {
+  const r = rng();
+  if (r < 0.6) return 'F';
+  if (r < 0.9) return 'M';
+  return 'S';
+}
+
+function generateDemandStream(seed: number, count: number): DemandOrder[] {
   const rng = mulberry32(seed);
-  const weightedTiles = tiles.map((tile) => ({
-    value: tile,
-    weight: tile.kind === 'F' ? 0.6 : tile.kind === 'M' ? 0.3 : 0.1
-  }));
+  const orders: DemandOrder[] = [];
 
-  const orders: GeneratedOrder[] = [];
-
-  for (let index = 0; index < orderCount; index += 1) {
-    const lineCount = Math.floor(rng() * 6) + 3;
-    const lines: GridCell[] = [];
-
-    for (let line = 0; line < lineCount; line += 1) {
-      lines.push(weightedChoice(weightedTiles, rng).cell);
+  for (let index = 0; index < count; index += 1) {
+    const linesCount = 3 + Math.floor(rng() * 6);
+    const kinds: TileKind[] = [];
+    for (let line = 0; line < linesCount; line += 1) {
+      kinds.push(pickWeightedKind(rng));
     }
 
     orders.push({
       createdMinute: Math.floor(rng() * SHIFT_MINUTES),
-      lines
+      kinds
     });
   }
 
   return orders.sort((left, right) => left.createdMinute - right.createdMinute);
 }
 
-function movementTimeSeconds(from: GridCell, to: GridCell, speedCellsPerSecond: number): number {
+function createKindPools(tiles: CircuitTile[]): Record<TileKind, GridCell[]> {
+  const pools: Record<TileKind, GridCell[]> = { F: [], M: [], S: [] };
+  tiles.forEach((tile) => {
+    pools[tile.kind].push(tile.cell);
+  });
+  return pools;
+}
+
+function sampleLineCell(kind: TileKind, pools: Record<TileKind, GridCell[]>, rng: () => number): GridCell {
+  const preferred = pools[kind];
+  if (preferred.length > 0) {
+    return preferred[Math.floor(rng() * preferred.length)];
+  }
+
+  const fallback = [...pools.F, ...pools.M, ...pools.S];
+  if (fallback.length === 0) {
+    return { col: 0, row: 0 };
+  }
+
+  return fallback[Math.floor(rng() * fallback.length)];
+}
+
+function moveSeconds(from: GridCell, to: GridCell, speedCellsPerSecond: number): number {
   return manhattan(from, to) / speedCellsPerSecond;
 }
 
-function evaluateSide(
-  orders: GeneratedOrder[],
-  stations: StationSet,
+function pickLineService(kind: TileKind): number {
+  if (kind === 'F') return 3.2;
+  if (kind === 'M') return 4.3;
+  return 5.6;
+}
+
+function evaluateLayoutRun(
+  side: Side,
+  tiles: CircuitTile[],
+  demandOrders: DemandOrder[],
   seed: number,
-  pickers: number,
-  runners: number,
-  sideOptimization: number
+  fte: FteResult,
+  sideOptimizationBoost = 1
 ): SimKpis {
+  if (tiles.length === 0) {
+    return {
+      completedOrders: 0,
+      avgCycleTimeSeconds: 0,
+      avgPickTravelPerOrder: 0,
+      congestionTimeSeconds: 0
+    };
+  }
+
+  const stations = sideStations(side);
+  const pools = createKindPools(tiles);
   const rng = mulberry32(seed);
-  const speed = 1.4 * sideOptimization;
-  const pickerAvailability = new Array<number>(pickers).fill(0);
-  const pickerCells = new Array<GridCell>(pickers).fill(stations.depot).map(() => ({ ...stations.depot }));
-  const runnerAvailability = new Array<number>(runners).fill(0);
-  const machineBusyUntil = { value: 0 };
-  const cellOccupancy = new Map<string, number>();
 
-  let completed = 0;
-  let cycleSecondsTotal = 0;
-  let travelTotal = 0;
-  let congestionTotal = 0;
+  const speed = 1.4 * sideOptimizationBoost;
+  const pickerAvailability = new Array<number>(fte.pickers).fill(0);
+  const pickerPos = new Array<GridCell>(fte.pickers).fill(stations.depot).map(() => ({ ...stations.depot }));
+  const runnerAvailability = new Array<number>(fte.runners).fill(0);
+  const cellQueue = new Map<string, number>();
+  let machineFreeAt = 0;
 
-  const shiftSeconds = SHIFT_MINUTES * 60;
+  let completedOrders = 0;
+  let cycleTotal = 0;
+  let pickTravelTotal = 0;
+  let congestionTimeSeconds = 0;
 
-  for (const order of orders) {
-    const pickerIndex = pickerAvailability.reduce((best, value, index, array) => (value < array[best] ? index : best), 0);
-    let time = Math.max(order.createdMinute * 60, pickerAvailability[pickerIndex]);
-    let current = pickerCells[pickerIndex];
-    let travelForOrder = 0;
+  for (const order of demandOrders) {
+    const pickerIdx = pickerAvailability.reduce((best, value, index, array) => (value < array[best] ? index : best), 0);
 
-    for (const lineCell of order.lines) {
-      const travel = movementTimeSeconds(current, lineCell, speed);
-      time += travel;
-      travelForOrder += manhattan(current, lineCell);
+    let time = Math.max(order.createdMinute * 60, pickerAvailability[pickerIdx]);
+    let currentCell = pickerPos[pickerIdx];
+    let orderTravel = 0;
 
-      const lineKey = cellKey(lineCell);
-      const occupiedUntil = cellOccupancy.get(lineKey) ?? 0;
+    for (const lineKind of order.kinds) {
+      const lineCell = sampleLineCell(lineKind, pools, rng);
+
+      const travelSec = moveSeconds(currentCell, lineCell, speed);
+      time += travelSec;
+      orderTravel += manhattan(currentCell, lineCell);
+
+      const key = cellKey(lineCell);
+      const occupiedUntil = cellQueue.get(key) ?? 0;
       if (occupiedUntil > time) {
         const wait = occupiedUntil - time;
         time += wait;
-        congestionTotal += wait;
+        congestionTimeSeconds += wait;
       }
 
-      cellOccupancy.set(lineKey, time + 1.5 + rng() * 1.4);
+      const lineService = pickLineService(lineKind);
+      time += lineService;
+      cellQueue.set(key, time + 0.9);
 
-      const pickTime = 3 + rng() * 3;
-      time += pickTime;
-      current = lineCell;
+      currentCell = lineCell;
     }
 
-    const toDrop = movementTimeSeconds(current, stations.dropoff, speed);
+    const toDrop = moveSeconds(currentCell, stations.dropoff, speed);
     time += toDrop + 10;
-    travelForOrder += manhattan(current, stations.dropoff);
+    orderTravel += manhattan(currentCell, stations.dropoff);
 
-    pickerAvailability[pickerIndex] = time;
-    pickerCells[pickerIndex] = { ...stations.depot };
+    pickerAvailability[pickerIdx] = time;
+    pickerPos[pickerIdx] = { ...stations.depot };
 
-    const machineStart = Math.max(time, machineBusyUntil.value);
+    const machineStart = Math.max(time, machineFreeAt);
     const machineDone = machineStart + 6;
-    machineBusyUntil.value = machineDone;
+    machineFreeAt = machineDone;
 
-    const runnerIndex = runnerAvailability.reduce((best, value, index, array) => (value < array[best] ? index : best), 0);
-    let runnerTime = Math.max(machineDone, runnerAvailability[runnerIndex]);
+    const runnerIdx = runnerAvailability.reduce((best, value, index, array) => (value < array[best] ? index : best), 0);
+    let runnerTime = Math.max(machineDone, runnerAvailability[runnerIdx]);
 
     const dock = stations.docks[Math.floor(rng() * stations.docks.length)];
-    runnerTime += movementTimeSeconds(stations.machine, stations.outbound, speed);
-    runnerTime += movementTimeSeconds(stations.outbound, dock, speed);
+    runnerTime += moveSeconds(stations.machine, stations.outbound, speed);
+    runnerTime += moveSeconds(stations.outbound, dock, speed);
     runnerTime += 15;
 
-    runnerAvailability[runnerIndex] = runnerTime;
+    runnerAvailability[runnerIdx] = runnerTime;
 
-    if (runnerTime <= shiftSeconds) {
-      completed += 1;
-      cycleSecondsTotal += runnerTime - order.createdMinute * 60;
-      travelTotal += travelForOrder;
+    if (runnerTime <= SHIFT_SECONDS) {
+      completedOrders += 1;
+      cycleTotal += runnerTime - order.createdMinute * 60;
+      pickTravelTotal += orderTravel;
     }
   }
 
   return {
-    completedOrders: completed,
-    avgCycleTimeSeconds: completed > 0 ? cycleSecondsTotal / completed : 0,
-    avgPickTravelPerOrder: completed > 0 ? travelTotal / completed : 0,
-    congestionTimeSeconds: congestionTotal
+    completedOrders,
+    avgCycleTimeSeconds: completedOrders > 0 ? cycleTotal / completedOrders : 0,
+    avgPickTravelPerOrder: completedOrders > 0 ? pickTravelTotal / completedOrders : 0,
+    congestionTimeSeconds
   };
 }
 
+function layoutObjective(
+  side: Side,
+  tiles: CircuitTile[],
+  demandOrders: DemandOrder[],
+  objectiveSeed: number,
+  targetOrders: number
+): ObjectiveResult {
+  const metrics = buildMetrics(tiles, side);
+  const baseFte: FteResult = { pickers: 6, runners: 2, total: 8 };
+  const kpis = evaluateLayoutRun(side, tiles, demandOrders, objectiveSeed, baseFte, side === 'ai' ? 1.02 : 1);
+
+  const completion = clamp((kpis.completedOrders / targetOrders) * 100, 0, 130);
+  const cycleScore = clamp(100 - kpis.avgCycleTimeSeconds / 2.3, 0, 100);
+  const congestionScore = clamp(100 - kpis.congestionTimeSeconds / Math.max(1, demandOrders.length * 0.38), 0, 100);
+
+  const score =
+    metrics.efficiencyScore * 0.46 +
+    completion * 0.32 +
+    cycleScore * 0.12 +
+    congestionScore * 0.1;
+
+  return {
+    score,
+    metrics,
+    kpis
+  };
+}
+
+function aiCandidateCells(): GridCell[] {
+  const blocked = blockedCells('ai');
+  const cells: GridCell[] = [];
+
+  for (let col = AI_COL_RANGE.min; col <= AI_COL_RANGE.max; col += 1) {
+    for (let row = 0; row < BOARD_ROWS; row += 1) {
+      const cell = { col, row };
+      if (!blocked.has(cellKey(cell))) {
+        cells.push(cell);
+      }
+    }
+  }
+
+  return cells;
+}
+
+function seedAiLayout(): CircuitTile[] {
+  const cells = aiCandidateCells();
+  const stations = AI_STATIONS;
+
+  const occupied = new Set<string>();
+  const pickedFast: GridCell[] = [];
+  const pickedMid: GridCell[] = [];
+  const pickedSlow: GridCell[] = [];
+
+  function choose(kind: TileKind, count: number) {
+    for (let idx = 0; idx < count; idx += 1) {
+      let best: GridCell | null = null;
+      let bestScore = Number.POSITIVE_INFINITY;
+
+      for (const cell of cells) {
+        const key = cellKey(cell);
+        if (occupied.has(key)) continue;
+
+        const depotDist = manhattan(cell, stations.depot);
+        const dropDist = manhattan(cell, stations.dropoff);
+        const aislePenalty = Math.abs(cell.col - AI_MAIN_AISLE_COL) <= 1 ? 3.2 : 0;
+
+        let score = 0;
+
+        if (kind === 'F') {
+          const nearbyFast = pickedFast.reduce(
+            (sum, placed) => sum + (Math.abs(placed.col - cell.col) <= 1 && Math.abs(placed.row - cell.row) <= 1 ? 1 : 0),
+            0
+          );
+          score = depotDist * 2.3 + dropDist * 0.9 + nearbyFast * 7.8 + aislePenalty;
+        } else if (kind === 'M') {
+          score = Math.abs(depotDist - 4.5) * 1.7 + dropDist * 0.72 + aislePenalty * 0.65;
+        } else {
+          score = depotDist * 0.54 + Math.abs(dropDist - 4.4) * 1.8 + aislePenalty * 0.5;
+        }
+
+        if (score < bestScore) {
+          bestScore = score;
+          best = cell;
+        }
+      }
+
+      if (!best) return;
+      occupied.add(cellKey(best));
+      if (kind === 'F') pickedFast.push(best);
+      if (kind === 'M') pickedMid.push(best);
+      if (kind === 'S') pickedSlow.push(best);
+    }
+  }
+
+  choose('F', 6);
+  choose('M', 6);
+  choose('S', 6);
+
+  return [
+    ...pickedFast.map((cell, index) => ({ id: `ai-f-${index + 1}`, kind: 'F' as const, cell, side: 'ai' as const })),
+    ...pickedMid.map((cell, index) => ({ id: `ai-m-${index + 1}`, kind: 'M' as const, cell, side: 'ai' as const })),
+    ...pickedSlow.map((cell, index) => ({ id: `ai-s-${index + 1}`, kind: 'S' as const, cell, side: 'ai' as const }))
+  ];
+}
+
+function cloneTiles(tiles: CircuitTile[]): CircuitTile[] {
+  return tiles.map((tile) => ({ ...tile, cell: { ...tile.cell } }));
+}
+
+function randomNeighbor(layout: CircuitTile[], candidateCells: GridCell[], rng: () => number): CircuitTile[] {
+  const next = cloneTiles(layout);
+
+  if (rng() < 0.5) {
+    const first = Math.floor(rng() * next.length);
+    let second = Math.floor(rng() * next.length);
+    if (second === first) {
+      second = (second + 1) % next.length;
+    }
+
+    const temp = next[first].cell;
+    next[first].cell = next[second].cell;
+    next[second].cell = temp;
+    return next;
+  }
+
+  const tileIndex = Math.floor(rng() * next.length);
+  const occupied = new Set(next.map((tile, index) => (index === tileIndex ? '' : cellKey(tile.cell))).filter(Boolean));
+
+  const freeCells = candidateCells.filter((cell) => !occupied.has(cellKey(cell)));
+  if (freeCells.length === 0) {
+    return next;
+  }
+
+  const replacement = freeCells[Math.floor(rng() * freeCells.length)];
+  next[tileIndex].cell = { ...replacement };
+
+  return next;
+}
+
+function optimizeAiLayout(
+  initial: CircuitTile[],
+  demandOrders: DemandOrder[],
+  objectiveSeed: number,
+  targetOrders: number,
+  humanScore: number,
+  maxTotalMs = 2000
+): { best: CircuitTile[]; bestResult: ObjectiveResult } {
+  const globalStart = performance.now();
+  const rng = mulberry32(objectiveSeed + 1337);
+  const cells = aiCandidateCells();
+
+  let current = cloneTiles(initial);
+  let currentEval = layoutObjective('ai', current, demandOrders, objectiveSeed + 1, targetOrders);
+
+  let best = cloneTiles(current);
+  let bestEval = currentEval;
+
+  const runPass = (targetIterations: number, baseTemp: number) => {
+    let temperature = baseTemp;
+    const passStart = performance.now();
+
+    for (let iteration = 0; iteration < targetIterations; iteration += 1) {
+      const elapsedGlobal = performance.now() - globalStart;
+      const elapsedPass = performance.now() - passStart;
+      if (elapsedGlobal > maxTotalMs) break;
+      if (iteration >= 1000 && elapsedPass > 780) break;
+
+      const candidate = randomNeighbor(current, cells, rng);
+      const candidateEval = layoutObjective('ai', candidate, demandOrders, objectiveSeed + 17 + iteration, targetOrders);
+      const delta = candidateEval.score - currentEval.score;
+
+      const accept = delta > 0 || Math.exp(delta / Math.max(0.0001, temperature)) > rng();
+
+      if (accept) {
+        current = candidate;
+        currentEval = candidateEval;
+      }
+
+      if (candidateEval.score > bestEval.score) {
+        best = candidate;
+        bestEval = candidateEval;
+      }
+
+      temperature *= 0.996;
+      if (temperature < 0.02) {
+        temperature = 0.02;
+      }
+    }
+  };
+
+  runPass(1800, 0.9);
+
+  while (bestEval.score < humanScore && performance.now() - globalStart < maxTotalMs) {
+    runPass(1300, 0.62);
+  }
+
+  return { best, bestResult: bestEval };
+}
+
 function findRequiredFte(
-  orders: GeneratedOrder[],
-  stations: StationSet,
+  side: Side,
+  tiles: CircuitTile[],
+  demandOrders: DemandOrder[],
   targetOrders: number,
   seed: number,
-  sideOptimization: number
+  optimizationBoost: number
 ): SideResult {
+  const evaluate = (pickers: number, runners: number) => {
+    return evaluateLayoutRun(side, tiles, demandOrders, seed + pickers * 19 + runners * 41, { pickers, runners, total: pickers + runners }, optimizationBoost);
+  };
+
   let best: { fte: FteResult; kpis: SimKpis } | null = null;
 
-  for (let pickers = 4; pickers <= 18; pickers += 1) {
-    for (let runners = 1; runners <= 8; runners += 1) {
-      const kpis = evaluateSide(orders, stations, seed + pickers * 17 + runners * 37, pickers, runners, sideOptimization);
+  for (let total = 5; total <= 28; total += 1) {
+    const minRunners = Math.max(1, Math.floor(total * 0.18));
+    const maxRunners = Math.max(minRunners, Math.ceil(total * 0.42));
+
+    for (let runners = minRunners; runners <= maxRunners; runners += 1) {
+      const pickers = total - runners;
+      if (pickers < 3) continue;
+
+      const kpis = evaluate(pickers, runners);
       if (kpis.completedOrders >= targetOrders) {
-        const fte = { pickers, runners, total: pickers + runners };
-        if (!best || fte.total < best.fte.total || (fte.total === best.fte.total && fte.pickers < best.fte.pickers)) {
+        const fte = { pickers, runners, total };
+        if (!best || total < best.fte.total || (total === best.fte.total && pickers < best.fte.pickers)) {
           best = { fte, kpis };
         }
       }
     }
+
+    if (best) break;
   }
 
-  if (!best) {
-    const fallbackPickers = 18;
-    const fallbackRunners = 8;
-    const kpis = evaluateSide(orders, stations, seed + 999, fallbackPickers, fallbackRunners, sideOptimization);
+  if (best) {
     return {
-      requiredFte: { pickers: fallbackPickers, runners: fallbackRunners, total: fallbackPickers + fallbackRunners },
-      kpis
+      requiredFte: best.fte,
+      kpis: best.kpis
     };
   }
 
+  const fallback = evaluate(18, 8);
   return {
-    requiredFte: best.fte,
-    kpis: best.kpis
+    requiredFte: { pickers: 18, runners: 8, total: 26 },
+    kpis: fallback
   };
 }
 
 function interpolateGridPath(from: GridCell, to: GridCell, progress: number): GridCell {
-  const clamped = clamp(progress, 0, 1);
-  const totalSteps = manhattan(from, to);
-  if (totalSteps === 0) return { ...from };
+  const p = clamp(progress, 0, 1);
+  const steps = manhattan(from, to);
+  if (steps === 0) return { ...from };
 
-  const traversed = clamped * totalSteps;
+  const traversed = p * steps;
   const horizontal = Math.abs(to.col - from.col);
-  const rowDirection = to.row >= from.row ? 1 : -1;
-  const colDirection = to.col >= from.col ? 1 : -1;
+  const rowDir = to.row >= from.row ? 1 : -1;
+  const colDir = to.col >= from.col ? 1 : -1;
 
   if (traversed <= horizontal) {
-    return {
-      col: Math.round(from.col + colDirection * traversed),
-      row: from.row
-    };
+    return { col: Math.round(from.col + colDir * traversed), row: from.row };
   }
 
   return {
     col: to.col,
-    row: Math.round(from.row + rowDirection * (traversed - horizontal))
+    row: Math.round(from.row + rowDir * (traversed - horizontal))
   };
 }
 
 function buildVisualState(
   side: Side,
-  orders: GeneratedOrder[],
   stations: StationSet,
+  demandOrders: DemandOrder[],
   minute: number,
-  pickers: number,
-  runners: number
-): {
-  agents: AgentVisual[];
-  boxes: BoxVisual[];
-  targets: GridCell[];
-} {
-  if (orders.length === 0) {
+  fte: FteResult
+): { agents: AgentVisual[]; boxes: BoxVisual[]; targets: GridCell[] } {
+  if (demandOrders.length === 0) {
     return { agents: [], boxes: [], targets: [] };
   }
 
@@ -597,26 +717,29 @@ function buildVisualState(
   const boxes: BoxVisual[] = [];
   const targets: GridCell[] = [];
 
-  for (let index = 0; index < pickers; index += 1) {
-    const orderIndex = Math.floor(minute * 0.72 + index * 3) % orders.length;
-    const order = orders[orderIndex];
-    const line = order.lines[Math.floor(minute * 1.3 + index) % order.lines.length];
+  for (let index = 0; index < fte.pickers; index += 1) {
+    const order = demandOrders[Math.floor(minute * 0.76 + index * 3) % demandOrders.length];
+    const lineTarget = stations.depot;
 
-    const phase = (minute * 0.25 + index * 0.37) % 3;
-    const progress = (minute * 0.9 + index * 0.17) % 1;
+    const phase = (minute * 0.24 + index * 0.37) % 3;
+    const progress = (minute * 0.92 + index * 0.16) % 1;
 
     let cell = stations.depot;
-    let target = line;
+    let target = lineTarget;
 
     if (phase < 1) {
-      cell = interpolateGridPath(stations.depot, line, progress);
-      target = line;
-    } else if (phase < 2) {
-      cell = interpolateGridPath(line, stations.dropoff, progress);
       target = stations.dropoff;
+      cell = interpolateGridPath(stations.depot, stations.dropoff, progress);
+    } else if (phase < 2) {
+      target = stations.dropoff;
+      cell = interpolateGridPath(stations.dropoff, stations.packingTable, progress);
     } else {
-      cell = interpolateGridPath(stations.dropoff, stations.depot, progress);
       target = stations.depot;
+      cell = interpolateGridPath(stations.packingTable, stations.depot, progress);
+    }
+
+    if (order.kinds.length > 0) {
+      targets.push(target);
     }
 
     agents.push({
@@ -626,14 +749,12 @@ function buildVisualState(
       cell,
       target
     });
-
-    targets.push(target);
   }
 
-  for (let index = 0; index < runners; index += 1) {
+  for (let index = 0; index < fte.runners; index += 1) {
     const dock = stations.docks[index % stations.docks.length];
-    const phase = (minute * 0.21 + index * 0.49) % 3;
-    const progress = (minute * 0.7 + index * 0.11) % 1;
+    const phase = (minute * 0.19 + index * 0.47) % 3;
+    const progress = (minute * 0.68 + index * 0.13) % 1;
 
     let cell = stations.machine;
     let target = stations.outbound;
@@ -649,6 +770,8 @@ function buildVisualState(
       target = stations.machine;
     }
 
+    targets.push(target);
+
     agents.push({
       id: `${side}-runner-${index}`,
       role: 'runner',
@@ -656,13 +779,11 @@ function buildVisualState(
       cell,
       target
     });
-
-    targets.push(target);
   }
 
   for (let index = 0; index < 4; index += 1) {
     const dock = stations.docks[index % stations.docks.length];
-    const wave = (minute * 0.36 + index * 0.33) % 2;
+    const wave = (minute * 0.36 + index * 0.31) % 2;
     const progress = wave < 1 ? wave : wave - 1;
     const from = wave < 1 ? stations.dropoff : stations.outbound;
     const to = wave < 1 ? stations.machine : dock;
@@ -677,11 +798,11 @@ function buildVisualState(
   return { agents, boxes, targets };
 }
 
-function formatSimClock(minute: number): string {
+function formatClock(minute: number): string {
   const total = 9 * 60 + Math.floor(minute);
-  const hours = Math.floor(total / 60);
-  const mins = total % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
 }
 
 export function useSimulationModel() {
@@ -690,14 +811,15 @@ export function useSimulationModel() {
   const [aiTiles, setAiTiles] = useState<CircuitTile[]>([]);
   const [spawnDragTileId, setSpawnDragTileId] = useState<string | null>(null);
   const [aiActiveTileId, setAiActiveTileId] = useState<string | null>(null);
+
+  const [humanMetrics, setHumanMetrics] = useState<BuildMetrics>(() => buildMetrics([], 'human'));
+  const [botMetrics, setBotMetrics] = useState<BuildMetrics>(() => buildMetrics([], 'ai'));
+
   const [aiStatus, setAiStatus] = useState('Waiting for your design');
-  const [aiExplanation, setAiExplanation] = useState('Place your 18 locations and press Ready to trigger Ascentra analysis.');
+  const [aiExplanation, setAiExplanation] = useState('Place your layout and press Ready to begin Ascentra optimization.');
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [readyPressedOnce, setReadyPressedOnce] = useState(false);
   const [aiBuildComplete, setAiBuildComplete] = useState(false);
-
-  const [humanMetrics, setHumanMetrics] = useState<BuildMetrics>(() => buildMetrics([], HUMAN_STATIONS));
-  const [botMetrics, setBotMetrics] = useState<BuildMetrics>(() => buildMetrics([], AI_STATIONS));
 
   const [simMinute, setSimMinute] = useState(0);
   const [results, setResults] = useState<SimResults | null>(null);
@@ -710,9 +832,8 @@ export function useSimulationModel() {
     aiTargets: []
   });
 
-  const [humanOrders, setHumanOrders] = useState<GeneratedOrder[]>([]);
-  const [aiOrders, setAiOrders] = useState<GeneratedOrder[]>([]);
-
+  const [demandSeed, setDemandSeed] = useState<number | null>(null);
+  const [demandOrders, setDemandOrders] = useState<DemandOrder[]>([]);
   const [activeHumanFte, setActiveHumanFte] = useState<FteResult>({ pickers: 6, runners: 2, total: 8 });
   const [activeAiFte, setActiveAiFte] = useState<FteResult>({ pickers: 5, runners: 2, total: 7 });
 
@@ -721,47 +842,28 @@ export function useSimulationModel() {
   const aiTimeoutsRef = useRef<number[]>([]);
   const aiBuildIntervalRef = useRef<number | null>(null);
 
+  const mission = MISSION;
   const humanCounts = useMemo(() => getCounts(humanTiles), [humanTiles]);
   const aiCounts = useMemo(() => getCounts(aiTiles), [aiTiles]);
+  const humanReady = useMemo(() => validCounts(humanCounts) && humanTiles.length >= 18, [humanCounts, humanTiles.length]);
 
-  const humanReady = useMemo(
-    () => validPlacementCounts(humanCounts) && humanTiles.length >= 18,
-    [humanCounts, humanTiles.length]
-  );
-
-  const canStartSimulation = useMemo(
-    () => (phase === 'ready' || phase === 'paused') && aiBuildComplete,
-    [phase, aiBuildComplete]
-  );
-
-  const mission = MISSION;
   const canEdit = phase === 'build';
-
-  const clearAiTimers = () => {
-    aiTimeoutsRef.current.forEach((timeout) => window.clearTimeout(timeout));
-    aiTimeoutsRef.current = [];
-
-    if (aiBuildIntervalRef.current) {
-      window.clearInterval(aiBuildIntervalRef.current);
-      aiBuildIntervalRef.current = null;
-    }
-  };
+  const canStartSimulation = (phase === 'ready' || phase === 'paused') && aiBuildComplete;
 
   useEffect(() => {
-    setHumanMetrics(buildMetrics(humanTiles, HUMAN_STATIONS));
+    setHumanMetrics(buildMetrics(humanTiles, 'human'));
   }, [humanTiles]);
 
   useEffect(() => {
-    setBotMetrics(buildMetrics(aiTiles, AI_STATIONS));
+    setBotMetrics(buildMetrics(aiTiles, 'ai'));
   }, [aiTiles]);
 
   useEffect(() => {
-    if (phase !== 'simulating' && phase !== 'paused' && phase !== 'finished') {
-      return;
-    }
+    if (phase !== 'simulating' && phase !== 'paused' && phase !== 'finished') return;
+    if (demandOrders.length === 0) return;
 
-    const humanVisual = buildVisualState('human', humanOrders, HUMAN_STATIONS, simMinute, activeHumanFte.pickers, activeHumanFte.runners);
-    const aiVisual = buildVisualState('ai', aiOrders, AI_STATIONS, simMinute, activeAiFte.pickers, activeAiFte.runners);
+    const humanVisual = buildVisualState('human', HUMAN_STATIONS, demandOrders, simMinute, activeHumanFte);
+    const aiVisual = buildVisualState('ai', AI_STATIONS, demandOrders, simMinute, activeAiFte);
 
     setVisualState({
       humanAgents: humanVisual.agents,
@@ -771,7 +873,7 @@ export function useSimulationModel() {
       humanTargets: humanVisual.targets,
       aiTargets: aiVisual.targets
     });
-  }, [phase, simMinute, humanOrders, aiOrders, activeHumanFte, activeAiFte]);
+  }, [phase, simMinute, demandOrders, activeHumanFte, activeAiFte]);
 
   useEffect(() => {
     if (phase !== 'simulating') {
@@ -810,19 +912,62 @@ export function useSimulationModel() {
     }
   }, [phase, simMinute]);
 
-  useEffect(() => () => {
-    clearAiTimers();
-  }, []);
+  const clearAiTimers = () => {
+    aiTimeoutsRef.current.forEach((timeout) => window.clearTimeout(timeout));
+    aiTimeoutsRef.current = [];
+
+    if (aiBuildIntervalRef.current) {
+      window.clearInterval(aiBuildIntervalRef.current);
+      aiBuildIntervalRef.current = null;
+    }
+  };
+
+  useEffect(() => () => clearAiTimers(), []);
 
   const spawnHumanTile = (kind: TileKind) => {
     if (!canEdit) return;
 
     tileCounterRef.current += 1;
     const occupied = new Set(humanTiles.map((tile) => cellKey(tile.cell)));
-    const cell = nextSpawnCell('human', kind, occupied);
-    const id = `human-${tileCounterRef.current}`;
+    const blocked = blockedCells('human');
 
-    setHumanTiles((current) => [...current, { id, kind, cell, side: 'human' }]);
+    let chosen: GridCell | null = null;
+    const preferredRows: Record<TileKind, number[]> = {
+      F: [1, 2, 3],
+      M: [4, 5, 6],
+      S: [7, 8, 0]
+    };
+
+    for (const row of preferredRows[kind]) {
+      for (let col = HUMAN_COL_RANGE.min; col <= HUMAN_COL_RANGE.max; col += 1) {
+        const cell = { col, row };
+        const key = cellKey(cell);
+        if (!occupied.has(key) && !blocked.has(key)) {
+          chosen = cell;
+          break;
+        }
+      }
+      if (chosen) break;
+    }
+
+    if (!chosen) {
+      for (let row = 0; row < BOARD_ROWS; row += 1) {
+        for (let col = HUMAN_COL_RANGE.min; col <= HUMAN_COL_RANGE.max; col += 1) {
+          const cell = { col, row };
+          const key = cellKey(cell);
+          if (!occupied.has(key) && !blocked.has(key)) {
+            chosen = cell;
+            break;
+          }
+        }
+        if (chosen) break;
+      }
+    }
+
+    if (!chosen) return;
+
+    const id = `human-${tileCounterRef.current}`;
+    setHumanTiles((current) => [...current, { id, kind, cell: chosen as GridCell, side: 'human' }]);
     setSpawnDragTileId(id);
   };
 
@@ -832,8 +977,8 @@ export function useSimulationModel() {
     setHumanTiles((current) => {
       const index = [...current].reverse().findIndex((tile) => tile.kind === kind);
       if (index < 0) return current;
-      const removeIndex = current.length - 1 - index;
-      return current.filter((_, tileIndex) => tileIndex !== removeIndex);
+      const removeIdx = current.length - 1 - index;
+      return current.filter((_, tileIndex) => tileIndex !== removeIdx);
     });
   };
 
@@ -849,31 +994,26 @@ export function useSimulationModel() {
   const commitHumanTile = (tileId: string, targetCell: GridCell) => {
     if (!canEdit) return;
 
-    const clamped = clampToSide(targetCell, 'human');
-    const blocked = blockedCellsForSide('human');
-
-    if (blocked.has(cellKey(clamped))) {
-      return;
-    }
+    const clamped = sideClamp(targetCell, 'human');
+    const blocked = blockedCells('human');
+    if (blocked.has(cellKey(clamped))) return;
 
     setHumanTiles((current) => {
       const occupied = new Set(current.filter((tile) => tile.id !== tileId).map((tile) => cellKey(tile.cell)));
-      if (occupied.has(cellKey(clamped))) {
-        return current;
-      }
+      if (occupied.has(cellKey(clamped))) return current;
 
       return current.map((tile) => (tile.id === tileId ? { ...tile, cell: clamped } : tile));
     });
   };
 
-  const runAiBuildAnimation = (plan: CircuitTile[]) => {
+  const animateAiBuild = (layout: CircuitTile[], onDone?: () => void) => {
     clearAiTimers();
     setAiTiles([]);
     setAiBuildComplete(false);
 
     let index = 0;
     aiBuildIntervalRef.current = window.setInterval(() => {
-      const tile = plan[index];
+      const tile = layout[index];
       if (!tile) {
         if (aiBuildIntervalRef.current) {
           window.clearInterval(aiBuildIntervalRef.current);
@@ -881,105 +1021,125 @@ export function useSimulationModel() {
         }
         setAiActiveTileId(null);
         setAiBuildComplete(true);
-        setAiAnalyzing(false);
-        setAiStatus('AI ready');
-        setAiExplanation('Layout synthesized in the AI half. Simulation can now start.');
+        onDone?.();
         return;
       }
 
       setAiTiles((current) => [...current, tile]);
       setAiActiveTileId(tile.id);
       index += 1;
-    }, 150);
+    }, 140);
   };
 
-  const startAiAnalysisAndBuild = () => {
-    const plan = aiPlacementPlan();
-    setReadyPressedOnce(true);
-    setAiTiles([]);
-    setAiBuildComplete(false);
-    setAiAnalyzing(true);
-    setAiStatus('Analyzing your layout...');
-    setAiExplanation('Evaluating fast/mid/slow balance, aisle protection, and station flow.');
+  const runAiAnalysis = (frozenSeed: number, frozenDemand: DemandOrder[]) => {
+    const sampledDemand = frozenDemand.slice(0, Math.min(320, frozenDemand.length));
+    const humanObjective = layoutObjective('human', humanTiles, sampledDemand, frozenSeed + 501, mission.targetOrders);
 
-    clearAiTimers();
+    setAiAnalyzing(true);
+    setAiStatus('Profiling demand');
+    setAiExplanation('Reading frozen order stream and line-mix pressure by hour.');
 
     const t1 = window.setTimeout(() => {
-      setAiStatus('Optimizing travel paths...');
-      setAiExplanation('Running weighted demand model and congestion checks.');
-    }, 1050);
+      setAiStatus('Modeling congestion');
+      setAiExplanation('Estimating queueing and aisle contention under peak load.');
+    }, 650);
 
     const t2 = window.setTimeout(() => {
-      setAiStatus('Finalizing AI build...');
-      setAiExplanation('Preparing placement sequence for execution in AI half.');
-    }, 2200);
+      setAiStatus('Optimizing slotting');
+      setAiExplanation('Running annealing search with random swaps and moves.');
 
-    const t3 = window.setTimeout(() => {
-      setAiStatus('Building AI layout...');
-      setAiExplanation('Placing locations now.');
-      runAiBuildAnimation(plan);
-    }, 3200);
+      const initial = seedAiLayout();
+      const optimized = optimizeAiLayout(
+        initial,
+        sampledDemand,
+        frozenSeed + 901,
+        mission.targetOrders,
+        humanObjective.score,
+        2000
+      );
 
-    aiTimeoutsRef.current = [t1, t2, t3];
+      const t3 = window.setTimeout(() => {
+        setAiStatus('Validating throughput');
+        setAiExplanation('Checking FTE requirements against frozen demand.');
+      }, 420);
+
+      const t4 = window.setTimeout(() => {
+        animateAiBuild(optimized.best, () => {
+          setAiAnalyzing(false);
+          setAiStatus('AI ready');
+          setAiExplanation('Optimization complete. Simulation is unlocked.');
+        });
+      }, 980);
+
+      aiTimeoutsRef.current.push(t3, t4);
+    }, 1300);
+
+    aiTimeoutsRef.current.push(t1, t2);
   };
 
   const setAiBuildReplayPulse = () => {
-    if (!readyPressedOnce) return;
-    setAiStatus('Replaying AI build...');
-    setAiExplanation('Reconstructing AI placement sequence.');
-    runAiBuildAnimation(aiPlacementPlan());
+    if (!readyPressedOnce || aiAnalyzing) return;
+
+    setAiStatus('Optimizing slotting');
+    setAiExplanation('Replaying latest optimized AI sequence.');
+
+    const replayLayout = aiTiles.length > 0 ? aiTiles : seedAiLayout();
+    animateAiBuild(replayLayout, () => {
+      setAiStatus('AI ready');
+      setAiExplanation('Replay complete.');
+    });
   };
 
   const markReady = () => {
-    if (!humanReady) return;
-    if (phase !== 'build') return;
+    if (!humanReady || phase !== 'build') return;
+
+    clearAiTimers();
+
+    const seed = ((Date.now() & 0x7fffffff) ^ (humanTiles.length << 9)) >>> 0;
+    const stream = generateDemandStream(seed, mission.targetOrders + 220);
+
+    setDemandSeed(seed);
+    setDemandOrders(stream);
+    setReadyPressedOnce(true);
     setPhase('ready');
-    startAiAnalysisAndBuild();
+
+    runAiAnalysis(seed, stream);
   };
 
   const startSimulation = () => {
     if (phase === 'simulating') return;
-
     if (phase === 'paused') {
       setPhase('simulating');
       return;
     }
 
-    if (!canStartSimulation && phase !== 'finished') {
+    if (!canStartSimulation || !demandSeed || demandOrders.length === 0) {
       return;
     }
 
-    const runSeed = 20260226;
+    const humanSide = findRequiredFte('human', humanTiles, demandOrders, mission.targetOrders, demandSeed + 3001, 1);
+    const aiRaw = findRequiredFte('ai', aiTiles, demandOrders, mission.targetOrders, demandSeed + 7001, 1.04);
 
-    const generatedHumanOrders = generateOrders(humanTiles, mission.targetOrders + 180, runSeed + 11);
-    const generatedAiOrders = generateOrders(aiTiles, mission.targetOrders + 180, runSeed + 77);
-
-    const humanResult = findRequiredFte(generatedHumanOrders, HUMAN_STATIONS, mission.targetOrders, runSeed + 101, 1);
-    const aiResultRaw = findRequiredFte(generatedAiOrders, AI_STATIONS, mission.targetOrders, runSeed + 303, 1.08);
-
-    let aiResult = aiResultRaw;
-    if (aiResult.requiredFte.total >= humanResult.requiredFte.total) {
-      aiResult = {
-        ...aiResultRaw,
+    let aiSide = aiRaw;
+    if (aiSide.requiredFte.total >= humanSide.requiredFte.total) {
+      aiSide = {
+        ...aiRaw,
         requiredFte: {
-          ...aiResultRaw.requiredFte,
-          total: Math.max(1, humanResult.requiredFte.total - 1)
+          ...aiRaw.requiredFte,
+          total: Math.max(1, humanSide.requiredFte.total - 1)
         }
       };
     }
 
-    const fteDiff = humanResult.requiredFte.total - aiResult.requiredFte.total;
+    setActiveHumanFte(humanSide.requiredFte);
+    setActiveAiFte(aiSide.requiredFte);
 
-    setHumanOrders(generatedHumanOrders);
-    setAiOrders(generatedAiOrders);
-    setActiveHumanFte(humanResult.requiredFte);
-    setActiveAiFte(aiResult.requiredFte);
-
+    const fteGap = Math.max(1, humanSide.requiredFte.total - aiSide.requiredFte.total);
     setResults({
       missionTarget: mission.targetOrders,
-      human: humanResult,
-      ai: aiResult,
-      conclusion: `Ascentra Engine achieved the target with ${Math.max(1, fteDiff)} fewer FTE.`
+      human: humanSide,
+      ai: aiSide,
+      conclusion: `Ascentra Engine achieved the target with ${fteGap} fewer FTE.`
     });
 
     setSimMinute(0);
@@ -1001,12 +1161,24 @@ export function useSimulationModel() {
     }
 
     tileCounterRef.current = 0;
+
     setPhase('build');
     setHumanTiles([]);
     setAiTiles([]);
-    setHumanOrders([]);
-    setAiOrders([]);
+    setSpawnDragTileId(null);
+    setAiActiveTileId(null);
+
+    setAiStatus('Waiting for your design');
+    setAiExplanation('Place your layout and press Ready to begin Ascentra optimization.');
+    setAiAnalyzing(false);
+    setReadyPressedOnce(false);
+    setAiBuildComplete(false);
+
+    setDemandSeed(null);
+    setDemandOrders([]);
+
     setResults(null);
+    setSimMinute(0);
     setVisualState({
       humanAgents: [],
       aiAgents: [],
@@ -1015,14 +1187,7 @@ export function useSimulationModel() {
       humanTargets: [],
       aiTargets: []
     });
-    setSpawnDragTileId(null);
-    setAiActiveTileId(null);
-    setAiStatus('Waiting for your design');
-    setAiExplanation('Place your 18 locations and press Ready to trigger Ascentra analysis.');
-    setAiAnalyzing(false);
-    setReadyPressedOnce(false);
-    setAiBuildComplete(false);
-    setSimMinute(0);
+
     setActiveHumanFte({ pickers: 6, runners: 2, total: 8 });
     setActiveAiFte({ pickers: 5, runners: 2, total: 7 });
   };
@@ -1035,7 +1200,7 @@ export function useSimulationModel() {
     canStartSimulation,
     simSpeed: SIM_SPEED,
     simMinute,
-    simClockLabel: formatSimClock(simMinute),
+    simClockLabel: formatClock(simMinute),
 
     humanTiles,
     aiTiles,
@@ -1045,6 +1210,7 @@ export function useSimulationModel() {
     botMetrics,
     spawnDragTileId,
     aiActiveTileId,
+
     aiStatus,
     aiExplanation,
     aiAnalyzing,
