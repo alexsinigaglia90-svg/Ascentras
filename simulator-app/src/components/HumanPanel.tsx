@@ -22,6 +22,18 @@ type HumanPanelProps = {
 
 const KINDS: TileKind[] = ['F', 'M', 'S'];
 
+const KIND_BTN_CLASS: Record<TileKind, string> = {
+  F: 'control-btn-kind-fast',
+  M: 'control-btn-kind-mid',
+  S: 'control-btn-kind-slow'
+};
+
+const KIND_COUNT_CLASS: Record<TileKind, string> = {
+  F: 'mover-count-pill-fast',
+  M: 'mover-count-pill-mid',
+  S: 'mover-count-pill-slow'
+};
+
 export function HumanPanel({
   mission,
   phase,
@@ -44,12 +56,12 @@ export function HumanPanel({
   return (
     <aside className="glass-panel">
       <header className="mb-4">
-        <h2 className="text-lg font-semibold tracking-[0.01em] text-slate-50">Human Mission</h2>
+        <h2 className="panel-title text-lg font-semibold tracking-[0.01em]">Human Mission</h2>
         <p className="mt-1 text-sm text-slate-300/95">Build your pick circuit on the left half and prepare for the 09:00–17:00 run.</p>
       </header>
 
       <section className="subpanel">
-        <h3 className="mb-2 text-[0.7rem] uppercase tracking-[0.16em] text-slate-300">Mission Brief</h3>
+        <h3 className="panel-kicker mb-2 text-[0.7rem] uppercase">Mission Brief</h3>
         <ul className="space-y-1.5 text-sm text-slate-200">
           <li>Peak season window: {mission.startLabel}–{mission.endLabel}</li>
           <li>Target orders: {mission.targetOrders.toLocaleString()}</li>
@@ -58,7 +70,7 @@ export function HumanPanel({
       </section>
 
       <section className="subpanel mt-3">
-        <h3 className="mb-2 text-[0.7rem] uppercase tracking-[0.16em] text-slate-300">Build Controls</h3>
+        <h3 className="panel-kicker mb-2 text-[0.7rem] uppercase">Build Controls</h3>
         <div className="grid gap-2">
           {KINDS.map((kind) => (
             <div key={kind} className="grid grid-cols-[1fr_1fr_auto] gap-2">
@@ -66,7 +78,7 @@ export function HumanPanel({
                 type="button"
                 disabled={!canEdit}
                 onClick={() => onAddTile(kind)}
-                className="control-btn text-left"
+                className={`control-btn ${KIND_BTN_CLASS[kind]} text-left`}
               >
                 <span className={`mover-chip ${MOVER_THEME[kind].uiClass}`}>{MOVER_THEME[kind].label}</span>
                 <span className="ml-2">Add</span>
@@ -75,13 +87,13 @@ export function HumanPanel({
                 type="button"
                 disabled={!canEdit || counts[kind] === 0}
                 onClick={() => onRemoveTile(kind)}
-                className="control-btn text-left"
+                className={`control-btn ${KIND_BTN_CLASS[kind]} text-left`}
               >
                 <span className={`mover-chip ${MOVER_THEME[kind].uiClass}`}>{MOVER_THEME[kind].label}</span>
                 <span className="ml-2">Remove</span>
               </button>
-              <div className="flex items-center justify-center rounded-lg border border-borderline/70 bg-slate-900/45 px-2 text-sm text-slate-100 shadow-[inset_0_1px_0_rgba(223,236,255,0.08)]">
-                <span className={`mover-chip ${MOVER_THEME[kind].uiClass}`}>{counts[kind]}</span>
+              <div className={`mover-count-pill ${KIND_COUNT_CLASS[kind]}`}>
+                <span className="text-base leading-none">{counts[kind]}</span>
               </div>
             </div>
           ))}
@@ -89,7 +101,7 @@ export function HumanPanel({
       </section>
 
       <section className="subpanel mt-3">
-        <h3 className="mb-2 text-[0.7rem] uppercase tracking-[0.16em] text-slate-300">Runtime</h3>
+        <h3 className="panel-kicker mb-2 text-[0.7rem] uppercase">Runtime</h3>
         <div className="grid gap-2 text-sm text-slate-200">
           <div className="metric-row">
             <span className="metric-label">Simulation clock</span>
