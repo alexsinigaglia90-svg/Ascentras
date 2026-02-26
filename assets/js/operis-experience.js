@@ -1,4 +1,11 @@
 (function initOperisExperience() {
+  function isActuallyVisible(element) {
+    if (!element) return false;
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    return style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0.05 && rect.width > 8 && rect.height > 8;
+  }
+
   function setupReveals() {
     const revealItems = document.querySelectorAll('.reveal');
     if (!revealItems.length) return;
@@ -158,17 +165,29 @@
 
     if (!section || !stage || !progress || scenes.length === 0) return;
 
-    section.classList.add('operis-cinematic-ready');
-
     const mobile = window.matchMedia('(max-width: 1024px)').matches;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (mobile || reduced) {
       section.classList.remove('operis-cinematic-ready');
+      section.style.removeProperty('--operis-cinematic-height');
       scenes.forEach((scene, index) => scene.classList.toggle('is-active', index === 0));
       dots.forEach((dot, index) => dot.classList.toggle('is-active', index === 0));
       progress.style.width = '33%';
       return;
     }
+
+    function applyDynamicHeight() {
+      const viewport = window.innerHeight || document.documentElement.clientHeight || 900;
+      const stickyOffset = 92;
+      const stageHeight = Math.max(stage.offsetHeight || 0, Math.min(680, Math.round(viewport * 0.72)));
+      const sceneSteps = Math.max(1, scenes.length - 1);
+      const scrollPerStep = Math.max(260, Math.round(viewport * 0.42));
+      const total = stageHeight + stickyOffset + sceneSteps * scrollPerStep + 96;
+      section.style.setProperty('--operis-cinematic-height', `${Math.max(total, viewport + 220)}px`);
+    }
+
+    applyDynamicHeight();
+    section.classList.add('operis-cinematic-ready');
 
     function setScene(index, ratio) {
       scenes.forEach((scene, sceneIndex) => {
@@ -214,7 +233,19 @@
 
     calculateProgress();
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    window.addEventListener('resize', () => {
+      applyDynamicHeight();
+      onScroll();
+    });
+
+    window.setTimeout(() => {
+      const activeScene = section.querySelector('.cinematic-scene.is-active');
+      const healthy = isActuallyVisible(activeScene) || isActuallyVisible(stage);
+      if (!healthy) {
+        section.classList.remove('operis-cinematic-ready');
+        section.style.removeProperty('--operis-cinematic-height');
+      }
+    }, 220);
   }
 
   function setupMicroInteractions() {
