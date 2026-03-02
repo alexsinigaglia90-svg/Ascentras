@@ -1,15 +1,15 @@
 import React from 'react';
-import { useStore } from '../../state/store';
+import { useStore, type ScenarioMode } from '../../state/store';
 import {
-  Activity, ArrowDown, ArrowUp, Clock, Sun, Moon,
-  Monitor, Zap, Eye, EyeOff, ChevronLeft
+  Activity, ArrowDown, ArrowUp, Sun, Moon,
+  Eye, EyeOff, ChevronLeft
 } from 'lucide-react';
 import styles from './OperationsPanel.module.css';
 
 export function OperationsPanel() {
   const {
-    kpis, incidents, shiftMode, performanceMode, cameraTarget,
-    setShiftMode, setPerformanceMode, setCameraTarget, acknowledgeAlarm,
+    kpis, incidents, shiftMode, scenarioMode, performanceMode, cameraTarget,
+    setShiftMode, applyScenario, setPerformanceMode, setCameraTarget, acknowledgeAlarm,
   } = useStore();
 
   const unacked = incidents.filter(i => !i.acknowledged).length;
@@ -58,6 +58,20 @@ export function OperationsPanel() {
         </div>
       </div>
 
+      {/* Scenario Director */}
+      <div className={styles.section}>
+        <div className={styles.sectionHead}>
+          <span>Scenario Director</span>
+          <span className={styles.scenarioBadge}>{scenarioMode}</span>
+        </div>
+        <div className={styles.scenarioGrid}>
+          <ScenarioButton current={scenarioMode} mode="baseline" onSelect={applyScenario} label="Baseline" />
+          <ScenarioButton current={scenarioMode} mode="peak-hour" onSelect={applyScenario} label="Peak Hour" />
+          <ScenarioButton current={scenarioMode} mode="jam-cascade" onSelect={applyScenario} label="Jam Cascade" />
+          <ScenarioButton current={scenarioMode} mode="night-shift" onSelect={applyScenario} label="Night Shift" />
+        </div>
+      </div>
+
       {/* Controls row */}
       <div className={styles.controls}>
         <button
@@ -78,6 +92,27 @@ export function OperationsPanel() {
         </button>
       </div>
     </div>
+  );
+}
+
+function ScenarioButton({
+  current,
+  mode,
+  onSelect,
+  label,
+}: {
+  current: ScenarioMode;
+  mode: ScenarioMode;
+  onSelect: (mode: ScenarioMode) => void;
+  label: string;
+}) {
+  return (
+    <button
+      className={`${styles.scenarioBtn} ${current === mode ? styles.scenarioBtnActive : ''}`}
+      onClick={() => onSelect(mode)}
+    >
+      {label}
+    </button>
   );
 }
 

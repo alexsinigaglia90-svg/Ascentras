@@ -168,6 +168,46 @@
   background: rgba(212, 149, 90, 0.08);
 }
 
+.scenarioBadge {
+  font-size: 0.52rem;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(47, 95, 138, 0.08);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 6px;
+}
+
+.scenarioGrid {
+  padding: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.scenarioBtn {
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.58rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.scenarioBtn:hover {
+  border-color: var(--border-active);
+  color: var(--text);
+}
+
+.scenarioBtnActive {
+  background: rgba(47, 95, 138, 0.14);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* ── Controls ── */
 .controls {
   display: flex;

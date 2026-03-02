@@ -10,6 +10,7 @@ export interface IncidentEntry {
 }
 
 export type ShiftMode = 'day' | 'night';
+export type ScenarioMode = 'baseline' | 'peak-hour' | 'jam-cascade' | 'night-shift';
 export type CameraTarget = 'overview' | 'autostore' | 'depalletizer' | 'palletizer' | 'conveyors' | 'safety' | string;
 
 export interface KPIs {
@@ -55,6 +56,7 @@ export interface ControlRoomState {
 
   /* UI / Scene */
   shiftMode: ShiftMode;
+  scenarioMode: ScenarioMode;
   performanceMode: boolean;
   cameraTarget: CameraTarget;
   focusedProfile: string | null;
@@ -93,6 +95,7 @@ export interface ControlRoomState {
   acknowledgeAlarm: () => void;
 
   setShiftMode: (m: ShiftMode) => void;
+  applyScenario: (mode: ScenarioMode) => void;
   setPerformanceMode: (v: boolean) => void;
   setCameraTarget: (t: CameraTarget) => void;
   setFocusedProfile: (id: string | null) => void;
@@ -105,6 +108,38 @@ let incidentCounter = 0;
 const now = () => {
   const d = new Date();
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+};
+
+const scenarioProfile: Record<ScenarioMode, {
+  throughputBias: number;
+  backlogDrift: number;
+  jamRisk: number;
+  amrDispatchBoost: number;
+}> = {
+  baseline: {
+    throughputBias: 1,
+    backlogDrift: 0,
+    jamRisk: 1,
+    amrDispatchBoost: 1,
+  },
+  'peak-hour': {
+    throughputBias: 1.08,
+    backlogDrift: 0.035,
+    jamRisk: 1.25,
+    amrDispatchBoost: 1.45,
+  },
+  'jam-cascade': {
+    throughputBias: 0.82,
+    backlogDrift: 0.12,
+    jamRisk: 2.2,
+    amrDispatchBoost: 0.9,
+  },
+  'night-shift': {
+    throughputBias: 0.9,
+    backlogDrift: 0.05,
+    jamRisk: 1.35,
+    amrDispatchBoost: 0.85,
+  },
 };
 
 export const useStore = create<ControlRoomState>((set, get) => ({
@@ -138,6 +173,7 @@ export const useStore = create<ControlRoomState>((set, get) => ({
   emergencyStop: false,
 
   shiftMode: 'day',
+  scenarioMode: 'baseline',
   performanceMode: false,
   cameraTarget: 'overview',
   focusedProfile: null,
@@ -387,6 +423,77 @@ export const useStore = create<ControlRoomState>((set, get) => ({
   })),
 
   setShiftMode: (m) => set({ shiftMode: m }),
+  applyScenario: (mode) => set(s => {
+    const nextIncidents = [...s.incidents];
+
+    const basePatch: Partial<ControlRoomState> = {
+      emergencyStop: false,
+      scenarioMode: mode,
+      conveyorJam: false,
+      conveyorJamClearing: false,
+    };
+
+    const modePatch: Partial<ControlRoomState> =
+      mode === 'peak-hour'
+        ? {
+            shiftMode: 'day',
+            depalletizerRunning: true,
+            depalletizerSpeed: 98,
+            palletizerRunning: true,
+            palletizerOutputRate: 108,
+            conveyorRunning: true,
+            autostoreSpeed: 132,
+            autostoreBinDensity: 82,
+          }
+        : mode === 'jam-cascade'
+        ? {
+            shiftMode: 'day',
+            depalletizerRunning: true,
+            depalletizerSpeed: 88,
+            palletizerRunning: true,
+            palletizerOutputRate: 86,
+            conveyorRunning: true,
+            autostoreSpeed: 176,
+            autostoreBinDensity: 92,
+            amrWaiting: false,
+          }
+        : mode === 'night-shift'
+        ? {
+            shiftMode: 'night',
+            depalletizerRunning: true,
+            depalletizerSpeed: 72,
+            palletizerRunning: true,
+            palletizerOutputRate: 72,
+            conveyorRunning: true,
+            autostoreSpeed: 82,
+            autostoreBinDensity: 64,
+          }
+        : {
+            shiftMode: 'day',
+            depalletizerRunning: false,
+            depalletizerSpeed: 60,
+            palletizerRunning: false,
+            palletizerOutputRate: 80,
+            conveyorRunning: true,
+            autostoreSpeed: 100,
+            autostoreBinDensity: 70,
+            amrWaiting: false,
+          };
+
+    nextIncidents.unshift({
+      id: `inc-${++incidentCounter}`,
+      time: now(),
+      message: `Scenario switched to ${mode.replace('-', ' ')}.`,
+      severity: mode === 'jam-cascade' ? 'warning' : 'info',
+      acknowledged: false,
+    });
+
+    return {
+      ...basePatch,
+      ...modePatch,
+      incidents: nextIncidents.slice(0, 50),
+    };
+  }),
   setPerformanceMode: (v) => set({ performanceMode: v }),
   setCameraTarget: (t) => set({ cameraTarget: t }),
   setFocusedProfile: (id) => set({ focusedProfile: id }),
@@ -415,6 +522,8 @@ export const useStore = create<ControlRoomState>((set, get) => ({
       };
     }
 
+    const scenario = scenarioProfile[s.scenarioMode];
+
     const conveyorFactor = s.conveyorRunning ? 1 : 0;
     const depalFactor = s.depalletizerRunning ? (s.depalletizerSpeed / 100) : 0;
     const palFactor = s.palletizerRunning ? (s.palletizerOutputRate / 100) : 0;
@@ -422,7 +531,7 @@ export const useStore = create<ControlRoomState>((set, get) => ({
     const faultPenalty = s.depalletizerFault ? 0.3 : 0;
 
     const targetThroughput = Math.round(
-      420 * ((conveyorFactor * 0.3) + (depalFactor * 0.25) + (palFactor * 0.25) + (asFactor * 0.2)) * (1 - faultPenalty)
+      420 * ((conveyorFactor * 0.3) + (depalFactor * 0.25) + (palFactor * 0.25) + (asFactor * 0.2)) * (1 - faultPenalty) * scenario.throughputBias
     );
     const newThroughput = s.kpis.throughput + (targetThroughput - s.kpis.throughput) * 0.02;
 
@@ -431,15 +540,27 @@ export const useStore = create<ControlRoomState>((set, get) => ({
     );
     const newUtil = s.kpis.utilization + (targetUtil - s.kpis.utilization) * 0.02;
 
-    const backlogDelta = s.conveyorRunning ? -0.05 : 0.1;
+    const backlogDelta = (s.conveyorRunning ? -0.05 : 0.1) + scenario.backlogDrift;
     const newBacklog = Math.max(0, Math.min(200, s.kpis.backlog + backlogDelta));
 
     const downDelta = (!s.conveyorRunning || s.depalletizerFault || s.conveyorJam) ? 0.016 : 0;
 
+    const tickIncs = [...s.incidents];
+
     // Randomly simulate jam if autostore speed too high
     let newJam = s.conveyorJam;
-    if (s.autostoreSpeed > 160 && s.conveyorRunning && !s.conveyorJam && !s.conveyorJamClearing && Math.random() < 0.001) {
+    if (s.autostoreSpeed > 160 && s.conveyorRunning && !s.conveyorJam && !s.conveyorJamClearing && Math.random() < 0.001 * scenario.jamRisk) {
       newJam = true;
+    }
+    if (s.scenarioMode === 'jam-cascade' && s.conveyorRunning && !newJam && Math.random() < 0.0024) {
+      newJam = true;
+      tickIncs.unshift({
+        id: `inc-${++incidentCounter}`,
+        time: now(),
+        message: 'CASCADE: queue surge triggered a secondary conveyor jam',
+        severity: 'warning',
+        acknowledged: false,
+      });
     }
 
     // AMR delivery simulation — completes after ~8 seconds (0.5% chance per tick)
@@ -449,7 +570,6 @@ export const useStore = create<ControlRoomState>((set, get) => ({
     let palletBoxes = s.palletBoxesRemaining;
     let palletEmpty = s.palletEmpty;
     let replenishReq = s.palletReplenishRequested;
-    const tickIncs = [...s.incidents];
 
     if (amrDelivering && Math.random() < 0.005) {
       amrDelivering = false;
@@ -480,7 +600,7 @@ export const useStore = create<ControlRoomState>((set, get) => ({
     }
 
     // Auto-dispatch AMR if buffer below max and not already delivering
-    if (!amrDelivering && bufferCount < s.palletBufferMax && Math.random() < 0.002) {
+    if (!amrDelivering && bufferCount < s.palletBufferMax && Math.random() < 0.002 * scenario.amrDispatchBoost) {
       amrDelivering = true;
     }
 
