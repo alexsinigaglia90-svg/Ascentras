@@ -67,6 +67,7 @@ export interface ControlRoomState {
   shiftMode: ShiftMode;
   scenarioMode: ScenarioMode;
   performanceMode: boolean;
+  ultraVisualMode: boolean;
   cameraTarget: CameraTarget;
   focusedProfile: string | null;
 
@@ -112,6 +113,7 @@ export interface ControlRoomState {
   setReplayCursor: (index: number) => void;
   clearScenarioRuns: () => void;
   setPerformanceMode: (v: boolean) => void;
+  setUltraVisualMode: (v: boolean) => void;
   setCameraTarget: (t: CameraTarget) => void;
   setFocusedProfile: (id: string | null) => void;
 
@@ -199,6 +201,7 @@ export const useStore = create<ControlRoomState>((set, get) => ({
   shiftMode: 'day',
   scenarioMode: 'baseline',
   performanceMode: false,
+  ultraVisualMode: false,
   cameraTarget: 'overview',
   focusedProfile: null,
 
@@ -585,6 +588,7 @@ export const useStore = create<ControlRoomState>((set, get) => ({
     };
   }),
   setPerformanceMode: (v) => set({ performanceMode: v }),
+  setUltraVisualMode: (v) => set({ ultraVisualMode: v }),
   setCameraTarget: (t) => set({ cameraTarget: t }),
   setFocusedProfile: (id) => set({ focusedProfile: id }),
 

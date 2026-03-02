@@ -296,7 +296,8 @@
 }
 
 .shiftBtn,
-.perfBtn {
+.perfBtn,
+.ultraBtn {
   flex: 1;
   display: flex;
   align-items: center;
@@ -314,7 +315,8 @@
 }
 
 .shiftBtn:hover,
-.perfBtn:hover {
+.perfBtn:hover,
+.ultraBtn:hover {
   background: var(--surface-elevated);
   color: var(--text);
 }
@@ -329,6 +331,12 @@
   background: rgba(200, 169, 110, 0.12);
   border-color: var(--brass);
   color: var(--brass);
+}
+
+.ultraActive {
+  background: rgba(107, 173, 107, 0.16);
+  border-color: var(--green);
+  color: var(--green);
 }
 
 @media (max-width: 768px) {

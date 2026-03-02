@@ -16,14 +16,15 @@ export function CinematicLighting({
   quality = 'cinematic',
 }: {
   performanceOverride?: boolean;
-  quality?: 'safe' | 'balanced' | 'cinematic';
+  quality?: 'safe' | 'balanced' | 'cinematic' | 'ultra';
 }) {
   const shift = useStore(s => s.shiftMode);
   const emergency = useStore(s => s.emergencyStop);
   const performanceMode = useStore(s => s.performanceMode);
   const effectivePerformance = performanceOverride ?? performanceMode;
   const balanced = quality === 'balanced';
-  const cinematic = quality === 'cinematic';
+  const cinematic = quality === 'cinematic' || quality === 'ultra';
+  const ultra = quality === 'ultra';
   const safe = quality === 'safe';
 
   const mainRef = useRef<THREE.DirectionalLight>(null!);
@@ -39,30 +40,30 @@ export function CinematicLighting({
     const t = clock.getElapsedTime();
 
     // Ambient — deeper night, warmer day
-    const tAmb = emergency ? 0.12 : isNight ? (cinematic ? 0.2 : 0.16) : cinematic ? 0.5 : 0.4;
+    const tAmb = emergency ? 0.12 : isNight ? (ultra ? 0.22 : cinematic ? 0.2 : 0.16) : ultra ? 0.56 : cinematic ? 0.5 : 0.4;
     ambRef.current.intensity += (tAmb - ambRef.current.intensity) * 0.04;
     ambRef.current.color.lerp(new THREE.Color(isNight ? '#1a2040' : '#ede8df'), 0.03);
 
     // Key light — warm, slightly animated intensity for "living" feel
     const breathe = Math.sin(t * 0.4) * 0.06;
-    const tKey = emergency ? 0.4 : isNight ? (cinematic ? 0.88 : 0.62) : (cinematic ? 3.05 : 2.2) + breathe;
+    const tKey = emergency ? 0.4 : isNight ? (ultra ? 0.94 : cinematic ? 0.88 : 0.62) : (ultra ? 3.28 : cinematic ? 3.05 : 2.2) + breathe;
     mainRef.current.intensity += (tKey - mainRef.current.intensity) * 0.04;
 
     // Fill
     if (fillRef.current) {
-      const tFill = emergency ? 0.15 : isNight ? 0.26 : cinematic ? 1.45 : 1.05;
+      const tFill = emergency ? 0.15 : isNight ? (ultra ? 0.3 : 0.26) : ultra ? 1.6 : cinematic ? 1.45 : 1.05;
       fillRef.current.intensity += (tFill - fillRef.current.intensity) * 0.04;
     }
 
     // Bounce fill — simulates indirect bounce from floor
     if (bounceFillRef.current) {
-      const tBounce = emergency ? 0.05 : isNight ? 0.1 : cinematic ? 0.62 : 0.42;
+      const tBounce = emergency ? 0.05 : isNight ? (ultra ? 0.12 : 0.1) : ultra ? 0.72 : cinematic ? 0.62 : 0.42;
       bounceFillRef.current.intensity += (tBounce - bounceFillRef.current.intensity) * 0.04;
     }
 
     // Rim
     if (rimRef.current) {
-      const tRim = emergency ? 0.08 : isNight ? 0.2 : cinematic ? 1.08 : 0.8;
+      const tRim = emergency ? 0.08 : isNight ? (ultra ? 0.24 : 0.2) : ultra ? 1.18 : cinematic ? 1.08 : 0.8;
       rimRef.current.intensity += (tRim - rimRef.current.intensity) * 0.04;
     }
 
@@ -71,12 +72,12 @@ export function CinematicLighting({
       if (!light) return;
       const phase = t * (0.3 + i * 0.07) + i * 1.2;
       const pulse = 1 + Math.sin(phase) * 0.08;
-      light.intensity = (emergency ? 0.2 : isNight ? 0.18 : cinematic ? 0.42 : 0.3) * pulse;
+      light.intensity = (emergency ? 0.2 : isNight ? (ultra ? 0.22 : 0.18) : ultra ? 0.48 : cinematic ? 0.42 : 0.3) * pulse;
     });
   });
 
   const isNight = shift === 'night';
-  const shadowSize = effectivePerformance ? 512 : balanced ? 1024 : 2048;
+  const shadowSize = effectivePerformance ? 512 : balanced ? 1024 : ultra ? 3072 : 2048;
 
   /* Machine zone accent colours & positions */
   const accents: { pos: [number, number, number]; color: string; dist: number }[] = [
@@ -96,17 +97,17 @@ export function CinematicLighting({
       <Environment
         files={HDRI_PATH}
         background={false}
-        environmentIntensity={isNight ? 0.1 : cinematic ? 0.35 : 0.24}
+        environmentIntensity={isNight ? (ultra ? 0.12 : 0.1) : ultra ? 0.42 : cinematic ? 0.35 : 0.24}
       />
 
       {/* ── Ambient base — lowered to let directional lights sculpt deeper ── */}
-      <ambientLight ref={ambRef} intensity={cinematic ? 0.48 : 0.42} color={isNight ? '#7d8ba8' : '#ede8df'} />
+      <ambientLight ref={ambRef} intensity={ultra ? 0.52 : cinematic ? 0.48 : 0.42} color={isNight ? '#7d8ba8' : '#ede8df'} />
 
       {/* ── Key light — high right, warm ── */}
       <directionalLight
         ref={mainRef}
         position={[5, 14, 7]}
-        intensity={cinematic ? 3.0 : 2.15}
+        intensity={ultra ? 3.25 : cinematic ? 3.0 : 2.15}
         color="#fff4e0"
         castShadow={!effectivePerformance}
         shadow-mapSize-width={shadowSize}
@@ -118,18 +119,18 @@ export function CinematicLighting({
         shadow-camera-bottom={-12}
         shadow-bias={-0.0002}
         shadow-normalBias={0.015}
-        shadow-radius={effectivePerformance ? 1 : balanced ? 3 : 5}
+        shadow-radius={effectivePerformance ? 1 : balanced ? 3 : ultra ? 6 : 5}
       />
 
       {/* ── Fill light — cool blue, opposite side ── */}
       <directionalLight
         ref={fillRef}
         position={[-7, 9, 5]}
-        intensity={cinematic ? 1.35 : 0.96}
+        intensity={ultra ? 1.52 : cinematic ? 1.35 : 0.96}
         color="#c0d0e8"
         castShadow={!effectivePerformance}
-        shadow-mapSize-width={effectivePerformance ? 256 : balanced ? 512 : 1024}
-        shadow-mapSize-height={effectivePerformance ? 256 : balanced ? 512 : 1024}
+        shadow-mapSize-width={effectivePerformance ? 256 : balanced ? 512 : ultra ? 1536 : 1024}
+        shadow-mapSize-height={effectivePerformance ? 256 : balanced ? 512 : ultra ? 1536 : 1024}
         shadow-camera-far={28}
         shadow-camera-left={-10}
         shadow-camera-right={10}
@@ -174,11 +175,11 @@ export function CinematicLighting({
       {/* ── Volumetric light beams — breathing opacity ── */}
       {!effectivePerformance && cinematic && (
         <>
-          <VolumetricBeam position={[-4.5, 5.5, -1]} color="#f0e8d0" intensity={0.14} width={1.0} />
-          <VolumetricBeam position={[-1, 5.5, 0.5]} color="#f0e8d0" intensity={0.12} width={0.9} />
-          <VolumetricBeam position={[2.5, 5.5, -0.5]} color="#f0e8d0" intensity={0.1} width={1.1} />
-          <VolumetricBeam position={[5.5, 5.5, 1]} color="#e8e0c0" intensity={0.09} width={0.8} />
-          <VolumetricBeam position={[0, 5.5, 2.5]} color="#e0d8c0" intensity={0.07} width={0.6} />
+          <VolumetricBeam position={[-4.5, 5.5, -1]} color="#f0e8d0" intensity={ultra ? 0.16 : 0.14} width={1.0} />
+          <VolumetricBeam position={[-1, 5.5, 0.5]} color="#f0e8d0" intensity={ultra ? 0.14 : 0.12} width={0.9} />
+          <VolumetricBeam position={[2.5, 5.5, -0.5]} color="#f0e8d0" intensity={ultra ? 0.12 : 0.1} width={1.1} />
+          <VolumetricBeam position={[5.5, 5.5, 1]} color="#e8e0c0" intensity={ultra ? 0.11 : 0.09} width={0.8} />
+          <VolumetricBeam position={[0, 5.5, 2.5]} color="#e0d8c0" intensity={ultra ? 0.09 : 0.07} width={0.6} />
         </>
       )}
 
@@ -188,7 +189,7 @@ export function CinematicLighting({
           key={i}
           ref={(el: THREE.PointLight | null) => { if (el) accentRefs.current[i] = el; }}
           position={a.pos}
-          intensity={cinematic ? 0.4 : 0.3}
+          intensity={ultra ? 0.46 : cinematic ? 0.4 : 0.3}
           color={a.color}
           distance={a.dist}
           decay={2}
@@ -202,7 +203,7 @@ export function CinematicLighting({
             position={[x, 4.8, i % 2 === 0 ? -2.5 : 2.5]}
             angle={0.65}
             penumbra={0.7}
-            intensity={isNight ? 0.12 : cinematic ? 0.5 : 0.4}
+            intensity={isNight ? (ultra ? 0.15 : 0.12) : ultra ? 0.58 : cinematic ? 0.5 : 0.4}
             color="#fff0d0"
             distance={9}
             decay={2}
@@ -216,7 +217,7 @@ export function CinematicLighting({
           {/* Lamp bulb — emissive */}
           <mesh position={[x, 4.64, i % 2 === 0 ? -2.5 : 2.5]}>
             <sphereGeometry args={[0.035, 8, 8]} />
-            <meshStandardMaterial color="#fff8e0" emissive="#fff0c0" emissiveIntensity={isNight ? 0.5 : 2.5} toneMapped={false} />
+            <meshStandardMaterial color="#fff8e0" emissive="#fff0c0" emissiveIntensity={isNight ? (ultra ? 0.65 : 0.5) : ultra ? 2.9 : 2.5} toneMapped={false} />
           </mesh>
           {/* Suspension wire */}
           <mesh position={[x, 5.3, i % 2 === 0 ? -2.5 : 2.5]}>
@@ -230,10 +231,10 @@ export function CinematicLighting({
       {!effectivePerformance && (
         <ContactShadows
           position={[0, 0.001, 0]}
-          scale={balanced ? 19 : 23}
-          blur={balanced ? 2.1 : 2.7}
+          scale={balanced ? 19 : ultra ? 24 : 23}
+          blur={balanced ? 2.1 : ultra ? 3.1 : 2.7}
           far={5}
-          opacity={balanced ? 0.46 : 0.6}
+          opacity={balanced ? 0.46 : ultra ? 0.66 : 0.6}
           color="#0a0810"
         />
       )}
@@ -241,20 +242,20 @@ export function CinematicLighting({
       {/* ── Floor edge glow strips ── */}
       {!safe && (
         <>
-          <RimStrip position={[-9, 0.04, 0]} width={0.06} height={16} color="#c8a858" intensity={cinematic ? 0.14 : 0.1} />
-          <RimStrip position={[9, 0.04, 0]} width={0.06} height={16} color="#c8a858" intensity={cinematic ? 0.14 : 0.1} />
-          <RimStrip position={[0, 0.04, -8]} width={18} height={0.06} color="#7888b0" intensity={cinematic ? 0.1 : 0.07} />
-          <RimStrip position={[0, 0.04, 8]} width={18} height={0.06} color="#7888b0" intensity={cinematic ? 0.1 : 0.07} />
+          <RimStrip position={[-9, 0.04, 0]} width={0.06} height={16} color="#c8a858" intensity={ultra ? 0.17 : cinematic ? 0.14 : 0.1} />
+          <RimStrip position={[9, 0.04, 0]} width={0.06} height={16} color="#c8a858" intensity={ultra ? 0.17 : cinematic ? 0.14 : 0.1} />
+          <RimStrip position={[0, 0.04, -8]} width={18} height={0.06} color="#7888b0" intensity={ultra ? 0.12 : cinematic ? 0.1 : 0.07} />
+          <RimStrip position={[0, 0.04, 8]} width={18} height={0.06} color="#7888b0" intensity={ultra ? 0.12 : cinematic ? 0.1 : 0.07} />
         </>
       )}
 
       {/* ── Floor zone glow patches — subtle area light feel ── */}
       {!safe && (
         <>
-          <FloorGlow position={[-5.2, 0.03, 0]} radius={1.8} color="#ff8040" opacity={cinematic ? 0.05 : 0.035} />
-          <FloorGlow position={[3, 0.03, 0]} radius={2.0} color="#d0a050" opacity={cinematic ? 0.04 : 0.03} />
-          <FloorGlow position={[5.5, 0.03, 0]} radius={2.2} color="#5070d0" opacity={cinematic ? 0.035 : 0.025} />
-          <FloorGlow position={[0, 0.03, 2.5]} radius={1.5} color="#60d0a0" opacity={cinematic ? 0.035 : 0.025} />
+          <FloorGlow position={[-5.2, 0.03, 0]} radius={1.8} color="#ff8040" opacity={ultra ? 0.06 : cinematic ? 0.05 : 0.035} />
+          <FloorGlow position={[3, 0.03, 0]} radius={2.0} color="#d0a050" opacity={ultra ? 0.05 : cinematic ? 0.04 : 0.03} />
+          <FloorGlow position={[5.5, 0.03, 0]} radius={2.2} color="#5070d0" opacity={ultra ? 0.045 : cinematic ? 0.035 : 0.025} />
+          <FloorGlow position={[0, 0.03, 2.5]} radius={1.5} color="#60d0a0" opacity={ultra ? 0.045 : cinematic ? 0.035 : 0.025} />
         </>
       )}
     </>

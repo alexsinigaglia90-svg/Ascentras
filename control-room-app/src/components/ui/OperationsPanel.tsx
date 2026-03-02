@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useStore, type ScenarioMode } from '../../state/store';
 import {
   Activity, ArrowDown, ArrowUp, Sun, Moon,
-  Eye, EyeOff, ChevronLeft, Play, Pause, SkipBack, SkipForward
+  Eye, EyeOff, ChevronLeft, Play, Pause, SkipBack, SkipForward, Sparkles
 } from 'lucide-react';
 import styles from './OperationsPanel.module.css';
 
 export function OperationsPanel() {
   const [isReplayPlaying, setIsReplayPlaying] = useState(false);
   const {
-    kpis, incidents, shiftMode, scenarioMode, scenarioRuns, replayCursor, performanceMode, cameraTarget,
-    setShiftMode, applyScenario, setReplayCursor, clearScenarioRuns, setPerformanceMode, setCameraTarget, acknowledgeAlarm,
+    kpis, incidents, shiftMode, scenarioMode, scenarioRuns, replayCursor, performanceMode, ultraVisualMode, cameraTarget,
+    setShiftMode, applyScenario, setReplayCursor, clearScenarioRuns, setPerformanceMode, setUltraVisualMode, setCameraTarget, acknowledgeAlarm,
   } = useStore();
 
   const unacked = incidents.filter(i => !i.acknowledged).length;
@@ -158,6 +158,19 @@ export function OperationsPanel() {
         >
           {performanceMode ? <EyeOff size={14} /> : <Eye size={14} />}
           Perf
+        </button>
+
+        <button
+          className={`${styles.ultraBtn} ${ultraVisualMode ? styles.ultraActive : ''}`}
+          onClick={() => {
+            const next = !ultraVisualMode;
+            if (next && performanceMode) setPerformanceMode(false);
+            setUltraVisualMode(next);
+          }}
+          title="Ultra visual mode forces maximum fidelity"
+        >
+          <Sparkles size={14} />
+          Ultra
         </button>
       </div>
     </div>

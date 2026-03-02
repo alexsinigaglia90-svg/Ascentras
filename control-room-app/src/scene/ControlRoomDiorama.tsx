@@ -129,6 +129,7 @@ function SceneLoadingFallback() {
  *  ══════════════════════════════════════════════════════ */
 export function ControlRoomDiorama() {
   const performanceMode = useStore(s => s.performanceMode);
+  const ultraVisualMode = useStore(s => s.ultraVisualMode);
   const shift = useStore(s => s.shiftMode);
   const [adaptivePerf, setAdaptivePerf] = useState(false);
 
@@ -140,20 +141,23 @@ export function ControlRoomDiorama() {
     setAdaptivePerf(lowCore || lowMemory || preferReducedMotion);
   }, []);
 
-  const quality = useMemo<'safe' | 'balanced' | 'cinematic'>(() => {
+  const quality = useMemo<'safe' | 'balanced' | 'cinematic' | 'ultra'>(() => {
     if (performanceMode || adaptivePerf) return 'safe';
+    if (ultraVisualMode) return 'ultra';
     return shift === 'night' ? 'balanced' : 'cinematic';
-  }, [performanceMode, adaptivePerf, shift]);
+  }, [performanceMode, adaptivePerf, ultraVisualMode, shift]);
 
   const effectivePerformance = quality === 'safe';
-  const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.25] : [1, 1.5];
+  const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.25] : quality === 'ultra' ? [1.25, 2] : [1, 1.5];
   const shadowEnabled = !effectivePerformance;
   const antialiasEnabled = !effectivePerformance;
-  const exposure = shift === 'night' ? (quality === 'safe' ? 0.8 : quality === 'balanced' ? 0.92 : 1.04) : quality === 'cinematic' ? 1.62 : 1.4;
+  const exposure = shift === 'night'
+    ? (quality === 'safe' ? 0.8 : quality === 'balanced' ? 0.92 : quality === 'ultra' ? 1.08 : 1.04)
+    : quality === 'ultra' ? 1.7 : quality === 'cinematic' ? 1.62 : 1.4;
 
   return (
     <Canvas
-      camera={{ position: [0, 6, 10], fov: quality === 'cinematic' ? 42 : 45, near: 0.1, far: 120 }}
+      camera={{ position: [0, 6, 10], fov: quality === 'cinematic' || quality === 'ultra' ? 42 : 45, near: 0.1, far: 140 }}
       shadows={shadowEnabled}
       dpr={dprSetting}
       gl={{
@@ -175,7 +179,7 @@ export function ControlRoomDiorama() {
       }}
     >
       <color attach="background" args={[shift === 'night' ? '#131824' : '#dbe2ea']} />
-      <fog attach="fog" args={[shift === 'night' ? '#171f31' : '#cfd6df', quality === 'cinematic' ? 20 : 22, quality === 'cinematic' ? 62 : 50]} />
+      <fog attach="fog" args={[shift === 'night' ? '#171f31' : '#cfd6df', quality === 'ultra' ? 22 : quality === 'cinematic' ? 20 : 22, quality === 'ultra' ? 70 : quality === 'cinematic' ? 62 : 50]} />
 
       <CameraController />
       <SimTicker />
