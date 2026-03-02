@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore, type ScenarioMode } from '../../state/store';
 import {
   Activity, ArrowDown, ArrowUp, Sun, Moon,
-  Eye, EyeOff, ChevronLeft
+  Eye, EyeOff, ChevronLeft, Play, Pause, SkipBack, SkipForward
 } from 'lucide-react';
 import styles from './OperationsPanel.module.css';
 
 export function OperationsPanel() {
+  const [isReplayPlaying, setIsReplayPlaying] = useState(false);
   const {
     kpis, incidents, shiftMode, scenarioMode, scenarioRuns, replayCursor, performanceMode, cameraTarget,
     setShiftMode, applyScenario, setReplayCursor, clearScenarioRuns, setPerformanceMode, setCameraTarget, acknowledgeAlarm,
@@ -23,6 +24,18 @@ export function OperationsPanel() {
         downtimeMinutes: selectedRun.endKpis.downtimeMinutes - selectedRun.startKpis.downtimeMinutes,
       }
     : null;
+
+  useEffect(() => {
+    if (!isReplayPlaying || scenarioRuns.length <= 1) return;
+
+    const timer = window.setInterval(() => {
+      const max = Math.max(0, scenarioRuns.length - 1);
+      const next = replayCursor >= max ? 0 : replayCursor + 1;
+      setReplayCursor(next);
+    }, 1200);
+
+    return () => window.clearInterval(timer);
+  }, [isReplayPlaying, replayCursor, scenarioRuns.length, setReplayCursor]);
 
   return (
     <div className={styles.panel}>
@@ -89,12 +102,26 @@ export function OperationsPanel() {
           <button className={styles.ackBtn} onClick={clearScenarioRuns}>Clear</button>
         </div>
         <div className={styles.replayWrap}>
+          <div className={styles.replayControls}>
+            <button className={styles.replayBtn} onClick={() => setReplayCursor(Math.max(0, replayCursor - 1))}>
+              <SkipBack size={12} />
+            </button>
+            <button className={`${styles.replayBtn} ${styles.replayPlayBtn}`} onClick={() => setIsReplayPlaying(v => !v)}>
+              {isReplayPlaying ? <Pause size={12} /> : <Play size={12} />} {isReplayPlaying ? 'Pause' : 'Play'}
+            </button>
+            <button className={styles.replayBtn} onClick={() => setReplayCursor(Math.min(Math.max(0, scenarioRuns.length - 1), replayCursor + 1))}>
+              <SkipForward size={12} />
+            </button>
+          </div>
           <input
             type="range"
             min={0}
             max={Math.max(0, scenarioRuns.length - 1)}
             value={Math.min(replayCursor, Math.max(0, scenarioRuns.length - 1))}
-            onChange={e => setReplayCursor(Number(e.target.value))}
+            onChange={e => {
+              setIsReplayPlaying(false);
+              setReplayCursor(Number(e.target.value));
+            }}
           />
           {selectedRun && (
             <div className={styles.replayMeta}>

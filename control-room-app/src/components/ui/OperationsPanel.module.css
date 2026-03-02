@@ -215,6 +215,39 @@
   gap: 6px;
 }
 
+.replayControls {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1fr;
+  gap: 4px;
+}
+
+.replayBtn {
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.replayBtn:hover {
+  border-color: var(--border-active);
+  color: var(--text);
+}
+
+.replayPlayBtn {
+  color: var(--accent);
+  border-color: rgba(47, 95, 138, 0.35);
+  background: rgba(47, 95, 138, 0.08);
+}
+
 .replayMeta {
   display: flex;
   flex-direction: column;
