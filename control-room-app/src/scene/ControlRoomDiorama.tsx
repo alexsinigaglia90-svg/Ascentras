@@ -295,11 +295,8 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
   const [dynamicPenalty, setDynamicPenalty] = useState<0 | 1 | 2>(0);
   const [sceneReady, setSceneReady] = useState(false);
   const [ultraWarmup, setUltraWarmup] = useState(false);
-  const [ultraGrace, setUltraGrace] = useState(false);
   const glRef = useRef<THREE.WebGLRenderer | null>(null);
   const invalidateRef = useRef<(() => void) | null>(null);
-  const warmupTimerRef = useRef<number | null>(null);
-  const graceTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const nav = navigator as Navigator & { deviceMemory?: number };
@@ -313,7 +310,7 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
     let cancelled = false;
 
     (async () => {
-      await Promise.all([preloadSceneAssets(), wait(2200)]);
+      await Promise.all([preloadSceneAssets(), wait(4200)]);
       if (!cancelled) setSceneReady(true);
     })();
 
@@ -329,38 +326,23 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
   }, [active, performanceMode, adaptivePerf]);
 
   useEffect(() => {
-    if (warmupTimerRef.current !== null) {
-      window.clearTimeout(warmupTimerRef.current);
-      warmupTimerRef.current = null;
-    }
-    if (graceTimerRef.current !== null) {
-      window.clearTimeout(graceTimerRef.current);
-      graceTimerRef.current = null;
-    }
+    let cancelled = false;
 
     if (!ultraVisualMode) {
       setUltraWarmup(false);
-      setUltraGrace(false);
       return;
     }
 
     setDynamicPenalty(0);
     setUltraWarmup(true);
-    setUltraGrace(true);
 
-    void preloadSceneAssets();
-
-    warmupTimerRef.current = window.setTimeout(() => {
-      setUltraWarmup(false);
-    }, 3200);
-
-    graceTimerRef.current = window.setTimeout(() => {
-      setUltraGrace(false);
-    }, 18000);
+    (async () => {
+      await Promise.all([preloadSceneAssets(), wait(6500)]);
+      if (!cancelled) setUltraWarmup(false);
+    })();
 
     return () => {
-      if (warmupTimerRef.current !== null) window.clearTimeout(warmupTimerRef.current);
-      if (graceTimerRef.current !== null) window.clearTimeout(graceTimerRef.current);
+      cancelled = true;
     };
   }, [ultraVisualMode]);
 
@@ -397,7 +379,7 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
   const effectivePerformance = quality === 'safe';
   const detailLevel = quality === 'safe' ? 0 : quality === 'balanced' ? 1 : quality === 'cinematic' ? 2 : 3;
   const targetFrameMs = quality === 'ultra' ? 16.8 : quality === 'cinematic' ? 20 : quality === 'balanced' ? 24 : 28;
-  const lockAdaptiveDowngrade = ultraVisualMode && (ultraWarmup || ultraGrace);
+  const lockAdaptiveDowngrade = ultraVisualMode;
   const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.25] : quality === 'ultra' ? [1.25, 2] : [1, 1.5];
   const shadowEnabled = !effectivePerformance;
   const antialiasEnabled = !effectivePerformance;
