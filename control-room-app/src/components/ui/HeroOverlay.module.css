@@ -18,7 +18,7 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--accent);
-  border: 1px solid rgba(45, 106, 79, 0.2);
+  border: 1px solid rgba(47, 95, 138, 0.2);
   border-radius: 100px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);

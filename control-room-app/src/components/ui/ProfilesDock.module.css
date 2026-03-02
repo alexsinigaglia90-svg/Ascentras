@@ -63,7 +63,7 @@
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
-  box-shadow: 0 2px 12px rgba(45, 106, 79, 0.25);
+  box-shadow: 0 2px 12px rgba(47, 95, 138, 0.25);
 }
 
 /*  Card Grid  */
@@ -112,7 +112,7 @@
 .cardActive {
   border-color: var(--accent);
   background: var(--surface);
-  box-shadow: 0 8px 32px rgba(45, 106, 79, 0.12);
+  box-shadow: 0 8px 32px rgba(47, 95, 138, 0.12);
   transform: translateY(-4px);
 }
 
@@ -121,7 +121,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-light), rgba(45, 106, 79, 0.15));
+  background: linear-gradient(135deg, var(--accent-light), rgba(47, 95, 138, 0.15));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -339,12 +339,12 @@
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
-  box-shadow: 0 4px 16px rgba(45, 106, 79, 0.2);
+  box-shadow: 0 4px 16px rgba(47, 95, 138, 0.2);
 }
 
 .ctaBtn:hover {
   background: var(--accent-bright);
-  box-shadow: 0 6px 24px rgba(45, 106, 79, 0.3);
+  box-shadow: 0 6px 24px rgba(47, 95, 138, 0.3);
   transform: translateY(-1px);
 }
 

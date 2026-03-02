@@ -1,10 +1,14 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { ControlRoomDiorama } from './scene/ControlRoomDiorama';
 import { SystemsPanel } from './components/ui/SystemsPanel';
 import { HeroOverlay } from './components/ui/HeroOverlay';
-import { ScrollContent } from './components/ui/ScrollContent';
 import { RequestModal } from './components/ui/RequestModal';
 import { useStore } from './state/store';
+
+/* Lazy-load ScrollContent — it's below the fold, no need to block first paint */
+const ScrollContent = lazy(() =>
+  import('./components/ui/ScrollContent').then(m => ({ default: m.ScrollContent }))
+);
 
 function LoadingScreen() {
   return (
@@ -76,6 +80,51 @@ export default function App() {
 
   return (
     <>
+      {/* ── Fixed home navigation ── */}
+      <a
+        href="/"
+        style={{
+          position: 'fixed',
+          top: 16,
+          left: 20,
+          zIndex: 200,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 18px',
+          fontSize: '0.78rem',
+          fontWeight: 600,
+          fontFamily: 'var(--font-serif)',
+          letterSpacing: '0.02em',
+          background: 'rgba(255,255,255,0.82)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          color: 'var(--text)',
+          border: '1px solid var(--border)',
+          borderRadius: '100px',
+          textDecoration: 'none',
+          boxShadow: '0 2px 12px rgba(8,23,42,0.06)',
+          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+        onMouseEnter={e => {
+          const el = e.currentTarget;
+          el.style.background = 'var(--accent)';
+          el.style.color = '#fff';
+          el.style.borderColor = 'var(--accent)';
+          el.style.boxShadow = '0 4px 20px rgba(47,95,138,0.25)';
+        }}
+        onMouseLeave={e => {
+          const el = e.currentTarget;
+          el.style.background = 'rgba(255,255,255,0.82)';
+          el.style.color = 'var(--text)';
+          el.style.borderColor = 'var(--border)';
+          el.style.boxShadow = '0 2px 12px rgba(8,23,42,0.06)';
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Ascentra
+      </a>
+
       {/* ── Hero Viewport: 3D scene + overlays ── */}
       <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}>
         <Suspense fallback={<LoadingScreen />}>
@@ -127,14 +176,14 @@ export default function App() {
               const btn = e.currentTarget;
               btn.style.background = 'var(--accent)';
               btn.style.color = '#fff';
-              btn.style.boxShadow = '0 8px 32px rgba(45,106,79,0.25)';
+              btn.style.boxShadow = '0 8px 32px rgba(47,95,138,0.25)';
               btn.style.transform = 'translateY(-2px)';
             }}
             onMouseLeave={e => {
               const btn = e.currentTarget;
               btn.style.background = 'rgba(255,255,255,0.88)';
               btn.style.color = 'var(--text)';
-              btn.style.boxShadow = '0 4px 24px rgba(0,0,0,0.08)';
+              btn.style.boxShadow = '0 4px 24px rgba(8,23,42,0.08)';
               btn.style.transform = 'translateY(0)';
             }}
           >
@@ -144,8 +193,18 @@ export default function App() {
         </div>
       </div>
 
-      {/* ── Scrollable Content Below ── */}
-      <ScrollContent onRequestProfiles={() => setModalOpen(true)} />
+      {/* ── Scrollable Content Below (lazy-loaded) ── */}
+      <Suspense fallback={
+        <div style={{ padding: '80px 24px', textAlign: 'center', background: 'var(--bg)' }}>
+          <div style={{
+            width: 32, height: 32, margin: '0 auto',
+            border: '2px solid var(--border)', borderTopColor: 'var(--accent)',
+            borderRadius: '50%', animation: 'spin 1s linear infinite',
+          }} />
+        </div>
+      }>
+        <ScrollContent onRequestProfiles={() => setModalOpen(true)} />
+      </Suspense>
 
       <RequestModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </>

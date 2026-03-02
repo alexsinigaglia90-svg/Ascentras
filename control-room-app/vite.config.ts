@@ -7,5 +7,21 @@ export default defineConfig({
   build: {
     outDir: '../operis/control-room-planning',
     emptyOutDir: true,
+    target: 'esnext',
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          /* Separate Three.js core (~600KB) from app code */
+          three: ['three'],
+          /* R3F ecosystem in its own chunk */
+          r3f: ['@react-three/fiber', '@react-three/drei', '@react-three/postprocessing'],
+          /* State management */
+          zustand: ['zustand'],
+        },
+      },
+    },
+    /* Raise warning limit — Three.js is inherently large */
+    chunkSizeWarningLimit: 800,
   },
 });

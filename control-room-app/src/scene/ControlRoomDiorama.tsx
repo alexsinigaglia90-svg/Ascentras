@@ -1,20 +1,22 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, lazy, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, SoftShadows } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useStore } from '../state/store';
 import { WarehouseEnvironment } from './WarehouseEnvironment';
 import { ControlDesk } from './ControlDesk';
-import { AutoStoreRig } from './machines/AutoStoreRig';
-import { ConveyorRig } from './machines/ConveyorRig';
-import { DepalletizerRig } from './machines/DepalletizerRig';
-import { PalletizerRig } from './machines/PalletizerRig';
-import { DecantingStations } from './machines/DecantingStations';
-import { AMRFleet } from './machines/AMRFleet';
-import { IndustrialDetails } from './props/IndustrialDetails';
-import { DustParticles } from './DustParticles';
 import { CinematicLighting } from './lighting/CinematicLighting';
 import { CinematicPost } from './post/CinematicPost';
+
+/* Lazy-load heavy machine rigs — they are complex geometry builders */
+const AutoStoreRig = lazy(() => import('./machines/AutoStoreRig').then(m => ({ default: m.AutoStoreRig })));
+const ConveyorRig = lazy(() => import('./machines/ConveyorRig').then(m => ({ default: m.ConveyorRig })));
+const DepalletizerRig = lazy(() => import('./machines/DepalletizerRig').then(m => ({ default: m.DepalletizerRig })));
+const PalletizerRig = lazy(() => import('./machines/PalletizerRig').then(m => ({ default: m.PalletizerRig })));
+const DecantingStations = lazy(() => import('./machines/DecantingStations').then(m => ({ default: m.DecantingStations })));
+const AMRFleet = lazy(() => import('./machines/AMRFleet').then(m => ({ default: m.AMRFleet })));
+const IndustrialDetails = lazy(() => import('./props/IndustrialDetails').then(m => ({ default: m.IndustrialDetails })));
+const DustParticles = lazy(() => import('./DustParticles').then(m => ({ default: m.DustParticles })));
 
 /* ── Camera positions (updated for flowing layout) ── */
 const cameraPositions: Record<string, { pos: [number, number, number]; target: [number, number, number] }> = {
@@ -115,20 +117,25 @@ export function ControlRoomDiorama() {
     <Canvas
       camera={{ position: [0, 6, 10], fov: 45, near: 0.1, far: 100 }}
       shadows={!performanceMode}
-      dpr={performanceMode ? 1 : [1, 2]}
+      dpr={performanceMode ? 1 : [1, 1.5]}
       gl={{
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: shift === 'night' ? 0.85 : 1.6,
         outputColorSpace: THREE.SRGBColorSpace,
         antialias: !performanceMode,
         powerPreference: 'high-performance',
+        stencil: false,
+        depth: true,
       }}
       style={{ position: 'absolute', inset: 0 }}
+      frameloop="demand"
+      onCreated={({ gl, invalidate }) => {
+        /* Switch to continuous rendering after first frame */
+        gl.setAnimationLoop(() => { invalidate(); });
+      }}
     >
       {/* Fog pushed back from 14→22 to eliminate haze on the scene  */}
       <fog attach="fog" args={[shift === 'night' ? '#1a1e28' : '#c8ccd4', 22, 50]} />
-
-      {!performanceMode && <SoftShadows size={25} samples={16} focus={0.5} />}
 
       <CameraController />
       <SimTicker />
@@ -142,21 +149,17 @@ export function ControlRoomDiorama() {
       {/* Operator station */}
       <ControlDesk />
 
-      {/* Machines — flowing operation: Depal → Conv → Decanting → AutoStore */}
-      <DepalletizerRig />
-      <ConveyorRig />
-      <DecantingStations />
-      <AutoStoreRig />
-      <PalletizerRig />
-
-      {/* AMR fleet — autonomous mobile robots */}
-      <AMRFleet />
-
-      {/* Shared industrial detail layer */}
-      <IndustrialDetails />
-
-      {/* Atmospheric particles */}
-      {!performanceMode && <DustParticles />}
+      {/* Machines — lazy-loaded for faster initial paint */}
+      <Suspense fallback={null}>
+        <DepalletizerRig />
+        <ConveyorRig />
+        <DecantingStations />
+        <AutoStoreRig />
+        <PalletizerRig />
+        <AMRFleet />
+        <IndustrialDetails />
+        {!performanceMode && <DustParticles />}
+      </Suspense>
 
       {/* Postprocessing – NO DOF, NO ChromaticAberration */}
       <CinematicPost />
