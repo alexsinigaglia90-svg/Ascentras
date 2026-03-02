@@ -77,7 +77,7 @@ export default function App() {
   return (
     <>
       {/* ── Hero Viewport: 3D scene + overlays ── */}
-      <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+      <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}>
         <Suspense fallback={<LoadingScreen />}>
           <ControlRoomDiorama />
         </Suspense>
