@@ -9,24 +9,26 @@ import { AutoStoreRig } from './machines/AutoStoreRig';
 import { ConveyorRig } from './machines/ConveyorRig';
 import { DepalletizerRig } from './machines/DepalletizerRig';
 import { PalletizerRig } from './machines/PalletizerRig';
+import { DecantingStations } from './machines/DecantingStations';
 import { IndustrialDetails } from './props/IndustrialDetails';
 import { DustParticles } from './DustParticles';
 import { CinematicLighting } from './lighting/CinematicLighting';
 import { CinematicPost } from './post/CinematicPost';
 
-/* ── Camera positions ── */
+/* ── Camera positions (updated for flowing layout) ── */
 const cameraPositions: Record<string, { pos: [number, number, number]; target: [number, number, number] }> = {
-  overview:        { pos: [0, 5.5, 8],     target: [0, 0.8, 0] },
-  autostore:       { pos: [4.5, 3, 0.5],   target: [3, 0.8, -1.5] },
-  depalletizer:    { pos: [-2.5, 2.5, 0],   target: [-3.5, 0.8, -1.5] },
-  palletizer:      { pos: [4, 2.5, 4],      target: [3.5, 0.8, 2.5] },
-  conveyors:       { pos: [-1, 2, 4],       target: [-2, 0.3, 2] },
-  safety:          { pos: [0, 3, 2],         target: [0, 1, 0] },
-  'cr-manager':    { pos: [-0.5, 2.5, 2.5], target: [0, 0.8, 0] },
-  'flow-controller':{ pos: [-2, 2, 3.5],    target: [-2, 0.3, 2] },
-  'wms-coordinator':{ pos: [3.5, 2.5, 1],   target: [3, 0.8, -1.5] },
-  'incident-lead': { pos: [0, 2.5, 1.5],    target: [0, 1, 0] },
-  'perf-analyst':  { pos: [1, 2, 2],         target: [0, 0.8, 0] },
+  overview:        { pos: [0, 6, 10],      target: [0.5, 0.6, 0] },
+  autostore:       { pos: [6.5, 3, 2],     target: [5.5, 0.8, 0] },
+  depalletizer:    { pos: [-4, 2.5, 2.5],  target: [-5.2, 0.8, 0] },
+  palletizer:      { pos: [7, 2.5, 4.5],   target: [6, 0.8, 2.5] },
+  conveyors:       { pos: [0, 2, 3],       target: [-1, 0.3, 0] },
+  decanting:       { pos: [3.5, 2.5, 3],   target: [3, 0.5, 0] },
+  safety:          { pos: [0, 3.5, 3],     target: [0, 1, 0] },
+  'cr-manager':    { pos: [0, 3, 5],       target: [0.5, 0.8, 0] },
+  'flow-controller':{ pos: [-1, 2, 4],     target: [-1, 0.3, 0] },
+  'wms-coordinator':{ pos: [5, 2.5, 2.5],  target: [5.5, 0.8, 0] },
+  'incident-lead': { pos: [0, 3, 3],       target: [0, 1, 0] },
+  'perf-analyst':  { pos: [1.5, 2.5, 4],   target: [1, 0.8, 0] },
 };
 
 /* ── Camera with parallax + drift ── */
@@ -107,7 +109,7 @@ export function ControlRoomDiorama() {
 
   return (
     <Canvas
-      camera={{ position: [0, 5.5, 8], fov: 45, near: 0.1, far: 100 }}
+      camera={{ position: [0, 6, 10], fov: 45, near: 0.1, far: 100 }}
       shadows={!performanceMode}
       dpr={performanceMode ? 1 : [1, 1.5]}
       gl={{
@@ -136,10 +138,11 @@ export function ControlRoomDiorama() {
       {/* Operator station */}
       <ControlDesk />
 
-      {/* Machines */}
-      <AutoStoreRig />
-      <ConveyorRig />
+      {/* Machines — flowing operation: Depal → Conv → Decanting → AutoStore */}
       <DepalletizerRig />
+      <ConveyorRig />
+      <DecantingStations />
+      <AutoStoreRig />
       <PalletizerRig />
 
       {/* Shared industrial detail layer */}

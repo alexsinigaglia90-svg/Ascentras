@@ -24,7 +24,7 @@ export function ControlDesk() {
   });
 
   return (
-    <group position={[0, 0, 0]}>
+    <group position={[0, 0, 2.5]}>
       {/* ── Main desk surface ── */}
       <mesh position={[0, 0.45, -0.3]} castShadow receiveShadow>
         <boxGeometry args={[2.8, 0.06, 1.0]} />

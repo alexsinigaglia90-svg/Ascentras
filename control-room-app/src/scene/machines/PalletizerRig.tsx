@@ -71,7 +71,7 @@ export function PalletizerRig() {
   ];
 
   return (
-    <group position={[3.5, 0, 2.5]}>
+    <group position={[6, 0, 2.5]}>
 
       {/* ══════════ ALUMINIUM EXTRUSION FRAME ══════════ */}
       {/* Uprights */}
