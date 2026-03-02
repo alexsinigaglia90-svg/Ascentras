@@ -450,6 +450,7 @@
 }
 
 .pj-guidance-tab {
+  min-width: 0;
   min-height: 42px;
   border-radius: 12px;
   border: 1px solid rgba(28, 42, 57, 0.18);
@@ -458,6 +459,8 @@
   font-size: 0.88rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+  white-space: normal;
+  line-height: 1.18;
   cursor: pointer;
   transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
 }
@@ -505,18 +508,25 @@
 }
 
 .pj-guidance-copy {
+  min-width: 0;
   margin: 0.44rem 0 0;
   color: rgba(28, 42, 57, 0.82);
   line-height: 1.46;
+  overflow-wrap: anywhere;
 }
 
 .pj-guidance-list {
+  min-width: 0;
   margin: 0.58rem 0 0;
   padding-left: 1rem;
   display: grid;
   gap: 0.34rem;
   color: rgba(28, 42, 57, 0.85);
   font-size: 0.84rem;
+}
+
+.pj-guidance-list li {
+  overflow-wrap: anywhere;
 }
 
 .pj-guidance-link {
@@ -554,6 +564,7 @@
 
 .pj-guidance-metric {
   position: relative;
+  min-width: 0;
   display: grid;
   gap: 0.34rem;
   border-radius: 10px;
@@ -564,6 +575,7 @@
   letter-spacing: 0.04em;
   color: rgba(28, 42, 57, 0.8);
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .pj-guidance-metric i {
