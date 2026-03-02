@@ -105,6 +105,62 @@ function SimTicker() {
   return null;
 }
 
+function FrameRateGuard({
+  enabled,
+  onLowFps,
+  onRecovered,
+}: {
+  enabled: boolean;
+  onLowFps: () => void;
+  onRecovered: () => void;
+}) {
+  const lowFpsSeconds = useRef(0);
+  const highFpsSeconds = useRef(0);
+  const downgraded = useRef(false);
+
+  useFrame((_, delta) => {
+    if (!enabled) {
+      lowFpsSeconds.current = 0;
+      highFpsSeconds.current = 0;
+      if (downgraded.current) {
+        downgraded.current = false;
+        onRecovered();
+      }
+      return;
+    }
+
+    const fps = delta > 0 ? 1 / delta : 60;
+    const belowThreshold = fps < 42;
+    const aboveThreshold = fps > 56;
+
+    if (belowThreshold) {
+      lowFpsSeconds.current += delta;
+    } else {
+      lowFpsSeconds.current = Math.max(0, lowFpsSeconds.current - delta * 0.5);
+    }
+
+    if (aboveThreshold) {
+      highFpsSeconds.current += delta;
+    } else {
+      highFpsSeconds.current = Math.max(0, highFpsSeconds.current - delta * 0.5);
+    }
+
+    if (!downgraded.current && lowFpsSeconds.current >= 2.2) {
+      downgraded.current = true;
+      highFpsSeconds.current = 0;
+      onLowFps();
+    }
+
+    if (downgraded.current && highFpsSeconds.current >= 4.2) {
+      downgraded.current = false;
+      lowFpsSeconds.current = 0;
+      onRecovered();
+    }
+  });
+
+  return null;
+}
+
 function SceneLoadingFallback() {
   return (
     <group>
@@ -132,6 +188,7 @@ export function ControlRoomDiorama() {
   const ultraVisualMode = useStore(s => s.ultraVisualMode);
   const shift = useStore(s => s.shiftMode);
   const [adaptivePerf, setAdaptivePerf] = useState(false);
+  const [ultraAutoFallback, setUltraAutoFallback] = useState(false);
 
   useEffect(() => {
     const nav = navigator as Navigator & { deviceMemory?: number };
@@ -141,11 +198,17 @@ export function ControlRoomDiorama() {
     setAdaptivePerf(lowCore || lowMemory || preferReducedMotion);
   }, []);
 
+  useEffect(() => {
+    if (!ultraVisualMode || performanceMode || adaptivePerf) {
+      setUltraAutoFallback(false);
+    }
+  }, [ultraVisualMode, performanceMode, adaptivePerf]);
+
   const quality = useMemo<'safe' | 'balanced' | 'cinematic' | 'ultra'>(() => {
     if (performanceMode || adaptivePerf) return 'safe';
-    if (ultraVisualMode) return 'ultra';
+    if (ultraVisualMode) return ultraAutoFallback ? 'cinematic' : 'ultra';
     return shift === 'night' ? 'balanced' : 'cinematic';
-  }, [performanceMode, adaptivePerf, ultraVisualMode, shift]);
+  }, [performanceMode, adaptivePerf, ultraVisualMode, ultraAutoFallback, shift]);
 
   const effectivePerformance = quality === 'safe';
   const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.25] : quality === 'ultra' ? [1.25, 2] : [1, 1.5];
@@ -183,6 +246,11 @@ export function ControlRoomDiorama() {
 
       <CameraController />
       <SimTicker />
+      <FrameRateGuard
+        enabled={ultraVisualMode && !performanceMode && !adaptivePerf}
+        onLowFps={() => setUltraAutoFallback(true)}
+        onRecovered={() => setUltraAutoFallback(false)}
+      />
 
       {/* Lighting */}
       <CinematicLighting performanceOverride={effectivePerformance} quality={quality} />
