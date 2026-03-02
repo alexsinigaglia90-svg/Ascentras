@@ -4,6 +4,7 @@ import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useStore } from '../state/store';
 import { StylizedWarehouse } from './StylizedWarehouse';
+import { StylizedMachines } from './StylizedMachines';
 import { LightingSetup } from './LightingSetup';
 import { CinematicPost } from './post/CinematicPost';
 
@@ -119,6 +120,7 @@ export function ControlRoomDiorama() {
 
       <LightingSetup />
       <StylizedWarehouse />
+      <StylizedMachines />
 
       <Suspense fallback={null}>
         <AMRFleet />
