@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import * as M from '../materials/materialPresets';
 
@@ -13,24 +13,28 @@ export function Fasteners({ positions, radius = 0.012, height = 0.016, scale = 1
   scale?: number;
 }) {
   const count = positions.length;
+  const meshRef = useRef<THREE.InstancedMesh>(null!);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  const mesh = useMemo(() => {
-    const r = radius * scale;
-    const h = height * scale;
-    const geo = new THREE.CylinderGeometry(r, r, h, 6);
-    const mat = new THREE.MeshPhysicalMaterial({ ...M.machinedSteel });
-    const im = new THREE.InstancedMesh(geo, mat, count);
+  useEffect(() => {
+    if (!meshRef.current || count === 0) return;
     positions.forEach(([x, y, z], i) => {
       dummy.position.set(x, y, z);
       dummy.updateMatrix();
-      im.setMatrixAt(i, dummy.matrix);
+      meshRef.current.setMatrixAt(i, dummy.matrix);
     });
-    im.instanceMatrix.needsUpdate = true;
-    return im;
-  }, [positions, radius, height, count, dummy]);
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [positions, count, dummy]);
 
-  return <primitive object={mesh} />;
+  const r = radius * scale;
+  const h = height * scale;
+
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
+      <cylinderGeometry args={[r, r, h, 6]} />
+      <meshPhysicalMaterial {...M.machinedSteel} />
+    </instancedMesh>
+  );
 }
 
 /** Single decorative hex bolt (non-instanced, for small clusters) */

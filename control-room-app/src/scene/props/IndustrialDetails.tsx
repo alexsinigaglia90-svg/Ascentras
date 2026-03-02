@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../../state/store';
@@ -166,17 +166,14 @@ function FloorBolts() {
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  useMemo(() => {
-    // Set transforms on first render
-    setTimeout(() => {
-      if (!meshRef.current) return;
-      positions.forEach(([x, y, z], i) => {
-        dummy.position.set(x, y, z);
-        dummy.updateMatrix();
-        meshRef.current.setMatrixAt(i, dummy.matrix);
-      });
-      meshRef.current.instanceMatrix.needsUpdate = true;
-    }, 0);
+  useEffect(() => {
+    if (!meshRef.current) return;
+    positions.forEach(([x, y, z], i) => {
+      dummy.position.set(x, y, z);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
   }, [positions, dummy]);
 
   return (

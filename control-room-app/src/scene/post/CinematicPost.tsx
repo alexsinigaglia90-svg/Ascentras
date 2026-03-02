@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import * as THREE from 'three';
 import {
   EffectComposer,
@@ -22,6 +23,7 @@ import { useStore } from '../../state/store';
  */
 export function CinematicPost() {
   const performanceMode = useStore(s => s.performanceMode);
+  const aoColor = useMemo(() => new THREE.Color('#1a1820'), []);
 
   if (performanceMode) return null;
 
@@ -34,7 +36,7 @@ export function CinematicPost() {
         distanceFalloff={0.7}
         quality="medium"
         halfRes={false}
-        color={new THREE.Color('#1a1820')}
+        color={aoColor}
       />
 
       {/* Bloom — slightly stronger for LEDs, beacons, screen emissives */}

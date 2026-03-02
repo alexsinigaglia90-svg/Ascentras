@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useMemo } from 'react';
 import * as THREE from 'three';
 import * as M from '../materials/materialPresets';
 
@@ -70,6 +70,10 @@ export function BarcodeTag({ position, rotation = [0, 0, 0], width = 0.04, heigh
   width?: number;
   height?: number;
 }) {
+  const barWidths = useMemo(
+    () => Array.from({ length: 8 }, () => 0.001 + Math.random() * 0.0015),
+    [],
+  );
   return (
     <group position={position} rotation={rotation}>
       {/* White backing */}
@@ -78,8 +82,7 @@ export function BarcodeTag({ position, rotation = [0, 0, 0], width = 0.04, heigh
         <meshStandardMaterial color="#f8f8f8" roughness={0.8} metalness={0.0} side={THREE.DoubleSide} />
       </mesh>
       {/* Barcode stripes */}
-      {Array.from({ length: 8 }).map((_, i) => {
-        const bw = 0.001 + Math.random() * 0.0015;
+      {barWidths.map((bw, i) => {
         const x = -width / 2 + 0.005 + i * (width - 0.01) / 8;
         return (
           <mesh key={i} position={[x, -height * 0.1, 0.001]}>

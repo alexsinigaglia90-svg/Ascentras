@@ -18,12 +18,6 @@ import { DragChain } from '../props/CablesAndTrays';
  *  gate + light-curtain, beacon, control cabinet.
  *  ──────────────────────────────────────────────────── */
 
-/* ---------- Geometry helpers ---------- */
-const cyl = (rTop: number, rBot: number, h: number, seg = 12) =>
-  new THREE.CylinderGeometry(rTop, rBot, h, seg);
-const bx = (w: number, h: number, d: number) =>
-  new THREE.BoxGeometry(w, h, d);
-
 /* ---------- Animation key-frames (normalised 0→1) ----------
    0.00–0.15  rotate to pallet
    0.15–0.30  descend onto box
@@ -149,17 +143,17 @@ export function DepalletizerRig() {
       {/* ══════════ ROBOT BASE ══════════ */}
       {/* Floor anchor plate */}
       <mesh position={[0, 0.005, 0]} receiveShadow>
-        <primitive object={bx(0.7, 0.01, 0.7)} />
+        <boxGeometry args={[0.7, 0.01, 0.7]} />
         <meshPhysicalMaterial {...M.castIron} />
       </mesh>
       {/* Pedestal */}
       <mesh position={[0, 0.09, 0]} castShadow>
-        <primitive object={cyl(0.26, 0.32, 0.16, 16)} />
+        <cylinderGeometry args={[0.26, 0.32, 0.16, 16]} />
         <meshPhysicalMaterial {...M.paintedSteel} />
       </mesh>
       {/* Base housing */}
       <mesh position={[0, 0.22, 0]} castShadow>
-        <primitive object={cyl(0.22, 0.26, 0.1, 16)} />
+        <cylinderGeometry args={[0.22, 0.26, 0.1, 16]} />
         <meshPhysicalMaterial color={armColor} roughness={0.35} metalness={0.45} clearcoat={0.2} clearcoatRoughness={0.4} />
       </mesh>
       {/* Base bolts */}
@@ -171,7 +165,7 @@ export function DepalletizerRig() {
       <group ref={j1Ref} position={[0, 0.27, 0]}>
         {/* J1 turret */}
         <mesh castShadow>
-          <primitive object={cyl(0.18, 0.2, 0.08, 12)} />
+          <cylinderGeometry args={[0.18, 0.2, 0.08, 12]} />
           <meshPhysicalMaterial color={armColor} roughness={0.35} metalness={0.45} clearcoat={0.2} clearcoatRoughness={0.4} />
         </mesh>
 
@@ -179,25 +173,25 @@ export function DepalletizerRig() {
         <group ref={j2Ref} position={[0, 0.06, 0]}>
           {/* Shoulder motor housing */}
           <mesh position={[0, 0.06, 0]} castShadow>
-            <primitive object={cyl(0.09, 0.09, 0.12, 10)} />
+            <cylinderGeometry args={[0.09, 0.09, 0.12, 10]} />
             <meshPhysicalMaterial color={armColor} roughness={0.35} metalness={0.45} clearcoat={0.2} clearcoatRoughness={0.4} />
           </mesh>
           {/* Shoulder cover plates (left/right) */}
           {[-0.09, 0.09].map((x, i) => (
             <mesh key={`shp${i}`} position={[x, 0.06, 0]}>
-              <primitive object={cyl(0.04, 0.04, 0.13, 8)} />
+              <cylinderGeometry args={[0.04, 0.04, 0.13, 8]} />
               <meshPhysicalMaterial {...M.machinedSteel} />
             </mesh>
           ))}
 
           {/* Lower arm (L-link) */}
           <mesh position={[0, 0.42, 0.02]} castShadow>
-            <primitive object={bx(0.1, 0.6, 0.08)} />
+            <boxGeometry args={[0.1, 0.6, 0.08]} />
             <meshPhysicalMaterial color={armColor} roughness={0.35} metalness={0.45} clearcoat={0.2} clearcoatRoughness={0.4} />
           </mesh>
           {/* Arm rib / stiffener */}
           <mesh position={[0, 0.42, 0.065]}>
-            <primitive object={bx(0.06, 0.5, 0.005)} />
+            <boxGeometry args={[0.06, 0.5, 0.005]} />
             <meshPhysicalMaterial {...M.machinedSteel} />
           </mesh>
 
@@ -217,20 +211,20 @@ export function DepalletizerRig() {
           <group ref={j3Ref} position={[0, 0.72, 0]}>
             {/* Elbow motor housing */}
             <mesh castShadow>
-              <primitive object={cyl(0.065, 0.065, 0.09, 10)} />
+              <cylinderGeometry args={[0.065, 0.065, 0.09, 10]} />
               <meshPhysicalMaterial color={armColor} roughness={0.35} metalness={0.45} clearcoat={0.2} clearcoatRoughness={0.4} />
             </mesh>
             {/* Elbow cover discs */}
             {[-0.065, 0.065].map((x, i) => (
               <mesh key={`elb${i}`} position={[x, 0, 0]}>
-                <primitive object={cyl(0.03, 0.03, 0.1, 8)} />
+                <cylinderGeometry args={[0.03, 0.03, 0.1, 8]} />
                 <meshPhysicalMaterial {...M.machinedSteel} />
               </mesh>
             ))}
 
             {/* Upper arm */}
             <mesh position={[0, 0.28, 0.015]} castShadow>
-              <primitive object={bx(0.08, 0.45, 0.07)} />
+              <boxGeometry args={[0.08, 0.45, 0.07]} />
               <meshPhysicalMaterial color={armColor} roughness={0.35} metalness={0.45} clearcoat={0.2} clearcoatRoughness={0.4} />
             </mesh>
 
@@ -238,12 +232,12 @@ export function DepalletizerRig() {
             <group ref={j5Ref} position={[0, 0.52, 0]}>
               {/* Wrist cylinder */}
               <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-                <primitive object={cyl(0.04, 0.04, 0.1, 10)} />
+                <cylinderGeometry args={[0.04, 0.04, 0.1, 10]} />
                 <meshPhysicalMaterial color={armColor} roughness={0.35} metalness={0.45} clearcoat={0.2} clearcoatRoughness={0.4} />
               </mesh>
               {/* J6 flange disc */}
               <mesh position={[0, -0.04, 0]}>
-                <primitive object={cyl(0.05, 0.05, 0.015, 12)} />
+                <cylinderGeometry args={[0.05, 0.05, 0.015, 12]} />
                 <meshPhysicalMaterial {...M.machinedSteel} />
               </mesh>
 
@@ -251,13 +245,13 @@ export function DepalletizerRig() {
               <group ref={gripRef} position={[0, -0.06, 0]}>
                 {/* Manifold block */}
                 <mesh castShadow>
-                  <primitive object={bx(0.2, 0.03, 0.15)} />
+                  <boxGeometry args={[0.2, 0.03, 0.15]} />
                   <meshPhysicalMaterial {...M.brushedAluminium} />
                 </mesh>
                 {/* Vacuum hose fittings */}
                 {[-0.06, 0, 0.06].map((z, i) => (
                   <mesh key={`vf${i}`} position={[0.1, 0.01, z]}>
-                    <primitive object={cyl(0.006, 0.006, 0.02, 6)} />
+                    <cylinderGeometry args={[0.006, 0.006, 0.02, 6]} />
                     <meshPhysicalMaterial {...M.brass} />
                   </mesh>
                 ))}
@@ -265,11 +259,11 @@ export function DepalletizerRig() {
                 {[[-0.06, -0.05], [0, -0.05], [0.06, -0.05], [-0.06, 0.05], [0, 0.05], [0.06, 0.05]].map(([x, z], i) => (
                   <group key={`cup${i}`} position={[x, -0.025, z]}>
                     <mesh>
-                      <primitive object={cyl(0.018, 0.022, 0.015, 8)} />
+                      <cylinderGeometry args={[0.018, 0.022, 0.015, 8]} />
                       <meshPhysicalMaterial {...M.rubber} />
                     </mesh>
                     <mesh position={[0, -0.012, 0]}>
-                      <primitive object={cyl(0.022, 0.015, 0.008, 8)} />
+                      <cylinderGeometry args={[0.022, 0.015, 0.008, 8]} />
                       <meshPhysicalMaterial {...M.rubber} />
                     </mesh>
                   </group>
@@ -295,18 +289,18 @@ export function DepalletizerRig() {
         {[0, 0.11, 0.22].map((y, i) => (
           <group key={`pal${i}`}>
             <mesh position={[0, y + 0.05, 0]} castShadow receiveShadow>
-              <primitive object={bx(0.65, 0.015, 0.55)} />
+              <boxGeometry args={[0.65, 0.015, 0.55]} />
               <meshPhysicalMaterial {...M.palletWood} />
             </mesh>
             {[-0.2, 0, 0.2].map((z, j) => (
               <mesh key={`bb${j}`} position={[0, y + 0.02, z]}>
-                <primitive object={bx(0.65, 0.012, 0.08)} />
+                <boxGeometry args={[0.65, 0.012, 0.08]} />
                 <meshPhysicalMaterial {...M.palletWood} />
               </mesh>
             ))}
             {[-0.22, 0, 0.22].map((x, j) => (
               <mesh key={`st${j}`} position={[x, y + 0.035, 0]}>
-                <primitive object={bx(0.08, 0.06, 0.55)} />
+                <boxGeometry args={[0.08, 0.06, 0.55]} />
                 <meshPhysicalMaterial {...M.palletWood} />
               </mesh>
             ))}
@@ -315,7 +309,7 @@ export function DepalletizerRig() {
         {/* Boxes on top pallet */}
         {[[-0.15, 0.34, -0.12], [0.1, 0.34, -0.1], [-0.08, 0.34, 0.12], [0.12, 0.34, 0.1]].map(([x, y, z], i) => (
           <mesh key={`cbox${i}`} position={[x, y, z]} castShadow>
-            <primitive object={bx(0.2, 0.14, 0.18)} />
+            <boxGeometry args={[0.2, 0.14, 0.18]} />
             <meshPhysicalMaterial {...M.cardboard} />
           </mesh>
         ))}
@@ -325,7 +319,7 @@ export function DepalletizerRig() {
       <group position={[0.9, 0, 0.2]}>
         {[-0.18, 0.18].map((z, i) => (
           <mesh key={`rail${i}`} position={[0, 0.38, z]}>
-            <primitive object={bx(0.8, 0.03, 0.015)} />
+            <boxGeometry args={[0.8, 0.03, 0.015]} />
             <meshPhysicalMaterial {...M.paintedSteel} />
           </mesh>
         ))}
@@ -333,19 +327,19 @@ export function DepalletizerRig() {
           const x = -0.35 + i * 0.1;
           return (
             <mesh key={`rl${i}`} position={[x, 0.36, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <primitive object={cyl(0.015, 0.015, 0.34, 8)} />
+              <cylinderGeometry args={[0.015, 0.015, 0.34, 8]} />
               <meshPhysicalMaterial {...M.machinedSteel} />
             </mesh>
           );
         })}
         {[[-0.3, -0.15], [0.3, -0.15], [-0.3, 0.15], [0.3, 0.15]].map(([x, z], i) => (
           <mesh key={`leg${i}`} position={[x, 0.18, z]}>
-            <primitive object={bx(0.025, 0.36, 0.025)} />
+            <boxGeometry args={[0.025, 0.36, 0.025]} />
             <meshPhysicalMaterial {...M.paintedSteel} />
           </mesh>
         ))}
         <mesh position={[0, 0.44, 0]} castShadow>
-          <primitive object={bx(0.18, 0.12, 0.16)} />
+          <boxGeometry args={[0.18, 0.12, 0.16]} />
           <meshPhysicalMaterial {...M.cardboard} />
         </mesh>
       </group>
@@ -371,15 +365,15 @@ export function DepalletizerRig() {
       {/* ══════════ CONTROL CABINET ══════════ */}
       <group position={[1.3, 0, -0.6]}>
         <mesh position={[0, 0.45, 0]} castShadow>
-          <primitive object={bx(0.35, 0.9, 0.22)} />
+          <boxGeometry args={[0.35, 0.9, 0.22]} />
           <meshPhysicalMaterial {...M.darkEnclosure} />
         </mesh>
         <mesh position={[0.176, 0.5, 0]}>
-          <primitive object={bx(0.008, 0.1, 0.015)} />
+          <boxGeometry args={[0.008, 0.1, 0.015]} />
           <meshPhysicalMaterial {...M.machinedSteel} />
         </mesh>
         <mesh position={[0, 0.45, 0.111]}>
-          <primitive object={bx(0.003, 0.85, 0.003)} />
+          <boxGeometry args={[0.003, 0.85, 0.003]} />
           <meshPhysicalMaterial color="#222" roughness={0.8} metalness={0.1} />
         </mesh>
         {[-0.05, 0, 0.05, 0.1, 0.15].map((y, i) => (
