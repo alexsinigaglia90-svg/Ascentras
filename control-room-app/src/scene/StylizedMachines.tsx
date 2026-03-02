@@ -144,7 +144,7 @@ function AutoStoreBots() {
   const speed = useStore(s => s.autostoreSpeed);
   const emergency = useStore(s => s.emergencyStop);
   const refs = useRef<THREE.Group[]>([]);
-  const ledRefs = useRef<THREE.Mesh[]>([]);
+  const ledRefs = useRef<THREE.MeshStandardMaterial[]>([]);
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -158,8 +158,7 @@ function AutoStoreBots() {
 
       const led = ledRefs.current[i];
       if (led) {
-        const mat = led.material as THREE.MeshStandardMaterial;
-        mat.emissiveIntensity = emergency ? 0.2 : 0.45 + Math.sin(t * 4 + i) * 0.2;
+        led.emissiveIntensity = emergency ? 0.2 : 0.45 + Math.sin(t * 4 + i) * 0.2;
       }
     });
   });
@@ -181,7 +180,7 @@ function AutoStoreBots() {
           <mesh position={[0, 0.08, 0]}>
             <torusGeometry args={[0.1, 0.01, 8, 20]} />
             <meshStandardMaterial
-              ref={(el: THREE.Mesh | null) => {
+              ref={(el: THREE.MeshStandardMaterial | null) => {
                 if (el) ledRefs.current[i] = el;
               }}
               color={C.mint}
