@@ -11,44 +11,43 @@ import { BlendFunction, ToneMappingMode } from 'postprocessing';
 import { useStore } from '../../state/store';
 
 /**
- * Enhanced cinematic post-processing — deep, rich, ray-tracing quality.
+ * Stylized post-processing.
  *
- * - N8AO at high quality for detailed contact shadows
- * - Two-pass bloom: subtle global + strong emissive punch
- * - Vignette for cinematic framing
- * - ACES Filmic tone mapping for cinematic colour
+ * - Subtle AO only for soft grounding
+ * - Bloom only on bright emissive accents
+ * - Gentle vignette
  */
 export function CinematicPost() {
   const performanceMode = useStore(s => s.performanceMode);
-  const aoColor = useMemo(() => new THREE.Color('#0a0810'), []);
+  const aoColor = useMemo(() => new THREE.Color('#98a8bf'), []);
 
   if (performanceMode) return null;
 
   return (
-    <EffectComposer multisampling={4}>
-      {/* Ambient Occlusion — high quality, tighter for mechanical detail */}
+    <EffectComposer multisampling={2}>
+      {/* Ambient Occlusion — light and clean */}
       <N8AO
-        aoRadius={0.4}
-        intensity={1.6}
-        distanceFalloff={0.6}
-        quality="high"
-        halfRes={false}
+        aoRadius={0.28}
+        intensity={0.45}
+        distanceFalloff={0.7}
+        quality="medium"
+        halfRes
         color={aoColor}
       />
 
-      {/* Bloom — luminous glow for LEDs, status lights, emissive elements */}
+      {/* Bloom — only emissive elements should cross this threshold */}
       <Bloom
-        intensity={0.55}
-        luminanceThreshold={0.45}
-        luminanceSmoothing={0.15}
+        intensity={0.32}
+        luminanceThreshold={0.82}
+        luminanceSmoothing={0.2}
         mipmapBlur
-        radius={0.8}
+        radius={0.55}
       />
 
-      {/* Vignette — subtle framing, lighter for premium feel */}
+      {/* Vignette — very soft */}
       <Vignette
-        offset={0.3}
-        darkness={0.25}
+        offset={0.26}
+        darkness={0.15}
         blendFunction={BlendFunction.NORMAL}
       />
 
