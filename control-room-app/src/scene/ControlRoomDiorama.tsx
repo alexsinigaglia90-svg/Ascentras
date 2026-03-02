@@ -149,19 +149,21 @@ export function ControlRoomDiorama() {
   const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.25] : [1, 1.5];
   const shadowEnabled = !effectivePerformance;
   const antialiasEnabled = !effectivePerformance;
-  const exposure = shift === 'night' ? (quality === 'safe' ? 0.8 : 0.9) : quality === 'cinematic' ? 1.55 : 1.35;
+  const exposure = shift === 'night' ? (quality === 'safe' ? 0.8 : quality === 'balanced' ? 0.92 : 1.04) : quality === 'cinematic' ? 1.62 : 1.4;
 
   return (
     <Canvas
-      camera={{ position: [0, 6, 10], fov: 45, near: 0.1, far: 100 }}
+      camera={{ position: [0, 6, 10], fov: quality === 'cinematic' ? 42 : 45, near: 0.1, far: 120 }}
       shadows={shadowEnabled}
       dpr={dprSetting}
       gl={{
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: exposure,
         outputColorSpace: THREE.SRGBColorSpace,
+        physicallyCorrectLights: true,
         antialias: antialiasEnabled,
         powerPreference: 'high-performance',
+        alpha: false,
         stencil: false,
         depth: true,
       }}
@@ -172,8 +174,8 @@ export function ControlRoomDiorama() {
         gl.setAnimationLoop(() => { invalidate(); });
       }}
     >
-      {/* Fog pushed back from 14→22 to eliminate haze on the scene  */}
-      <fog attach="fog" args={[shift === 'night' ? '#1a1e28' : '#c8ccd4', 22, 50]} />
+      <color attach="background" args={[shift === 'night' ? '#131824' : '#dbe2ea']} />
+      <fog attach="fog" args={[shift === 'night' ? '#171f31' : '#cfd6df', quality === 'cinematic' ? 20 : 22, quality === 'cinematic' ? 62 : 50]} />
 
       <CameraController />
       <SimTicker />

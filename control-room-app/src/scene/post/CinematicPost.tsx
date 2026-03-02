@@ -6,6 +6,8 @@ import {
   Vignette,
   N8AO,
   ToneMapping,
+  SMAA,
+  Noise,
 } from '@react-three/postprocessing';
 import { BlendFunction, ToneMappingMode } from 'postprocessing';
 import { useStore } from '../../state/store';
@@ -23,38 +25,43 @@ export function CinematicPost({ quality = 'cinematic' }: { quality?: 'safe' | 'b
   const aoColor = useMemo(() => new THREE.Color('#0a0810'), []);
   const safe = quality === 'safe';
   const balanced = quality === 'balanced';
+  const cinematic = quality === 'cinematic';
 
   if (performanceMode || safe) return null;
 
   return (
     <EffectComposer multisampling={balanced ? 0 : 4}>
+      {balanced && <SMAA />}
+
       {/* Ambient Occlusion — high quality, tighter for mechanical detail */}
       {!balanced && (
         <N8AO
-          aoRadius={0.4}
-          intensity={1.6}
-          distanceFalloff={0.6}
+          aoRadius={cinematic ? 0.42 : 0.34}
+          intensity={cinematic ? 1.65 : 0.95}
+          distanceFalloff={cinematic ? 0.6 : 0.72}
           quality="high"
-          halfRes={false}
+          halfRes={!cinematic}
           color={aoColor}
         />
       )}
 
       {/* Bloom — luminous glow for LEDs, status lights, emissive elements */}
       <Bloom
-        intensity={balanced ? 0.28 : 0.55}
-        luminanceThreshold={balanced ? 0.62 : 0.45}
-        luminanceSmoothing={balanced ? 0.2 : 0.15}
+        intensity={balanced ? 0.34 : cinematic ? 0.62 : 0.42}
+        luminanceThreshold={balanced ? 0.6 : cinematic ? 0.4 : 0.52}
+        luminanceSmoothing={balanced ? 0.2 : cinematic ? 0.12 : 0.18}
         mipmapBlur
-        radius={balanced ? 0.55 : 0.8}
+        radius={balanced ? 0.62 : cinematic ? 0.84 : 0.68}
       />
 
       {/* Vignette — subtle framing, lighter for premium feel */}
       <Vignette
-        offset={0.3}
-        darkness={balanced ? 0.16 : 0.25}
+        offset={cinematic ? 0.28 : 0.3}
+        darkness={balanced ? 0.14 : cinematic ? 0.24 : 0.18}
         blendFunction={BlendFunction.NORMAL}
       />
+
+      <Noise opacity={balanced ? 0.03 : 0.04} premultiply blendFunction={BlendFunction.SOFT_LIGHT} />
 
       {/* Tone mapping — ACES filmic for rich, cinematic colour response */}
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />

@@ -15,12 +15,13 @@ export function WarehouseEnvironment() {
       <mesh position={[0, -0.01, 0]} rotation={[-Math.PI * 0.5, 0, 0]} receiveShadow>
         <planeGeometry args={[16, 14]} />
         <meshPhysicalMaterial
-          color="#5a5e65"
-          roughness={0.75}
-          metalness={0.05}
-          clearcoat={0.15}
-          clearcoatRoughness={0.6}
-          reflectivity={0.2}
+          color="#575d66"
+          roughness={0.62}
+          metalness={0.08}
+          clearcoat={0.3}
+          clearcoatRoughness={0.38}
+          reflectivity={0.35}
+          envMapIntensity={0.75}
         />
       </mesh>
 
@@ -76,10 +77,11 @@ export function WarehouseEnvironment() {
         <planeGeometry args={[16, 5]} />
         <meshPhysicalMaterial
           color={shift === 'night' ? '#2a2e35' : '#555d68'}
-          roughness={0.85}
-          metalness={0.05}
-          clearcoat={0.05}
-          clearcoatRoughness={0.9}
+          roughness={0.72}
+          metalness={0.08}
+          clearcoat={0.12}
+          clearcoatRoughness={0.68}
+          envMapIntensity={0.45}
         />
       </mesh>
       {/* Wall panel seams */}
@@ -93,11 +95,11 @@ export function WarehouseEnvironment() {
       {/* ── Side walls ── */}
       <mesh position={[-7, 2, 0]} rotation={[0, Math.PI * 0.5, 0]} receiveShadow>
         <planeGeometry args={[14, 5]} />
-        <meshPhysicalMaterial color="#555d68" roughness={0.85} metalness={0.05} />
+        <meshPhysicalMaterial color="#555d68" roughness={0.74} metalness={0.07} clearcoat={0.08} clearcoatRoughness={0.7} envMapIntensity={0.4} />
       </mesh>
       <mesh position={[7, 2, 0]} rotation={[0, -Math.PI * 0.5, 0]} receiveShadow>
         <planeGeometry args={[14, 5]} />
-        <meshPhysicalMaterial color="#555d68" roughness={0.85} metalness={0.05} />
+        <meshPhysicalMaterial color="#555d68" roughness={0.74} metalness={0.07} clearcoat={0.08} clearcoatRoughness={0.7} envMapIntensity={0.4} />
       </mesh>
 
       {/* ── Steel ceiling beams (I-beam profile) ── */}
