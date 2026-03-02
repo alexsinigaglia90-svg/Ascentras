@@ -1364,11 +1364,14 @@ body.pj-lane-open .platform-journey-noise {
   }
 
   .panel-grid,
-  .pj-guidance-tabs,
   .pj-guidance-metrics,
   .ops-grid,
   .astra-stats {
     grid-template-columns: 1fr;
+  }
+
+  .pj-guidance-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -1386,6 +1389,10 @@ body.pj-lane-open .platform-journey-noise {
   .pj-guidance-window .app-head {
     font-size: 0.76rem;
     letter-spacing: 0.09em;
+  }
+
+  .pj-guidance-tabs {
+    grid-template-columns: 1fr;
   }
 }
 
