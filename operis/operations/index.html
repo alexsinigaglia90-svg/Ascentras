@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operis | Operations</title>
+  <meta name="description" content="Operations profielen van Operis.">
+  <link rel="stylesheet" href="/assets/styles.css?v=20260225o">
+  <style>
+    .page-shell{position:relative;isolation:isolate;min-height:100vh;display:grid;place-items:center;padding:2rem 1rem;background:radial-gradient(circle at 14% 14%, color-mix(in srgb,var(--accent) 16%, transparent), transparent 38%),radial-gradient(circle at 86% 20%, color-mix(in srgb,var(--gold) 18%, transparent), transparent 42%),var(--bg);overflow:hidden}
+    .page-card{position:relative;z-index:1;width:min(980px,95vw);border:1px solid var(--border);border-radius:22px;background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);padding:1.3rem;box-shadow:0 24px 52px rgba(8,23,42,.16);backdrop-filter:blur(8px)}
+    .page-title{margin:0;font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;font-size:clamp(2rem,5vw,3rem);line-height:1.06;color:var(--blue)}
+    .page-sub{margin:.65rem 0 0;color:var(--muted);max-width:65ch}
+    .role-grid{margin-top:1rem;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+    .role-chip{border:1px solid var(--border);border-radius:12px;padding:.52rem .62rem;background:color-mix(in srgb,var(--surface) 90%,var(--bg) 10%);font-size:.86rem;color:var(--blue)}
+    .page-actions{margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap}
+    @media (max-width:760px){.role-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="page-card" data-premium-card>
+      <p class="hero-eyebrow">Operis Category 02</p>
+      <h1 class="page-title">Operations</h1>
+      <p class="page-sub">Voor stabiele dagexecutie op de vloer: deze profielen leveren directe output, kwaliteitsborging en veilige doorstroom in het warehouse.</p>
+      <div class="role-grid" aria-label="Operations profielen">
+        <div class="role-chip">Operator</div>
+        <div class="role-chip">VNA Driver</div>
+        <div class="role-chip">Team Lead Warehouse</div>
+        <div class="role-chip">Supervisor Warehouse</div>
+        <div class="role-chip">Shift Leader</div>
+        <div class="role-chip">Quality Control</div>
+        <div class="role-chip">Training & Warehouse Onboard Specialist</div>
+        <div class="role-chip">CI-Engineer</div>
+      </div>
+      <div class="page-actions">
+        <a class="btn pill" href="/operis/">Back to Operis</a>
+        <a class="btn pill secondary" href="/operis/control-room-planning/">Go to Control Room & Planning</a>
+        <a class="btn pill secondary" href="/operis/operational-management/">Go to Operational Management</a>
+      </div>
+    </section>
+  </main>
+  <script src="/assets/js/page-premium.js?v=20260225g" defer></script>
+</body>
+</html>

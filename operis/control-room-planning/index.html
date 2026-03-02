@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operis | Control Room & Planning</title>
+  <meta name="description" content="Control Room & Planning profielen van Operis.">
+  <link rel="stylesheet" href="/assets/styles.css?v=20260225o">
+  <style>
+    .page-shell{position:relative;isolation:isolate;min-height:100vh;display:grid;place-items:center;padding:2rem 1rem;background:radial-gradient(circle at 14% 14%, color-mix(in srgb,var(--accent) 16%, transparent), transparent 38%),radial-gradient(circle at 86% 20%, color-mix(in srgb,var(--gold) 18%, transparent), transparent 42%),var(--bg);overflow:hidden}
+    .page-card{position:relative;z-index:1;width:min(980px,95vw);border:1px solid var(--border);border-radius:22px;background:color-mix(in srgb,var(--surface) 86%,var(--bg) 14%);padding:1.3rem;box-shadow:0 24px 52px rgba(8,23,42,.16);backdrop-filter:blur(8px)}
+    .page-title{margin:0;font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;font-size:clamp(2rem,5vw,3rem);line-height:1.06;color:var(--blue)}
+    .page-sub{margin:.65rem 0 0;color:var(--muted);max-width:65ch}
+    .role-grid{margin-top:1rem;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+    .role-chip{border:1px solid var(--border);border-radius:12px;padding:.52rem .62rem;background:color-mix(in srgb,var(--surface) 90%,var(--bg) 10%);font-size:.86rem;color:var(--blue)}
+    .page-actions{margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap}
+    @media (max-width:760px){.role-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="page-card" data-premium-card>
+      <p class="hero-eyebrow">Operis Category 01</p>
+      <h1 class="page-title">Control Room & Planning</h1>
+      <p class="page-sub">Voor klanten die voorspelbaarheid en realtime sturing willen: deze profielen verbinden planning, control room en systeemregie in één operationele cockpit.</p>
+      <div class="role-grid" aria-label="Control room en planning profielen">
+        <div class="role-chip">Transport Planner</div>
+        <div class="role-chip">Control Room Manager</div>
+        <div class="role-chip">Control Room Operator</div>
+        <div class="role-chip">Process Controller</div>
+        <div class="role-chip">WMS Controller</div>
+        <div class="role-chip">WMS Specialist</div>
+        <div class="role-chip">Function Analyst</div>
+        <div class="role-chip">Workforce Planner</div>
+        <div class="role-chip">Capacity Planner</div>
+        <div class="role-chip">Production Planner</div>
+        <div class="role-chip">Inventory Controller</div>
+        <div class="role-chip">Stock Controller</div>
+        <div class="role-chip">Slotting Specialist</div>
+      </div>
+      <div class="page-actions">
+        <a class="btn pill" href="/operis/">Back to Operis</a>
+        <a class="btn pill secondary" href="/operis/operations/">Go to Operations</a>
+        <a class="btn pill secondary" href="/operis/operational-management/">Go to Operational Management</a>
+      </div>
+    </section>
+  </main>
+  <script src="/assets/js/page-premium.js?v=20260225g" defer></script>
+</body>
+</html>
