@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { ControlRoomScene } from './scene/ControlRoomScene';
+import { ControlRoomDiorama } from './scene/ControlRoomDiorama';
 import { SystemsPanel } from './components/ui/SystemsPanel';
 import { OperationsPanel } from './components/ui/OperationsPanel';
 import { ProfilesDock } from './components/ui/ProfilesDock';
@@ -78,7 +78,7 @@ export default function App() {
   return (
     <>
       <Suspense fallback={<LoadingScreen />}>
-        <ControlRoomScene />
+        <ControlRoomDiorama />
       </Suspense>
 
       <HeroOverlay />

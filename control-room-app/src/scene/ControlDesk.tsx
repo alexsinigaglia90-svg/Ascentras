@@ -1,30 +1,8 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../state/store';
-
-/** Curved cable using TubeGeometry + CatmullRomCurve3 */
-function Cable({ points, radius = 0.008, color = '#1a1a1a' }: {
-  points: [number, number, number][];
-  radius?: number;
-  color?: string;
-}) {
-  const geometry = useMemo(() => {
-    const curve = new THREE.CatmullRomCurve3(
-      points.map(p => new THREE.Vector3(...p)),
-      false,
-      'catmullrom',
-      0.5,
-    );
-    return new THREE.TubeGeometry(curve, 24, radius, 6, false);
-  }, [points, radius]);
-
-  return (
-    <mesh geometry={geometry}>
-      <meshStandardMaterial color={color} roughness={0.85} />
-    </mesh>
-  );
-}
+import { Cable } from './props/Cable';
 
 /** Museum-grade control desk with PBR materials, glass screens, micro-detail */
 export function ControlDesk() {
