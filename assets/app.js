@@ -170,7 +170,19 @@ const i18n = {
     pj_astra_subtitle: 'Astra develops hardware and software that makes warehouse automation scalable and measurable.',
     pj_astra_b1: 'Industrial hardware and embedded control solutions',
     pj_astra_b2: 'Warehouse software, data flows, and integrations',
-    pj_astra_b3: 'Implementations focused on ROI, continuity, and scalability'
+    pj_astra_b3: 'Implementations focused on ROI, continuity, and scalability',
+    pj_cta_ascentra: 'Explore Ascentra',
+    pj_cta_ascentra_aria: 'Explore Ascentra',
+    pj_cta_operis: 'Explore Operis',
+    pj_cta_operis_aria: 'Explore Operis',
+    pj_cta_astra: 'Explore Astra',
+    pj_cta_astra_aria: 'Explore Astra',
+    pj_operis_mini_cta: 'Enter Operis environment',
+    pj_operis_mini_cta_aria: 'Open Operis environment',
+    pj_lane_cta_operis: 'Open Operis',
+    pj_lane_cta_operis_aria: 'Open Operis destination',
+    pj_lane_cta_astra: 'Open Astra',
+    pj_lane_cta_astra_aria: 'Open Astra destination'
   },
   nl: {
     nav_platform: 'Platform',
@@ -290,7 +302,19 @@ const i18n = {
     pj_astra_subtitle: 'Astra ontwikkelt hardware en software die warehouse-automatisering schaalbaar en meetbaar maakt.',
     pj_astra_b1: 'Industrial hardware en embedded control-oplossingen',
     pj_astra_b2: 'Warehouse software, dataflows en integraties',
-    pj_astra_b3: 'Implementaties met focus op ROI, continuïteit en schaalbaarheid'
+    pj_astra_b3: 'Implementaties met focus op ROI, continuïteit en schaalbaarheid',
+    pj_cta_ascentra: 'Ontdek Ascentra',
+    pj_cta_ascentra_aria: 'Ontdek Ascentra',
+    pj_cta_operis: 'Ontdek Operis',
+    pj_cta_operis_aria: 'Ontdek Operis',
+    pj_cta_astra: 'Ontdek Astra',
+    pj_cta_astra_aria: 'Ontdek Astra',
+    pj_operis_mini_cta: 'Ga naar Operis omgeving',
+    pj_operis_mini_cta_aria: 'Open Operis omgeving',
+    pj_lane_cta_operis: 'Open Operis',
+    pj_lane_cta_operis_aria: 'Open Operis bestemming',
+    pj_lane_cta_astra: 'Open Astra',
+    pj_lane_cta_astra_aria: 'Open Astra bestemming'
   }
 };
 
@@ -299,6 +323,10 @@ function applyI18n(lang) {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
     if (dict[key]) el.textContent = dict[key];
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-aria');
+    if (dict[key]) el.setAttribute('aria-label', dict[key]);
   });
 }
 
