@@ -1,4 +1,4 @@
-import { useRef, useEffect, lazy, Suspense } from 'react';
+import { useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -6,9 +6,7 @@ import { useStore } from '../state/store';
 import { StylizedWarehouse } from './StylizedWarehouse';
 import { StylizedMachines } from './StylizedMachines';
 import { LightingSetup } from './LightingSetup';
-import { CinematicPost } from './post/CinematicPost';
-
-const AMRFleet = lazy(() => import('./machines/AMRFleet').then(m => ({ default: m.AMRFleet })));
+import { AMRFleet } from './machines/AMRFleet';
 
 const cameraPositions: Record<string, { pos: [number, number, number]; target: [number, number, number] }> = {
   overview: { pos: [0, 6.8, 11], target: [0, 0.9, 0] },
@@ -108,6 +106,7 @@ export function ControlRoomDiorama() {
         outputColorSpace: THREE.SRGBColorSpace,
         antialias: !performanceMode,
         powerPreference: 'high-performance',
+        alpha: false,
         stencil: false,
         depth: true,
       }}
@@ -122,11 +121,10 @@ export function ControlRoomDiorama() {
       <StylizedWarehouse />
       <StylizedMachines />
 
-      <Suspense fallback={null}>
-        <AMRFleet />
-      </Suspense>
+      <AMRFleet />
 
-      <CinematicPost />
+      {/* fail-safe: keep scene visible even if post FX causes a blank frame on some GPUs */}
+      {false && <CinematicPost />}
     </Canvas>
   );
 }
