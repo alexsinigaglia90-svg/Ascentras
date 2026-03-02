@@ -21,6 +21,15 @@ export interface KPIs {
   downtimeMinutes: number;
 }
 
+export interface ScenarioRun {
+  id: string;
+  mode: ScenarioMode;
+  startTime: string;
+  endTime: string | null;
+  startKpis: KPIs;
+  endKpis: KPIs | null;
+}
+
 export interface ControlRoomState {
   /* Machine states */
   depalletizerRunning: boolean;
@@ -64,6 +73,10 @@ export interface ControlRoomState {
   /* KPIs */
   kpis: KPIs;
 
+  /* Scenario replay */
+  scenarioRuns: ScenarioRun[];
+  replayCursor: number;
+
   /* Incidents */
   incidents: IncidentEntry[];
 
@@ -96,6 +109,8 @@ export interface ControlRoomState {
 
   setShiftMode: (m: ShiftMode) => void;
   applyScenario: (mode: ScenarioMode) => void;
+  setReplayCursor: (index: number) => void;
+  clearScenarioRuns: () => void;
   setPerformanceMode: (v: boolean) => void;
   setCameraTarget: (t: CameraTarget) => void;
   setFocusedProfile: (id: string | null) => void;
@@ -105,10 +120,19 @@ export interface ControlRoomState {
 }
 
 let incidentCounter = 0;
+let scenarioRunCounter = 0;
 const now = () => {
   const d = new Date();
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
 };
+
+const cloneKpis = (kpis: KPIs): KPIs => ({
+  throughput: kpis.throughput,
+  backlog: kpis.backlog,
+  missedCutoffs: kpis.missedCutoffs,
+  utilization: kpis.utilization,
+  downtimeMinutes: kpis.downtimeMinutes,
+});
 
 const scenarioProfile: Record<ScenarioMode, {
   throughputBias: number;
@@ -185,6 +209,30 @@ export const useStore = create<ControlRoomState>((set, get) => ({
     utilization: 72,
     downtimeMinutes: 0,
   },
+
+  scenarioRuns: [
+    {
+      id: `run-${++scenarioRunCounter}`,
+      mode: 'baseline',
+      startTime: now(),
+      endTime: null,
+      startKpis: {
+        throughput: 420,
+        backlog: 38,
+        missedCutoffs: 0,
+        utilization: 72,
+        downtimeMinutes: 0,
+      },
+      endKpis: {
+        throughput: 420,
+        backlog: 38,
+        missedCutoffs: 0,
+        utilization: 72,
+        downtimeMinutes: 0,
+      },
+    },
+  ],
+  replayCursor: 0,
 
   incidents: [
     { id: 'init-1', time: now(), message: 'System initialised — all stations nominal', severity: 'info', acknowledged: true },
@@ -425,6 +473,7 @@ export const useStore = create<ControlRoomState>((set, get) => ({
   setShiftMode: (m) => set({ shiftMode: m }),
   applyScenario: (mode) => set(s => {
     const nextIncidents = [...s.incidents];
+    const scenarioNow = now();
 
     const basePatch: Partial<ControlRoomState> = {
       emergencyStop: false,
@@ -482,16 +531,57 @@ export const useStore = create<ControlRoomState>((set, get) => ({
 
     nextIncidents.unshift({
       id: `inc-${++incidentCounter}`,
-      time: now(),
+      time: scenarioNow,
       message: `Scenario switched to ${mode.replace('-', ' ')}.`,
       severity: mode === 'jam-cascade' ? 'warning' : 'info',
       acknowledged: false,
     });
 
+    const runs = [...s.scenarioRuns];
+    if (runs.length > 0) {
+      const last = runs[runs.length - 1];
+      runs[runs.length - 1] = {
+        ...last,
+        endTime: scenarioNow,
+        endKpis: cloneKpis(s.kpis),
+      };
+    }
+
+    runs.push({
+      id: `run-${++scenarioRunCounter}`,
+      mode,
+      startTime: scenarioNow,
+      endTime: null,
+      startKpis: cloneKpis(s.kpis),
+      endKpis: cloneKpis(s.kpis),
+    });
+
+    const trimmedRuns = runs.slice(-30);
+
     return {
       ...basePatch,
       ...modePatch,
       incidents: nextIncidents.slice(0, 50),
+      scenarioRuns: trimmedRuns,
+      replayCursor: trimmedRuns.length - 1,
+    };
+  }),
+  setReplayCursor: (index) => set(s => {
+    const maxIndex = Math.max(0, s.scenarioRuns.length - 1);
+    return { replayCursor: Math.max(0, Math.min(maxIndex, Math.round(index))) };
+  }),
+  clearScenarioRuns: () => set(s => {
+    const resetNow = now();
+    return {
+      scenarioRuns: [{
+        id: `run-${++scenarioRunCounter}`,
+        mode: s.scenarioMode,
+        startTime: resetNow,
+        endTime: null,
+        startKpis: cloneKpis(s.kpis),
+        endKpis: cloneKpis(s.kpis),
+      }],
+      replayCursor: 0,
     };
   }),
   setPerformanceMode: (v) => set({ performanceMode: v }),
@@ -513,12 +603,22 @@ export const useStore = create<ControlRoomState>((set, get) => ({
   /* Simulation tick — called on rAF from scene */
   tick: () => set(s => {
     if (s.emergencyStop) {
+      const emergencyKpis = {
+        ...s.kpis,
+        downtimeMinutes: s.kpis.downtimeMinutes + 0.016,
+        throughput: Math.max(0, s.kpis.throughput - 2),
+      };
+      const emergencyRuns = [...s.scenarioRuns];
+      if (emergencyRuns.length > 0) {
+        const idx = emergencyRuns.length - 1;
+        emergencyRuns[idx] = {
+          ...emergencyRuns[idx],
+          endKpis: cloneKpis(emergencyKpis),
+        };
+      }
       return {
-        kpis: {
-          ...s.kpis,
-          downtimeMinutes: s.kpis.downtimeMinutes + 0.016,
-          throughput: Math.max(0, s.kpis.throughput - 2),
-        },
+        kpis: emergencyKpis,
+        scenarioRuns: emergencyRuns,
       };
     }
 
@@ -609,6 +709,23 @@ export const useStore = create<ControlRoomState>((set, get) => ({
       amrWaiting = false;
     }
 
+    const nextKpis = {
+      throughput: Math.round(newThroughput),
+      backlog: Math.round(newBacklog),
+      missedCutoffs: s.kpis.missedCutoffs + (newBacklog > 150 ? 0.01 : 0),
+      utilization: Math.round(newUtil),
+      downtimeMinutes: Math.round((s.kpis.downtimeMinutes + downDelta) * 100) / 100,
+    };
+
+    const nextRuns = [...s.scenarioRuns];
+    if (nextRuns.length > 0) {
+      const idx = nextRuns.length - 1;
+      nextRuns[idx] = {
+        ...nextRuns[idx],
+        endKpis: cloneKpis(nextKpis),
+      };
+    }
+
     return {
       conveyorJam: newJam,
       amrDelivering,
@@ -618,13 +735,8 @@ export const useStore = create<ControlRoomState>((set, get) => ({
       palletEmpty,
       palletReplenishRequested: replenishReq,
       incidents: tickIncs.slice(0, 50),
-      kpis: {
-        throughput: Math.round(newThroughput),
-        backlog: Math.round(newBacklog),
-        missedCutoffs: s.kpis.missedCutoffs + (newBacklog > 150 ? 0.01 : 0),
-        utilization: Math.round(newUtil),
-        downtimeMinutes: Math.round((s.kpis.downtimeMinutes + downDelta) * 100) / 100,
-      },
+      kpis: nextKpis,
+      scenarioRuns: nextRuns,
     };
   }),
 }));

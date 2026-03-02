@@ -8,11 +8,21 @@ import styles from './OperationsPanel.module.css';
 
 export function OperationsPanel() {
   const {
-    kpis, incidents, shiftMode, scenarioMode, performanceMode, cameraTarget,
-    setShiftMode, applyScenario, setPerformanceMode, setCameraTarget, acknowledgeAlarm,
+    kpis, incidents, shiftMode, scenarioMode, scenarioRuns, replayCursor, performanceMode, cameraTarget,
+    setShiftMode, applyScenario, setReplayCursor, clearScenarioRuns, setPerformanceMode, setCameraTarget, acknowledgeAlarm,
   } = useStore();
 
   const unacked = incidents.filter(i => !i.acknowledged).length;
+  const selectedRun = scenarioRuns[Math.max(0, Math.min(replayCursor, scenarioRuns.length - 1))] ?? null;
+
+  const delta = selectedRun && selectedRun.endKpis
+    ? {
+        throughput: selectedRun.endKpis.throughput - selectedRun.startKpis.throughput,
+        backlog: selectedRun.endKpis.backlog - selectedRun.startKpis.backlog,
+        utilization: selectedRun.endKpis.utilization - selectedRun.startKpis.utilization,
+        downtimeMinutes: selectedRun.endKpis.downtimeMinutes - selectedRun.startKpis.downtimeMinutes,
+      }
+    : null;
 
   return (
     <div className={styles.panel}>
@@ -72,6 +82,38 @@ export function OperationsPanel() {
         </div>
       </div>
 
+      {/* Scenario Replay */}
+      <div className={styles.section}>
+        <div className={styles.sectionHead}>
+          <span>Scenario Replay</span>
+          <button className={styles.ackBtn} onClick={clearScenarioRuns}>Clear</button>
+        </div>
+        <div className={styles.replayWrap}>
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, scenarioRuns.length - 1)}
+            value={Math.min(replayCursor, Math.max(0, scenarioRuns.length - 1))}
+            onChange={e => setReplayCursor(Number(e.target.value))}
+          />
+          {selectedRun && (
+            <div className={styles.replayMeta}>
+              <div className={styles.replayTitle}>
+                {selectedRun.mode} · {selectedRun.startTime}{selectedRun.endTime ? ` → ${selectedRun.endTime}` : ' → live'}
+              </div>
+              {delta && (
+                <div className={styles.replayDeltas}>
+                  <DeltaChip label="TP" value={delta.throughput} positiveGood />
+                  <DeltaChip label="BL" value={delta.backlog} positiveGood={false} />
+                  <DeltaChip label="UT" value={delta.utilization} positiveGood />
+                  <DeltaChip label="DT" value={delta.downtimeMinutes} positiveGood={false} precision={2} />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Controls row */}
       <div className={styles.controls}>
         <button
@@ -92,6 +134,28 @@ export function OperationsPanel() {
         </button>
       </div>
     </div>
+  );
+}
+
+function DeltaChip({
+  label,
+  value,
+  positiveGood,
+  precision = 0,
+}: {
+  label: string;
+  value: number;
+  positiveGood: boolean;
+  precision?: number;
+}) {
+  const positive = value >= 0;
+  const good = positiveGood ? positive : !positive;
+  const formatted = `${positive ? '+' : ''}${value.toFixed(precision)}`;
+
+  return (
+    <span className={`${styles.deltaChip} ${good ? styles.deltaGood : styles.deltaBad}`}>
+      {label} {formatted}
+    </span>
   );
 }
 

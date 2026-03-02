@@ -208,6 +208,54 @@
   color: var(--accent);
 }
 
+.replayWrap {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.replayMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.replayTitle {
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.replayDeltas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.deltaChip {
+  height: 22px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.56rem;
+  font-weight: 700;
+}
+
+.deltaGood {
+  color: var(--green);
+  background: rgba(22, 163, 74, 0.1);
+  border-color: rgba(22, 163, 74, 0.32);
+}
+
+.deltaBad {
+  color: var(--red-bright);
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.28);
+}
+
 /* ── Controls ── */
 .controls {
   display: flex;
