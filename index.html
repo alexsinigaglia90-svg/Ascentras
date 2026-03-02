@@ -15,10 +15,10 @@
   <meta name="twitter:description" content="Operational excellence, engineered with elegance.">
   <meta name="twitter:image" content="/assets/og-image.png">
   <link rel="preload" href="/assets/styles.css?v=20260225k" as="style">
-  <link rel="preload" href="/assets/css/lane-shell.css?v=20260226a" as="style">
+  <link rel="preload" href="/assets/css/lane-shell.css?v=20260302a" as="style">
   <link rel="preload" href="/assets/js/lane-shell.js?v=20260226a" as="script">
   <link rel="stylesheet" href="/assets/styles.css?v=20260225k">
-  <link rel="stylesheet" href="/assets/css/lane-shell.css?v=20260226a">
+  <link rel="stylesheet" href="/assets/css/lane-shell.css?v=20260302a">
 </head>
 <body class="lane-shell-body">
   <div class="lane-shell" id="lane-shell" data-active-lane="home">
@@ -39,31 +39,93 @@
 
     <div class="lane-track" id="lane-track">
       <section class="lane" data-lane-id="home" aria-label="Home lane">
-        <div class="lane-scroll" data-lane-scroll="home">
-          <header class="home-head">
-            <span class="home-mark">Ascentra</span>
-            <div class="home-actions">
-              <button class="btn pill" type="button" data-goto-lane="pyramid">Pyramid Hub</button>
-              <button class="btn pill secondary" type="button" data-goto-lane="ascentra">Enter Ascentra</button>
+        <div class="lane-scroll lane-scroll-home" data-lane-scroll="home">
+          <header class="topnav" id="topnav">
+            <div class="container nav-inner">
+              <span class="logo">Ascentra</span>
+              <div class="header-controls-cluster">
+                <div class="header-controls-capsule">
+                  <div class="header-toggle-group header-toggle-lang" id="lang-toggle">
+                    <button type="button" class="header-dot" data-lang="en" aria-label="English">EN</button>
+                    <button type="button" class="header-dot" data-lang="nl" aria-label="Nederlands">NL</button>
+                  </div>
+                  <div class="header-toggle-group header-toggle-theme" id="theme-toggle">
+                    <button type="button" class="header-dot" data-theme="light" aria-label="Light"></button>
+                    <button type="button" class="header-dot" data-theme="dark" aria-label="Dark"></button>
+                  </div>
+                  <div class="header-toggle-group header-toggle-style" id="style-toggle">
+                    <button type="button" class="header-dot" data-style="ivory" aria-label="Ivory"></button>
+                    <button type="button" class="header-dot" data-style="porcelain" aria-label="Porcelain"></button>
+                    <button type="button" class="header-dot" data-style="midnight" aria-label="Midnight"></button>
+                    <button type="button" class="header-dot" data-style="heritage" aria-label="Heritage"></button>
+                  </div>
+                </div>
+              </div>
+              <nav>
+                <a href="/hub" class="nav-link" data-goto-lane="pyramid">Hub</a>
+                <a href="/ascentra" class="nav-link" data-goto-lane="ascentra" data-i18n="nav_platform">Platform</a>
+                <a href="/operis" class="nav-link" data-goto-lane="operis">Operis</a>
+                <a href="/astra" class="nav-link" data-goto-lane="astra">Astra</a>
+                <button class="btn nav-cta" id="nav-cta" type="button" data-goto-lane="pyramid">Hub</button>
+              </nav>
             </div>
           </header>
 
           <main class="home-main">
-            <section class="home-hero">
-              <p class="lane-kicker">Private Enterprise Advisory</p>
-              <h1 tabindex="-1">Operational excellence, engineered with elegance.</h1>
-              <p>Navigate horizontally through the Ascentra ecosystem while preserving deep vertical journeys per lane.</p>
-              <div class="home-hero-ctas">
-                <button class="btn pill" type="button" data-goto-lane="pyramid">Open Pyramid Hub</button>
-                <button class="btn pill secondary" type="button" data-goto-lane="operis">Fly to Operis</button>
-                <button class="btn pill secondary" type="button" data-goto-lane="astra">Fly to Astra</button>
+            <section class="hero" id="hero">
+              <video class="hero-video" src="/assets/hero.mp4" autoplay muted loop playsinline poster="" id="hero-video"></video>
+              <div class="hero-fallback" id="hero-fallback">
+                <div class="hero-bg noimg"></div>
+              </div>
+              <div class="hero-overlay-gradient"></div>
+              <div class="hero-vignette"></div>
+              <div class="hero-content">
+                <div class="hero-eyebrow" data-i18n="hero_eyebrow">PRIVATE ENTERPRISE ADVISORY</div>
+                <h1 class="hero-headline" data-lane-title="home" tabindex="-1" data-i18n="hero_headline">Ascentra</h1>
+                <p class="hero-subcopy" data-i18n="hero_subcopy">Operational excellence, engineered with elegance.</p>
+                <div class="hero-ctas">
+                  <button class="btn pill primary" id="cta-explore" type="button" data-goto-lane="pyramid" data-i18n="hero_cta_explore">Explore platform</button>
+                  <button class="btn pill secondary" id="cta-meeting" type="button" data-goto-lane="ascentra" data-i18n="hero_cta_meeting">Plan a meeting</button>
+                </div>
               </div>
             </section>
 
-            <section class="home-strip" aria-label="Ascentra pillars">
-              <article><h2>Strategy</h2><p>Operating-model architecture and execution governance.</p></article>
-              <article><h2>Mechanization</h2><p>Warehouse and process optimization with durable standards.</p></article>
-              <article><h2>Software</h2><p>Data, control and orchestration systems for measurable impact.</p></article>
+            <section class="home-ecosystem" id="platform" aria-label="Ascentra ecosystem module">
+              <div class="home-ecosystem-copy">
+                <p class="lane-kicker" data-i18n="ecosystem_kicker">Platform Journey</p>
+                <h2 data-i18n="ecosystem_title">Ascentra</h2>
+                <p class="home-ecosystem-intro" data-i18n="ecosystem_intro">Drie gespecialiseerde onderdelen, één orchestratie-laag voor tastbare resultaten in supply chain en warehousing.</p>
+                <ul class="home-ecosystem-highlights" aria-label="Ecosystem highlights">
+                  <li data-i18n="ecosystem_highlight_1">Ascentra stuurt strategie en supply-chain consultancy.</li>
+                  <li data-i18n="ecosystem_highlight_2">Operis runt warehousing en logistieke operatie.</li>
+                  <li data-i18n="ecosystem_highlight_3">Astra levert hard- en software voor slimme warehouses.</li>
+                </ul>
+                <a class="btn pill secondary ecosystem-link" id="ecosystem-link" href="/ascentra" data-i18n="ecosystem_cta_default">Explore Ascentra</a>
+              </div>
+
+              <article class="ecosystem-console" data-ecosystem-module>
+                <p class="ecosystem-console-kicker" data-i18n="ecosystem_console_kicker">Ascentra Orchestration</p>
+                <div class="ecosystem-tabs" role="tablist" aria-label="Business units">
+                  <button type="button" class="ecosystem-tab is-active" role="tab" aria-selected="true" aria-controls="ecosystem-panel" id="ecosystem-tab-ascentra" data-ecosystem-key="ascentra" data-i18n="ecosystem_tab_ascentra">Ascentra</button>
+                  <button type="button" class="ecosystem-tab" role="tab" aria-selected="false" aria-controls="ecosystem-panel" id="ecosystem-tab-operis" data-ecosystem-key="operis" data-i18n="ecosystem_tab_operis">Operis</button>
+                  <button type="button" class="ecosystem-tab" role="tab" aria-selected="false" aria-controls="ecosystem-panel" id="ecosystem-tab-astra" data-ecosystem-key="astra" data-i18n="ecosystem_tab_astra">Astra</button>
+                </div>
+
+                <div class="ecosystem-panel" id="ecosystem-panel" role="tabpanel" aria-live="polite" aria-labelledby="ecosystem-tab-ascentra">
+                  <h3 class="ecosystem-panel-title" id="ecosystem-panel-title">Supply Chain Consultancy</h3>
+                  <p class="ecosystem-panel-desc" id="ecosystem-panel-desc">Ascentra vertaalt bedrijfsdoelen naar een schaalbaar operating model met governance en meetbare executie.</p>
+                  <ul class="ecosystem-panel-points" id="ecosystem-panel-points">
+                    <li>Operating model alignment</li>
+                    <li>Network and process redesign</li>
+                    <li>Execution governance</li>
+                  </ul>
+                  <div class="ecosystem-panel-metrics" id="ecosystem-panel-metrics">
+                    <span class="ecosystem-metric">Strategy Alignment</span>
+                    <span class="ecosystem-metric">Execution Velocity</span>
+                    <span class="ecosystem-metric">ROI Control</span>
+                  </div>
+                </div>
+              </article>
             </section>
           </main>
         </div>
@@ -117,6 +179,7 @@
     </div>
   </div>
 
-  <script src="/assets/js/lane-shell.js?v=20260226a" defer></script>
+  <script src="/assets/js/lane-shell.js?v=20260226b" defer></script>
+  <script src="/assets/app.js?v=20260302a" defer></script>
 </body>
 </html>
