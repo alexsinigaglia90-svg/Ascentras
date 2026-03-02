@@ -55,11 +55,15 @@ export function DepalletizerRig() {
   const j5Ref = useRef<THREE.Group>(null!);   // wrist pitch
   const gripRef = useRef<THREE.Group>(null!);
   const carriedBoxRef = useRef<THREE.Mesh>(null!);
+  const lastReleaseRef = useRef(false);
 
   const running = useStore(s => s.depalletizerRunning);
   const speed = useStore(s => s.depalletizerSpeed);
   const fault = useStore(s => s.depalletizerFault);
   const emergency = useStore(s => s.emergencyStop);
+  const boxesRemaining = useStore(s => s.palletBoxesRemaining);
+  const palletEmpty = useStore(s => s.palletEmpty);
+  const removeBox = useStore(s => s.removeBoxFromPallet);
 
   const baseBolts = useMemo(() => {
     const arr: [number, number, number][] = [];
@@ -139,9 +143,16 @@ export function DepalletizerRig() {
 
     // Carried box follows gripper during pick/carry phases
     if (carriedBoxRef.current) {
-      carriedBoxRef.current.visible =
-        phase === 'grip' || phase === 'lift' || phase === 'rotateToPlace' || phase === 'place';
+      const showBox = phase === 'grip' || phase === 'lift' || phase === 'rotateToPlace' || phase === 'place';
+      carriedBoxRef.current.visible = showBox;
     }
+
+    // Remove a box from the pallet at each release phase (edge-detect)
+    const isRelease = phase === 'release';
+    if (isRelease && !lastReleaseRef.current && boxesRemaining > 0) {
+      removeBox();
+    }
+    lastReleaseRef.current = isRelease;
   });
 
   const armColor = fault ? '#7a2828' : '#e8a020';
@@ -272,7 +283,7 @@ export function DepalletizerRig() {
         </group>
       </group>
 
-      {/* ══════ PALLET INFEED (high-detail) ══════ */}
+      {/* ══════ PALLET INFEED (progressive unstacking) ══════ */}
       <group position={[-0.85, 0, 0]}>
         {/* Euro pallet — top deck */}
         <mesh position={[0, 0.14, 0]} receiveShadow>
@@ -302,31 +313,23 @@ export function DepalletizerRig() {
             </mesh>
           ))
         )}
-        {/* Layer 1 — 3×2 box grid */}
-        {[-0.22, 0, 0.22].flatMap((x, xi) =>
-          [-0.12, 0.12].map((z, zi) => (
-            <mesh key={`l1_${xi}_${zi}`} position={[x, 0.22, z]} castShadow>
-              <boxGeometry args={[0.2, 0.13, 0.2]} />
-              <meshPhysicalMaterial {...M.cardboard} />
-            </mesh>
-          ))
-        )}
-        {/* Layer 2 — 3×2, slightly staggered */}
-        {[-0.22, 0, 0.22].flatMap((x, xi) =>
-          [-0.12, 0.12].map((z, zi) => (
-            <mesh key={`l2_${xi}_${zi}`} position={[x + 0.015, 0.36, z - 0.01]} castShadow>
-              <boxGeometry args={[0.2, 0.13, 0.2]} />
-              <meshPhysicalMaterial {...M.cardboard} />
-            </mesh>
-          ))
-        )}
-        {/* Layer 3 — partial top (being unstacked) */}
-        {[-0.22, 0.22].map((x, i) => (
-          <mesh key={`l3_${i}`} position={[x, 0.495, 0]} castShadow>
-            <boxGeometry args={[0.2, 0.13, 0.2]} />
-            <meshPhysicalMaterial {...M.cardboard} />
+
+        {/* ── LAYER 1: boxes 1-6 (bottom), y=0.22 ── */}
+        <PalletLayer y={0.22} offset={0} boxesRemaining={boxesRemaining} />
+
+        {/* ── LAYER 2: boxes 7-12 (middle), y=0.36 ── */}
+        <PalletLayer y={0.36} offset={6} boxesRemaining={boxesRemaining} stagger={0.015} />
+
+        {/* ── LAYER 3: boxes 13-18 (top), y=0.50 ── */}
+        <PalletLayer y={0.50} offset={12} boxesRemaining={boxesRemaining} stagger={-0.01} />
+
+        {/* Empty pallet indicator */}
+        {palletEmpty && (
+          <mesh position={[0, 0.20, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.4, 0.3]} />
+            <meshBasicMaterial color="#ff4040" transparent opacity={0.3} depthWrite={false} />
           </mesh>
-        ))}
+        )}
       </group>
 
       {/* ══════ OUTFEED → MAIN CONVEYOR ══════ */}
@@ -413,6 +416,115 @@ export function DepalletizerRig() {
       {/* ══════ LABELS ══════ */}
       <WarningLabel position={[-1.48, 0.5, -0.4]} rotation={[0, Math.PI / 2, 0]} />
       <WarningLabel position={[0, 0.5, -0.78]} rotation={[0, 0, 0]} color="#ff3030" width={0.08} height={0.05} />
+
+      {/* ══════ BUFFER STAGING AREA (opzetbaan) ══════ */}
+      <BufferLane />
+    </group>
+  );
+}
+
+/* ── Pallet layer: 3×2 grid of boxes, conditionally rendered ── */
+function PalletLayer({ y, offset, boxesRemaining, stagger = 0 }: {
+  y: number;
+  offset: number;
+  boxesRemaining: number;
+  stagger?: number;
+}) {
+  const positions: [number, number][] = [
+    [-0.22, -0.12], [0, -0.12], [0.22, -0.12],
+    [-0.22, 0.12], [0, 0.12], [0.22, 0.12],
+  ];
+
+  return (
+    <>
+      {positions.map(([x, z], i) => {
+        const boxIndex = offset + i + 1; // 1-indexed
+        if (boxesRemaining < boxIndex) return null;
+        return (
+          <mesh key={`layer_${offset}_${i}`} position={[x + stagger, y, z]} castShadow>
+            <boxGeometry args={[0.19, 0.13, 0.19]} />
+            <meshPhysicalMaterial {...M.cardboard} />
+          </mesh>
+        );
+      })}
+    </>
+  );
+}
+
+/* ── Buffer staging lane beside depal — holds waiting pallets ── */
+function BufferLane() {
+  const bufferCount = useStore(s => s.palletBufferCount);
+  const bufferMax = useStore(s => s.palletBufferMax);
+
+  return (
+    <group position={[-0.85, 0, -1.4]}>
+      {/* Buffer lane rails */}
+      {[-0.35, 0.35].map((z, i) => (
+        <mesh key={`br${i}`} position={[0, 0.04, z]}>
+          <boxGeometry args={[2.6, 0.03, 0.03]} />
+          <meshPhysicalMaterial {...M.paintedSteel} />
+        </mesh>
+      ))}
+      {/* Lane rollers — flat orientation */}
+      {Array.from({ length: 20 }).map((_, i) => (
+        <mesh key={`brl${i}`} position={[-1.2 + i * 0.13, 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.62, 8]} />
+          <meshPhysicalMaterial {...M.machinedSteel} />
+        </mesh>
+      ))}
+      {/* Lane legs */}
+      {[-1.0, 0, 1.0].map((x, i) =>
+        [-0.3, 0.3].map((z, zi) => (
+          <mesh key={`bl${i}_${zi}`} position={[x, 0.02, z]}>
+            <boxGeometry args={[0.025, 0.04, 0.025]} />
+            <meshPhysicalMaterial {...M.paintedSteel} />
+          </mesh>
+        ))
+      )}
+
+      {/* Queued pallets — shown based on bufferCount */}
+      {Array.from({ length: bufferMax }).map((_, i) => {
+        if (i >= bufferCount) return null;
+        return (
+          <group key={`buf_pallet_${i}`} position={[-0.85 + i * 0.9, 0, 0]}>
+            {/* Pallet deck */}
+            <mesh position={[0, 0.12, 0]}>
+              <boxGeometry args={[0.8, 0.015, 0.6]} />
+              <meshPhysicalMaterial {...M.palletWood} />
+            </mesh>
+            {/* Stringers */}
+            {[-0.2, 0, 0.2].map((z, si) => (
+              <mesh key={`bs${si}`} position={[0, 0.08, z]}>
+                <boxGeometry args={[0.8, 0.07, 0.07]} />
+                <meshPhysicalMaterial {...M.palletWood} />
+              </mesh>
+            ))}
+            {/* Full box load — 3 layers stacked */}
+            {[0.2, 0.33, 0.46].map((y, li) => (
+              <group key={`bl${li}`}>
+                {[-0.2, 0, 0.2].flatMap((x, xi) =>
+                  [-0.11, 0.11].map((z, zi) => (
+                    <mesh key={`bb${xi}_${zi}`} position={[x, y, z]} castShadow>
+                      <boxGeometry args={[0.18, 0.12, 0.18]} />
+                      <meshPhysicalMaterial {...M.cardboard} />
+                    </mesh>
+                  ))
+                )}
+              </group>
+            ))}
+          </group>
+        );
+      })}
+
+      {/* Buffer status label */}
+      <mesh position={[0, 0.6, -0.4]}>
+        <planeGeometry args={[0.35, 0.08]} />
+        <meshBasicMaterial
+          color={bufferCount >= bufferMax ? '#ff4040' : bufferCount > 0 ? '#40a040' : '#808080'}
+          transparent
+          opacity={0.7}
+        />
+      </mesh>
     </group>
   );
 }

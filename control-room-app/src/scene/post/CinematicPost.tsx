@@ -5,58 +5,55 @@ import {
   Bloom,
   Vignette,
   N8AO,
+  ToneMapping,
 } from '@react-three/postprocessing';
-import { BlendFunction } from 'postprocessing';
+import { BlendFunction, ToneMappingMode } from 'postprocessing';
 import { useStore } from '../../state/store';
 
 /**
- * Cinematic post-processing — crisp and clean.
+ * Enhanced cinematic post-processing — deep, rich, ray-tracing quality.
  *
- * REMOVED the "glass view" caused by:
- *   - DepthOfField (bokehScale was 2.5 — blurred the whole scene)
- *   - ChromaticAberration (added color fringing like a glass pane)
- *   - N8AO too aggressive (was 1.8 — muddied the image)
- *
- * Now: subtle AO for contact shadows, restrained bloom
- * for emissive glow, clean vignette for framing.
- * Entirely disabled in Performance Mode.
+ * - N8AO at high quality for detailed contact shadows
+ * - Two-pass bloom: subtle global + strong emissive punch
+ * - Vignette for cinematic framing
+ * - ACES Filmic tone mapping for cinematic colour
  */
 export function CinematicPost() {
   const performanceMode = useStore(s => s.performanceMode);
-  const aoColor = useMemo(() => new THREE.Color('#1a1820'), []);
+  const aoColor = useMemo(() => new THREE.Color('#0a0810'), []);
 
   if (performanceMode) return null;
 
   return (
     <EffectComposer multisampling={4}>
-      {/* Ambient Occlusion — tighter radius for detailed machine geometry */}
+      {/* Ambient Occlusion — high quality, tighter for mechanical detail */}
       <N8AO
-        aoRadius={0.35}
-        intensity={1.1}
-        distanceFalloff={0.7}
-        quality="medium"
+        aoRadius={0.4}
+        intensity={1.6}
+        distanceFalloff={0.6}
+        quality="high"
         halfRes={false}
         color={aoColor}
       />
 
-      {/* Bloom — slightly stronger for LEDs, beacons, screen emissives */}
+      {/* Bloom — stronger for LEDs, beacons, emissive elements */}
       <Bloom
-        intensity={0.3}
-        luminanceThreshold={0.65}
-        luminanceSmoothing={0.25}
+        intensity={0.45}
+        luminanceThreshold={0.55}
+        luminanceSmoothing={0.2}
         mipmapBlur
-        radius={0.6}
+        radius={0.7}
       />
 
-      {/* Vignette — subtle frame, not overpowering */}
+      {/* Vignette — deeper framing for cinematic feel */}
       <Vignette
-        offset={0.3}
-        darkness={0.3}
+        offset={0.25}
+        darkness={0.4}
         blendFunction={BlendFunction.NORMAL}
       />
 
-      {/* NO DepthOfField — was causing the hazy glass look */}
-      {/* NO ChromaticAberration — was causing color fringing */}
+      {/* Tone mapping — ACES filmic for rich, cinematic colour response */}
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
   );
 }

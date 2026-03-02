@@ -9,7 +9,10 @@ import * as M from './materials/materialPresets';
 export function ControlDesk() {
   const emergency = useStore(s => s.emergencyStop);
   const shift = useStore(s => s.shiftMode);
+  const palletReplenish = useStore(s => s.palletReplenishRequested);
+  const bufferFull = useStore(s => s.palletBufferCount >= s.palletBufferMax);
   const screenRef = useRef<THREE.Mesh>(null!);
+  const alertRef = useRef<THREE.Mesh>(null!);
 
   useFrame(() => {
     if (!screenRef.current) return;
@@ -17,9 +20,25 @@ export function ControlDesk() {
     if (emergency) {
       mat.emissiveIntensity = Math.sin(performance.now() * 0.008) > 0 ? 1.2 : 0.1;
       mat.emissive.set('#ff2020');
+    } else if (palletReplenish) {
+      // Pulsing orange warning when pallet needs replenishment
+      mat.emissiveIntensity = 0.5 + Math.sin(performance.now() * 0.006) * 0.3;
+      mat.emissive.set('#ff8800');
     } else {
       mat.emissiveIntensity = 0.5 + Math.sin(performance.now() * 0.002) * 0.08;
       mat.emissive.set(shift === 'night' ? '#1a3050' : '#2a5a3a');
+    }
+
+    // Alert overlay panel pulsing
+    if (alertRef.current) {
+      const alertMat = alertRef.current.material as THREE.MeshBasicMaterial;
+      if (palletReplenish || bufferFull) {
+        alertMat.opacity = 0.15 + Math.sin(performance.now() * 0.005) * 0.1;
+        alertMat.color.set(bufferFull ? '#ff2020' : '#ff8800');
+        alertRef.current.visible = true;
+      } else {
+        alertRef.current.visible = false;
+      }
     }
   });
 
@@ -66,6 +85,16 @@ export function ControlDesk() {
             color="#ffffff"
             transparent
             opacity={0.015}
+            depthWrite={false}
+          />
+        </mesh>
+        {/* Alert overlay — pulsing when replenishment needed or buffer full */}
+        <mesh ref={alertRef} position={[0, 0.1, 0.028]} visible={false}>
+          <planeGeometry args={[0.8, 0.2]} />
+          <meshBasicMaterial
+            color="#ff8800"
+            transparent
+            opacity={0.2}
             depthWrite={false}
           />
         </mesh>

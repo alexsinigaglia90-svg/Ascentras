@@ -10,6 +10,7 @@ import { ConveyorRig } from './machines/ConveyorRig';
 import { DepalletizerRig } from './machines/DepalletizerRig';
 import { PalletizerRig } from './machines/PalletizerRig';
 import { DecantingStations } from './machines/DecantingStations';
+import { AMRFleet } from './machines/AMRFleet';
 import { IndustrialDetails } from './props/IndustrialDetails';
 import { DustParticles } from './DustParticles';
 import { CinematicLighting } from './lighting/CinematicLighting';
@@ -29,6 +30,7 @@ const cameraPositions: Record<string, { pos: [number, number, number]; target: [
   'wms-coordinator':{ pos: [5, 2.5, 2.5],  target: [5.5, 0.8, 0] },
   'incident-lead': { pos: [0, 3, 3],       target: [0, 1, 0] },
   'perf-analyst':  { pos: [1.5, 2.5, 4],   target: [1, 0.8, 0] },
+  'amr-fleet':     { pos: [-5, 2, -3],     target: [-4, 0.3, -1] },
 };
 
 /* ── Camera with parallax + drift ── */
@@ -144,6 +146,9 @@ export function ControlRoomDiorama() {
       <DecantingStations />
       <AutoStoreRig />
       <PalletizerRig />
+
+      {/* AMR fleet — autonomous mobile robots */}
+      <AMRFleet />
 
       {/* Shared industrial detail layer */}
       <IndustrialDetails />

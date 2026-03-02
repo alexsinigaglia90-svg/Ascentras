@@ -31,13 +31,14 @@ export function ConveyorRig() {
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  /* Place rollers ONCE — they never spin */
+  /* Place rollers ONCE — they never spin. Rotate so cylinders lie
+     flat across the conveyor (Z-axis) instead of standing up (Y-axis). */
   useEffect(() => {
     if (!rollerRef.current) return;
     for (let i = 0; i < ROLLER_COUNT; i++) {
       const x = (i - ROLLER_COUNT / 2) * ROLLER_SPACING;
       dummy.position.set(x, 0, 0);
-      dummy.rotation.set(0, 0, 0);
+      dummy.rotation.set(Math.PI / 2, 0, 0);   // lie flat across conveyor
       dummy.scale.set(1, 1, 1);
       dummy.updateMatrix();
       rollerRef.current.setMatrixAt(i, dummy.matrix);

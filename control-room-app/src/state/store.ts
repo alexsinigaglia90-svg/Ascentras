@@ -26,6 +26,18 @@ export interface ControlRoomState {
   depalletizerSpeed: number;
   depalletizerFault: boolean;
 
+  /* Pallet tracking — boxes remaining on active pallet */
+  palletBoxesRemaining: number;        // 0-18 (3 layers × 6 boxes)
+  palletBufferCount: number;           // 0-3 pallets queued in buffer lane
+  palletBufferMax: number;             // max 3
+  palletReplenishRequested: boolean;   // control room notification active
+  palletEmpty: boolean;                // pallet fully unstacked
+
+  /* AMR fleet */
+  amrCount: number;
+  amrDelivering: boolean;              // an AMR is en-route with pallet
+  amrWaiting: boolean;                 // AMR waiting because buffer full
+
   autostoreSpeed: number;
   autostoreHeatmap: boolean;
   autostoreBinDensity: number;
@@ -57,6 +69,12 @@ export interface ControlRoomState {
   toggleDepalletizer: () => void;
   setDepalletizerSpeed: (v: number) => void;
   toggleDepalletizerFault: () => void;
+
+  /* Pallet / AMR actions */
+  removeBoxFromPallet: () => void;     // called by depal animation cycle
+  requestReplenishment: () => void;    // user clicks "request pallet"
+  dispatchAmr: () => void;             // send AMR with new pallet
+  loadPalletFromBuffer: () => void;    // move buffer pallet to depal
 
   setAutostoreSpeed: (v: number) => void;
   toggleAutostoreHeatmap: () => void;
@@ -93,6 +111,16 @@ export const useStore = create<ControlRoomState>((set, get) => ({
   depalletizerRunning: false,
   depalletizerSpeed: 60,
   depalletizerFault: false,
+
+  palletBoxesRemaining: 18,
+  palletBufferCount: 2,
+  palletBufferMax: 3,
+  palletReplenishRequested: false,
+  palletEmpty: false,
+
+  amrCount: 3,
+  amrDelivering: false,
+  amrWaiting: false,
 
   autostoreSpeed: 100,
   autostoreHeatmap: false,
@@ -156,6 +184,107 @@ export const useStore = create<ControlRoomState>((set, get) => ({
     return {
       depalletizerFault: fault,
       depalletizerRunning: fault ? false : s.depalletizerRunning,
+      incidents: newIncidents.slice(0, 50),
+    };
+  }),
+
+  /* ── Pallet / AMR Actions ── */
+  removeBoxFromPallet: () => set(s => {
+    if (s.palletBoxesRemaining <= 0) return s;
+    const remaining = s.palletBoxesRemaining - 1;
+    const empty = remaining === 0;
+    const newIncidents = [...s.incidents];
+    if (empty) {
+      newIncidents.unshift({
+        id: `inc-${++incidentCounter}`,
+        time: now(),
+        message: 'PALLET EMPTY — replenishment required',
+        severity: 'warning',
+        acknowledged: false,
+      });
+    }
+    return {
+      palletBoxesRemaining: remaining,
+      palletEmpty: empty,
+      palletReplenishRequested: empty ? true : s.palletReplenishRequested,
+      depalletizerRunning: empty ? false : s.depalletizerRunning,
+      incidents: empty ? newIncidents.slice(0, 50) : s.incidents,
+    };
+  }),
+
+  requestReplenishment: () => set(s => {
+    if (s.amrDelivering || !s.palletReplenishRequested) return s;
+    const newIncidents = [...s.incidents];
+    if (s.palletBufferCount > 0) {
+      // Load from buffer immediately
+      newIncidents.unshift({
+        id: `inc-${++incidentCounter}`,
+        time: now(),
+        message: 'Loading pallet from buffer lane — depal restarting',
+        severity: 'info',
+        acknowledged: false,
+      });
+      return {
+        palletBoxesRemaining: 18,
+        palletEmpty: false,
+        palletReplenishRequested: false,
+        palletBufferCount: s.palletBufferCount - 1,
+        incidents: newIncidents.slice(0, 50),
+      };
+    }
+    // Dispatch AMR
+    newIncidents.unshift({
+      id: `inc-${++incidentCounter}`,
+      time: now(),
+      message: 'AMR dispatched — fetching new pallet from warehouse',
+      severity: 'info',
+      acknowledged: false,
+    });
+    return {
+      amrDelivering: true,
+      incidents: newIncidents.slice(0, 50),
+    };
+  }),
+
+  dispatchAmr: () => set(s => {
+    if (s.amrDelivering) return s;
+    const newIncidents = [...s.incidents];
+    if (s.palletBufferCount >= s.palletBufferMax) {
+      newIncidents.unshift({
+        id: `inc-${++incidentCounter}`,
+        time: now(),
+        message: 'BUFFER FULL — AMR waiting for slot',
+        severity: 'warning',
+        acknowledged: false,
+      });
+      return { amrWaiting: true, incidents: newIncidents.slice(0, 50) };
+    }
+    newIncidents.unshift({
+      id: `inc-${++incidentCounter}`,
+      time: now(),
+      message: 'AMR dispatched to buffer lane',
+      severity: 'info',
+      acknowledged: false,
+    });
+    return { amrDelivering: true, incidents: newIncidents.slice(0, 50) };
+  }),
+
+  loadPalletFromBuffer: () => set(s => {
+    if (s.palletBufferCount <= 0 || !s.palletEmpty) return s;
+    const newIncidents = [...s.incidents];
+    newIncidents.unshift({
+      id: `inc-${++incidentCounter}`,
+      time: now(),
+      message: 'Buffer pallet loaded to depal — resuming operation',
+      severity: 'info',
+      acknowledged: false,
+    });
+    return {
+      palletBoxesRemaining: 18,
+      palletEmpty: false,
+      palletReplenishRequested: false,
+      palletBufferCount: s.palletBufferCount - 1,
+      amrWaiting: s.palletBufferCount - 1 < s.palletBufferMax ? false : s.amrWaiting,
       incidents: newIncidents.slice(0, 50),
     };
   }),
@@ -313,8 +442,62 @@ export const useStore = create<ControlRoomState>((set, get) => ({
       newJam = true;
     }
 
+    // AMR delivery simulation — completes after ~8 seconds (0.5% chance per tick)
+    let amrDelivering = s.amrDelivering;
+    let bufferCount = s.palletBufferCount;
+    let amrWaiting = s.amrWaiting;
+    let palletBoxes = s.palletBoxesRemaining;
+    let palletEmpty = s.palletEmpty;
+    let replenishReq = s.palletReplenishRequested;
+    const tickIncs = [...s.incidents];
+
+    if (amrDelivering && Math.random() < 0.005) {
+      amrDelivering = false;
+      if (bufferCount < s.palletBufferMax) {
+        bufferCount += 1;
+        tickIncs.unshift({
+          id: `inc-${++incidentCounter}`,
+          time: now(),
+          message: `AMR delivered pallet to buffer (${bufferCount}/${s.palletBufferMax})`,
+          severity: 'info',
+          acknowledged: false,
+        });
+        // Auto-load if pallet is empty and buffer just got stock
+        if (palletEmpty && bufferCount > 0) {
+          palletBoxes = 18;
+          palletEmpty = false;
+          replenishReq = false;
+          bufferCount -= 1;
+          tickIncs.unshift({
+            id: `inc-${++incidentCounter}`,
+            time: now(),
+            message: 'Auto-loaded pallet from buffer — depal ready',
+            severity: 'info',
+            acknowledged: false,
+          });
+        }
+      }
+    }
+
+    // Auto-dispatch AMR if buffer below max and not already delivering
+    if (!amrDelivering && bufferCount < s.palletBufferMax && Math.random() < 0.002) {
+      amrDelivering = true;
+    }
+
+    // Release waiting AMR if buffer has space
+    if (amrWaiting && bufferCount < s.palletBufferMax) {
+      amrWaiting = false;
+    }
+
     return {
       conveyorJam: newJam,
+      amrDelivering,
+      amrWaiting,
+      palletBufferCount: bufferCount,
+      palletBoxesRemaining: palletBoxes,
+      palletEmpty,
+      palletReplenishRequested: replenishReq,
+      incidents: tickIncs.slice(0, 50),
       kpis: {
         throughput: Math.round(newThroughput),
         backlog: Math.round(newBacklog),

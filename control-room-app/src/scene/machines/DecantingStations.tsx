@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 import * as M from '../materials/materialPresets';
 import { Cable } from '../props/Cable';
 import { StatusLED, LightStack } from '../props/BeaconsAndIndicators';
@@ -24,37 +25,75 @@ import { useStore } from '../../state/store';
 const STATION_SPACING = 1.6;
 
 function OperatorFigure({ position }: { position: [number, number, number] }) {
+  const leftArmRef = useRef<THREE.Mesh>(null!);
+  const rightArmRef = useRef<THREE.Mesh>(null!);
+  const torsoRef = useRef<THREE.Group>(null!);
+  const leftLegRef = useRef<THREE.Mesh>(null!);
+  const rightLegRef = useRef<THREE.Mesh>(null!);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    const px = position[0]; // use position as phase offset
+    const phase = t * 1.8 + px * 2.5;
+
+    // Arms: alternating reach/retract motion (picking items)
+    if (leftArmRef.current) {
+      leftArmRef.current.rotation.x = 0.3 + Math.sin(phase) * 0.25;
+      leftArmRef.current.rotation.z = 0.15 + Math.sin(phase * 0.7) * 0.05;
+    }
+    if (rightArmRef.current) {
+      rightArmRef.current.rotation.x = 0.3 + Math.sin(phase + Math.PI) * 0.25;
+      rightArmRef.current.rotation.z = -0.15 - Math.sin(phase * 0.7 + 1) * 0.05;
+    }
+
+    // Torso: subtle sway
+    if (torsoRef.current) {
+      torsoRef.current.rotation.y = Math.sin(phase * 0.5) * 0.04;
+      torsoRef.current.position.y = 0.56 + Math.sin(phase * 1.2) * 0.005;
+    }
+
+    // Subtle weight shift on legs
+    if (leftLegRef.current) {
+      leftLegRef.current.scale.y = 1 + Math.sin(phase * 0.6) * 0.01;
+    }
+    if (rightLegRef.current) {
+      rightLegRef.current.scale.y = 1 - Math.sin(phase * 0.6) * 0.01;
+    }
+  });
+
   return (
     <group position={position}>
       {/* Legs */}
-      <mesh position={[-0.04, 0.22, 0]} castShadow>
+      <mesh ref={leftLegRef} position={[-0.04, 0.22, 0]} castShadow>
         <boxGeometry args={[0.06, 0.44, 0.06]} />
         <meshStandardMaterial color="#2a3a60" roughness={0.7} />
       </mesh>
-      <mesh position={[0.04, 0.22, 0]} castShadow>
+      <mesh ref={rightLegRef} position={[0.04, 0.22, 0]} castShadow>
         <boxGeometry args={[0.06, 0.44, 0.06]} />
         <meshStandardMaterial color="#2a3a60" roughness={0.7} />
       </mesh>
       {/* Torso */}
-      <mesh position={[0, 0.56, 0]} castShadow>
-        <boxGeometry args={[0.2, 0.28, 0.12]} />
-        <meshStandardMaterial color="#e07020" roughness={0.6} />
-      </mesh>
-      {/* Hi-vis vest strips */}
-      <mesh position={[0, 0.52, 0.061]}>
-        <boxGeometry args={[0.18, 0.03, 0.002]} />
-        <meshStandardMaterial color="#ccff00" emissive="#aadd00" emissiveIntensity={0.15} roughness={0.5} />
-      </mesh>
-      <mesh position={[0, 0.60, 0.061]}>
-        <boxGeometry args={[0.18, 0.03, 0.002]} />
-        <meshStandardMaterial color="#ccff00" emissive="#aadd00" emissiveIntensity={0.15} roughness={0.5} />
-      </mesh>
-      {/* Arms */}
-      <mesh position={[-0.14, 0.52, 0.04]} rotation={[0.4, 0, 0.15]} castShadow>
+      <group ref={torsoRef} position={[0, 0.56, 0]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.2, 0.28, 0.12]} />
+          <meshStandardMaterial color="#e07020" roughness={0.6} />
+        </mesh>
+        {/* Hi-vis vest strips */}
+        <mesh position={[0, -0.04, 0.061]}>
+          <boxGeometry args={[0.18, 0.03, 0.002]} />
+          <meshStandardMaterial color="#ccff00" emissive="#aadd00" emissiveIntensity={0.15} roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 0.04, 0.061]}>
+          <boxGeometry args={[0.18, 0.03, 0.002]} />
+          <meshStandardMaterial color="#ccff00" emissive="#aadd00" emissiveIntensity={0.15} roughness={0.5} />
+        </mesh>
+      </group>
+      {/* Arms — animated */}
+      <mesh ref={leftArmRef} position={[-0.14, 0.52, 0.04]} rotation={[0.4, 0, 0.15]} castShadow>
         <boxGeometry args={[0.05, 0.26, 0.05]} />
         <meshStandardMaterial color="#e07020" roughness={0.6} />
       </mesh>
-      <mesh position={[0.14, 0.52, 0.04]} rotation={[0.4, 0, -0.15]} castShadow>
+      <mesh ref={rightArmRef} position={[0.14, 0.52, 0.04]} rotation={[0.4, 0, -0.15]} castShadow>
         <boxGeometry args={[0.05, 0.26, 0.05]} />
         <meshStandardMaterial color="#e07020" roughness={0.6} />
       </mesh>
@@ -259,6 +298,11 @@ export function DecantingStations() {
             <meshPhysicalMaterial {...M.paintedSteel} />
           </mesh>
         ))}
+
+        {/* ── Flowing boxes on feed conveyor ── */}
+        {active && [0, 1, 2].map(i => (
+          <FlowBox key={`feed${i}`} index={i} axis="x" range={[-0.35, 0.35]} y={0.42} speed={0.5} />
+        ))}
       </group>
 
       {/* ── Station 1 (front) ── */}
@@ -287,6 +331,11 @@ export function DecantingStations() {
             <meshPhysicalMaterial {...M.paintedSteel} />
           </mesh>
         ))}
+
+        {/* ── Flowing products on merge conveyor ── */}
+        {active && [0, 1].map(i => (
+          <FlowBox key={`merge${i}`} index={i} axis="x" range={[-0.25, 0.25]} y={0.39} speed={0.4} small />
+        ))}
       </group>
 
       {/* ── Light stack ── */}
@@ -306,5 +355,40 @@ export function DecantingStations() {
       {/* ── Warning label ── */}
       <WarningLabel position={[-1.1, 0.3, 0]} rotation={[0, -Math.PI / 2, 0]} />
     </group>
+  );
+}
+
+/* ── Animated box flowing along a conveyor section ── */
+function FlowBox({ index, axis, range, y, speed, small = false }: {
+  index: number;
+  axis: 'x' | 'z';
+  range: [number, number];
+  y: number;
+  speed: number;
+  small?: boolean;
+}) {
+  const ref = useRef<THREE.Mesh>(null!);
+  const boxSize: [number, number, number] = small
+    ? [0.06, 0.05, 0.06]
+    : [0.16, 0.12, 0.14];
+  const spanLen = range[1] - range[0];
+  const offset = (index / 3) * spanLen;
+
+  useFrame(() => {
+    if (!ref.current) return;
+    const t = performance.now() * 0.001;
+    const pos = ((t * speed + offset) % spanLen) + range[0];
+    if (axis === 'x') {
+      ref.current.position.x = pos;
+    } else {
+      ref.current.position.z = pos;
+    }
+  });
+
+  return (
+    <mesh ref={ref} position={[0, y, 0]} castShadow>
+      <boxGeometry args={boxSize} />
+      <meshPhysicalMaterial {...(small ? { color: '#4488cc', roughness: 0.5 } : M.cardboard)} />
+    </mesh>
   );
 }
