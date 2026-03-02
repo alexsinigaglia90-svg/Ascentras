@@ -8,6 +8,8 @@ import { ControlDesk } from './ControlDesk';
 import { CinematicLighting } from './lighting/CinematicLighting';
 import { CinematicPost } from './post/CinematicPost';
 
+type QualityTier = 'safe' | 'balanced' | 'cinematic' | 'ultra';
+
 /* Lazy-load heavy machine rigs — they are complex geometry builders */
 const AutoStoreRig = lazy(() => import('./machines/AutoStoreRig').then(m => ({ default: m.AutoStoreRig })));
 const ConveyorRig = lazy(() => import('./machines/ConveyorRig').then(m => ({ default: m.ConveyorRig })));
@@ -105,60 +107,76 @@ function SimTicker() {
   return null;
 }
 
-function FrameRateGuard({
+function PerformanceBudgetGuard({
   enabled,
-  onLowFps,
-  onRecovered,
+  targetFrameMs,
+  onPenaltyIncrease,
+  onPenaltyDecrease,
 }: {
   enabled: boolean;
-  onLowFps: () => void;
-  onRecovered: () => void;
+  targetFrameMs: number;
+  onPenaltyIncrease: () => void;
+  onPenaltyDecrease: () => void;
 }) {
-  const lowFpsSeconds = useRef(0);
-  const highFpsSeconds = useRef(0);
-  const downgraded = useRef(false);
+  const emaFrameMs = useRef(16.7);
+  const overBudgetSeconds = useRef(0);
+  const underBudgetSeconds = useRef(0);
 
   useFrame((_, delta) => {
+    const frameMs = Math.max(1, delta * 1000);
+    emaFrameMs.current += (frameMs - emaFrameMs.current) * 0.08;
+
     if (!enabled) {
-      lowFpsSeconds.current = 0;
-      highFpsSeconds.current = 0;
-      if (downgraded.current) {
-        downgraded.current = false;
-        onRecovered();
-      }
+      overBudgetSeconds.current = 0;
+      underBudgetSeconds.current = 0;
       return;
     }
 
-    const fps = delta > 0 ? 1 / delta : 60;
-    const belowThreshold = fps < 42;
-    const aboveThreshold = fps > 56;
+    const overThreshold = targetFrameMs + 4;
+    const underThreshold = Math.max(8, targetFrameMs - 4);
+    const overBudget = emaFrameMs.current > overThreshold;
+    const underBudget = emaFrameMs.current < underThreshold;
 
-    if (belowThreshold) {
-      lowFpsSeconds.current += delta;
+    if (overBudget) {
+      overBudgetSeconds.current += delta;
     } else {
-      lowFpsSeconds.current = Math.max(0, lowFpsSeconds.current - delta * 0.5);
+      overBudgetSeconds.current = Math.max(0, overBudgetSeconds.current - delta * 0.6);
     }
 
-    if (aboveThreshold) {
-      highFpsSeconds.current += delta;
+    if (underBudget) {
+      underBudgetSeconds.current += delta;
     } else {
-      highFpsSeconds.current = Math.max(0, highFpsSeconds.current - delta * 0.5);
+      underBudgetSeconds.current = Math.max(0, underBudgetSeconds.current - delta * 0.7);
     }
 
-    if (!downgraded.current && lowFpsSeconds.current >= 2.2) {
-      downgraded.current = true;
-      highFpsSeconds.current = 0;
-      onLowFps();
+    if (overBudgetSeconds.current >= 2.2) {
+      overBudgetSeconds.current = 0;
+      underBudgetSeconds.current = 0;
+      onPenaltyIncrease();
     }
 
-    if (downgraded.current && highFpsSeconds.current >= 4.2) {
-      downgraded.current = false;
-      lowFpsSeconds.current = 0;
-      onRecovered();
+    if (underBudgetSeconds.current >= 5.2) {
+      underBudgetSeconds.current = 0;
+      overBudgetSeconds.current = 0;
+      onPenaltyDecrease();
     }
   });
 
   return null;
+}
+
+function downgradeQuality(base: QualityTier, penalty: 0 | 1 | 2): QualityTier {
+  if (penalty === 0) return base;
+  if (penalty === 1) {
+    if (base === 'ultra') return 'cinematic';
+    if (base === 'cinematic') return 'balanced';
+    if (base === 'balanced') return 'safe';
+    return 'safe';
+  }
+
+  if (base === 'ultra') return 'balanced';
+  if (base === 'cinematic') return 'safe';
+  return 'safe';
 }
 
 function SceneLoadingFallback() {
@@ -188,7 +206,7 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
   const ultraVisualMode = useStore(s => s.ultraVisualMode);
   const shift = useStore(s => s.shiftMode);
   const [adaptivePerf, setAdaptivePerf] = useState(false);
-  const [ultraAutoFallback, setUltraAutoFallback] = useState(false);
+  const [dynamicPenalty, setDynamicPenalty] = useState<0 | 1 | 2>(0);
   const glRef = useRef<THREE.WebGLRenderer | null>(null);
   const invalidateRef = useRef<(() => void) | null>(null);
 
@@ -201,10 +219,10 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (!ultraVisualMode || performanceMode || adaptivePerf) {
-      setUltraAutoFallback(false);
+    if (!active || performanceMode || adaptivePerf) {
+      setDynamicPenalty(0);
     }
-  }, [ultraVisualMode, performanceMode, adaptivePerf]);
+  }, [active, performanceMode, adaptivePerf]);
 
   useEffect(() => {
     const gl = glRef.current;
@@ -225,13 +243,20 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
     };
   }, [active]);
 
-  const quality = useMemo<'safe' | 'balanced' | 'cinematic' | 'ultra'>(() => {
+  const baseQuality = useMemo<QualityTier>(() => {
     if (performanceMode || adaptivePerf) return 'safe';
-    if (ultraVisualMode) return ultraAutoFallback ? 'cinematic' : 'ultra';
+    if (ultraVisualMode) return 'ultra';
     return shift === 'night' ? 'balanced' : 'cinematic';
-  }, [performanceMode, adaptivePerf, ultraVisualMode, ultraAutoFallback, shift]);
+  }, [performanceMode, adaptivePerf, ultraVisualMode, shift]);
+
+  const quality = useMemo<QualityTier>(
+    () => downgradeQuality(baseQuality, dynamicPenalty),
+    [baseQuality, dynamicPenalty],
+  );
 
   const effectivePerformance = quality === 'safe';
+  const detailLevel = quality === 'safe' ? 0 : quality === 'balanced' ? 1 : quality === 'cinematic' ? 2 : 3;
+  const targetFrameMs = quality === 'ultra' ? 16.8 : quality === 'cinematic' ? 20 : quality === 'balanced' ? 24 : 28;
   const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.25] : quality === 'ultra' ? [1.25, 2] : [1, 1.5];
   const shadowEnabled = !effectivePerformance;
   const antialiasEnabled = !effectivePerformance;
@@ -272,17 +297,18 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
 
       <CameraController />
       {active && <SimTicker />}
-      <FrameRateGuard
-        enabled={active && ultraVisualMode && !performanceMode && !adaptivePerf}
-        onLowFps={() => setUltraAutoFallback(true)}
-        onRecovered={() => setUltraAutoFallback(false)}
+      <PerformanceBudgetGuard
+        enabled={active && !performanceMode && !adaptivePerf}
+        targetFrameMs={targetFrameMs}
+        onPenaltyIncrease={() => setDynamicPenalty(p => (p < 2 ? ((p + 1) as 0 | 1 | 2) : p))}
+        onPenaltyDecrease={() => setDynamicPenalty(p => (p > 0 ? ((p - 1) as 0 | 1 | 2) : p))}
       />
 
       {/* Lighting */}
       <CinematicLighting performanceOverride={effectivePerformance} quality={quality} />
 
       {/* Environment shell */}
-      <WarehouseEnvironment />
+      <WarehouseEnvironment detailLevel={detailLevel} />
 
       {/* Operator station */}
       <ControlDesk />
@@ -294,9 +320,9 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
         <DecantingStations />
         <AutoStoreRig />
         <PalletizerRig />
-        <AMRFleet />
-        <IndustrialDetails />
-        {!effectivePerformance && <DustParticles />}
+        <AMRFleet detailLevel={detailLevel} />
+        <IndustrialDetails detailLevel={detailLevel} />
+        {detailLevel >= 2 && <DustParticles />}
       </Suspense>
 
       {/* Postprocessing – NO DOF, NO ChromaticAberration */}

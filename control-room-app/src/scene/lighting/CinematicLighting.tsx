@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
@@ -20,6 +20,9 @@ export function CinematicLighting({
 }) {
   const shift = useStore(s => s.shiftMode);
   const emergency = useStore(s => s.emergencyStop);
+  const incidents = useStore(s => s.incidents);
+  const conveyorJam = useStore(s => s.conveyorJam);
+  const depalletizerFault = useStore(s => s.depalletizerFault);
   const performanceMode = useStore(s => s.performanceMode);
   const effectivePerformance = performanceOverride ?? performanceMode;
   const balanced = quality === 'balanced';
@@ -27,17 +30,37 @@ export function CinematicLighting({
   const ultra = quality === 'ultra';
   const safe = quality === 'safe';
 
+  const incidentSignal = useMemo(() => {
+    const recent = incidents.slice(0, 10);
+    let score = 0;
+    for (const inc of recent) {
+      if (inc.acknowledged) continue;
+      if (inc.severity === 'critical') score += 0.22;
+      else if (inc.severity === 'warning') score += 0.12;
+      else score += 0.05;
+    }
+    if (conveyorJam) score += 0.34;
+    if (depalletizerFault) score += 0.28;
+    return Math.min(1, score);
+  }, [incidents, conveyorJam, depalletizerFault]);
+
   const mainRef = useRef<THREE.DirectionalLight>(null!);
   const fillRef = useRef<THREE.DirectionalLight>(null!);
   const bounceFillRef = useRef<THREE.DirectionalLight>(null!);
   const ambRef = useRef<THREE.AmbientLight>(null!);
   const rimRef = useRef<THREE.SpotLight>(null!);
   const accentRefs = useRef<THREE.PointLight[]>([]);
+  const eventMixRef = useRef(0);
+  const eventFillRef = useRef<THREE.PointLight>(null!);
+  const eventWashRef = useRef<THREE.SpotLight>(null!);
 
   useFrame(({ clock }) => {
     if (!mainRef.current || !ambRef.current) return;
     const isNight = shift === 'night';
     const t = clock.getElapsedTime();
+    const pulse = (Math.sin(t * 8) + 1) * 0.5;
+    const targetEventMix = emergency ? 1 : incidentSignal;
+    eventMixRef.current += (targetEventMix - eventMixRef.current) * 0.08;
 
     // Ambient — deeper night, warmer day
     const tAmb = emergency ? 0.12 : isNight ? (ultra ? 0.22 : cinematic ? 0.2 : 0.16) : ultra ? 0.56 : cinematic ? 0.5 : 0.4;
@@ -71,9 +94,25 @@ export function CinematicLighting({
     accentRefs.current.forEach((light, i) => {
       if (!light) return;
       const phase = t * (0.3 + i * 0.07) + i * 1.2;
-      const pulse = 1 + Math.sin(phase) * 0.08;
-      light.intensity = (emergency ? 0.2 : isNight ? (ultra ? 0.22 : 0.18) : ultra ? 0.48 : cinematic ? 0.42 : 0.3) * pulse;
+      const accentPulse = 1 + Math.sin(phase) * 0.08;
+      const eventBoost = 1 + eventMixRef.current * 0.45 + pulse * eventMixRef.current * 0.2;
+      light.intensity = (emergency ? 0.2 : isNight ? (ultra ? 0.22 : 0.18) : ultra ? 0.48 : cinematic ? 0.42 : 0.3) * accentPulse * eventBoost;
+      if (eventMixRef.current > 0.02 && !emergency) {
+        light.color.lerp(new THREE.Color(conveyorJam || depalletizerFault ? '#ff5638' : '#ff9f43'), eventMixRef.current * 0.05);
+      }
     });
+
+    if (eventFillRef.current) {
+      const eventIntensity = eventMixRef.current * (0.15 + pulse * 0.45);
+      eventFillRef.current.intensity = eventIntensity;
+      eventFillRef.current.color.set(conveyorJam || depalletizerFault || emergency ? '#ff422f' : '#ffb55c');
+    }
+
+    if (eventWashRef.current) {
+      const eventIntensity = eventMixRef.current * (0.08 + pulse * 0.3);
+      eventWashRef.current.intensity = eventIntensity;
+      eventWashRef.current.color.set(conveyorJam || depalletizerFault || emergency ? '#ff3a2f' : '#ffb76c');
+    }
   });
 
   const isNight = shift === 'night';
@@ -169,6 +208,26 @@ export function CinematicLighting({
         intensity={isNight ? 0.1 : 0.35}
         color="#7090c0"
         distance={18}
+        castShadow={false}
+      />
+
+      {/* ── Event-driven reactive lights (incidents/jam/fault) ── */}
+      <pointLight
+        ref={eventFillRef}
+        position={[0, 2.4, 0]}
+        intensity={0}
+        color="#ff8d58"
+        distance={16}
+        decay={2}
+      />
+      <spotLight
+        ref={eventWashRef}
+        position={[0, 4.6, 4.4]}
+        angle={0.6}
+        penumbra={0.7}
+        intensity={0}
+        color="#ff8d58"
+        distance={20}
         castShadow={false}
       />
 

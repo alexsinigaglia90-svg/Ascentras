@@ -5,9 +5,11 @@ import { useStore } from '../state/store';
 import { Conduit } from './props/Cable';
 
 /** Museum-grade warehouse environment with PBR surfaces */
-export function WarehouseEnvironment() {
+export function WarehouseEnvironment({ detailLevel = 2 }: { detailLevel?: number }) {
   const shift = useStore(s => s.shiftMode);
   const emergency = useStore(s => s.emergencyStop);
+  const highDetail = detailLevel >= 2;
+  const ultraDetail = detailLevel >= 3;
 
   return (
     <group>
@@ -442,6 +444,52 @@ export function WarehouseEnvironment() {
         <mesh key={`fled${z}`} position={[-6.9, 0.03, z]} rotation={[0, Math.PI * 0.5, 0]}>
           <boxGeometry args={[0.6, 0.01, 0.01]} />
           <meshBasicMaterial color="#304858" />
+        </mesh>
+      ))}
+
+      {/* ── Micro-surface details for realism ── */}
+      {highDetail && <TireScuffs />}
+      {ultraDetail && <FloorOilStains />}
+    </group>
+  );
+}
+
+function TireScuffs() {
+  const marks: Array<{ pos: [number, number, number]; size: [number, number]; rot: number; opacity: number }> = [
+    { pos: [-5.4, 0.004, -1.5], size: [0.7, 0.1], rot: 0.2, opacity: 0.12 },
+    { pos: [-3.1, 0.004, -0.8], size: [0.8, 0.12], rot: -0.35, opacity: 0.1 },
+    { pos: [-0.8, 0.004, 2.2], size: [1.0, 0.14], rot: 0.1, opacity: 0.09 },
+    { pos: [2.1, 0.004, 0.8], size: [0.9, 0.11], rot: -0.45, opacity: 0.11 },
+    { pos: [4.8, 0.004, -0.6], size: [1.1, 0.15], rot: 0.3, opacity: 0.1 },
+    { pos: [6.4, 0.004, 1.8], size: [0.8, 0.1], rot: -0.2, opacity: 0.08 },
+  ];
+
+  return (
+    <group>
+      {marks.map((mark, i) => (
+        <mesh key={`scuff-${i}`} position={mark.pos} rotation={[-Math.PI * 0.5, mark.rot, 0]}>
+          <planeGeometry args={mark.size} />
+          <meshStandardMaterial color="#202226" transparent opacity={mark.opacity} roughness={1} metalness={0} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function FloorOilStains() {
+  const stains: Array<{ pos: [number, number, number]; radius: number; opacity: number }> = [
+    { pos: [-4.8, 0.0035, 2.8], radius: 0.22, opacity: 0.1 },
+    { pos: [-1.6, 0.0035, -2.6], radius: 0.3, opacity: 0.09 },
+    { pos: [1.9, 0.0035, 3.1], radius: 0.26, opacity: 0.085 },
+    { pos: [5.9, 0.0035, -1.9], radius: 0.24, opacity: 0.08 },
+  ];
+
+  return (
+    <group>
+      {stains.map((stain, i) => (
+        <mesh key={`stain-${i}`} position={stain.pos} rotation={[-Math.PI * 0.5, i * 0.5, 0]}>
+          <circleGeometry args={[stain.radius, 18]} />
+          <meshStandardMaterial color="#1b1e24" transparent opacity={stain.opacity} roughness={1} metalness={0} />
         </mesh>
       ))}
     </group>
