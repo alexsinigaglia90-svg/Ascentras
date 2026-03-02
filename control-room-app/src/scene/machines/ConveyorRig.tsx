@@ -1,297 +1,304 @@
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../../state/store';
 import { Cable } from '../props/Cable';
+import * as M from '../materials/materialPresets';
+import { SafetyBeacon, StatusLED, LightStack } from '../props/BeaconsAndIndicators';
+import { WarningLabel, Nameplate, BarcodeTag } from '../props/DecalsAndLabels';
+import { Fasteners } from '../props/Fasteners';
 
 /** ────────────────────────────────────────────────────
- *  Conveyor Rig — 20-segment animated belt with side
- *  rails, support legs, sensors, divert gate, motor,
- *  packages, cable runs.
- *  Added: cable tray, proximity sensors, guard rail,
- *  belt tension indicator, extra motor detail.
+ *  Conveyor Rig — Roller conveyor with instanced
+ *  rollers, steel side rails, support legs with cross
+ *  members, drive motor housings, photoelectric sensors,
+ *  divert mechanism (pneumatic pusher), packages with
+ *  believable movement, cable tray, e-stop, decals.
  *  ──────────────────────────────────────────────────── */
+
+const ROLLER_COUNT = 40;
+const ROLLER_SPACING = 0.16;
+const BELT_LEN = ROLLER_COUNT * ROLLER_SPACING;
+const BELT_WIDTH = 0.45;
+
 export function ConveyorRig() {
   const groupRef = useRef<THREE.Group>(null!);
-  const segRef = useRef<THREE.Mesh[]>([]);
+  const rollerMeshRef = useRef<THREE.InstancedMesh>(null!);
+
   const running = useStore(s => s.conveyorRunning);
   const jam = useStore(s => s.conveyorJam);
   const divert = useStore(s => s.conveyorDivert);
   const emergency = useStore(s => s.emergencyStop);
 
-  const segCount = 20;
-  const segWidth = 0.35;
+  const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  useFrame((_, delta) => {
-    if (!groupRef.current) return;
+  useFrame(() => {
+    if (!rollerMeshRef.current) return;
+    const time = performance.now() * 0.001;
     const active = running && !jam && !emergency;
-    segRef.current.forEach((seg, i) => {
-      if (!seg) return;
-      if (active) {
-        seg.position.x -= delta * 1.5;
-        if (seg.position.x < -segCount * segWidth * 0.5) {
-          seg.position.x += segCount * segWidth;
-        }
-      }
-      if (jam) {
-        seg.position.y = Math.sin(performance.now() * 0.02 + i) * 0.01;
-      } else {
-        seg.position.y = 0;
-      }
-    });
+
+    for (let i = 0; i < ROLLER_COUNT; i++) {
+      const x = (i - ROLLER_COUNT / 2) * ROLLER_SPACING;
+      const jitter = jam ? Math.sin(time * 15 + i) * 0.005 : 0;
+      dummy.position.set(x, 0, 0);
+      dummy.rotation.set(active ? time * 8 : 0, 0, 0); // spin rollers
+      dummy.position.y = jitter;
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      rollerMeshRef.current.setMatrixAt(i, dummy.matrix);
+    }
+    rollerMeshRef.current.instanceMatrix.needsUpdate = true;
   });
+
+  // Leg positions along belt
+  const legXs = useMemo(() => {
+    const arr: number[] = [];
+    for (let i = 0; i < 6; i++) arr.push(-BELT_LEN / 2 + 0.5 + i * (BELT_LEN - 1) / 5);
+    return arr;
+  }, []);
 
   return (
     <group ref={groupRef} position={[-2, 0.35, 2]}>
-      {/* ── Belt frame ── */}
-      <mesh position={[0, -0.06, 0]} castShadow receiveShadow>
-        <boxGeometry args={[segCount * segWidth, 0.06, 0.92]} />
-        <meshPhysicalMaterial color="#3a3f48" roughness={0.6} metalness={0.5} clearcoat={0.1} clearcoatRoughness={0.7} />
-      </mesh>
 
-      {/* ── Support legs with cross-braces ── */}
-      {[-2.5, -0.5, 1.5, 3.0].map((x, i) => (
+      {/* ══════════ SIDE RAILS ══════════ */}
+      {[-BELT_WIDTH - 0.02, BELT_WIDTH + 0.02].map((z, i) => (
+        <group key={`rail${i}`}>
+          {/* Main rail C-channel */}
+          <mesh position={[0, 0.03, z]} castShadow>
+            <boxGeometry args={[BELT_LEN + 0.1, 0.05, 0.025]} />
+            <meshPhysicalMaterial {...M.paintedSteel} />
+          </mesh>
+          {/* Top lip */}
+          <mesh position={[0, 0.058, z + (i === 0 ? 0.015 : -0.015)]}>
+            <boxGeometry args={[BELT_LEN + 0.1, 0.008, 0.015]} />
+            <meshPhysicalMaterial {...M.machinedSteel} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* ══════════ INSTANCED ROLLERS ══════════ */}
+      <instancedMesh ref={rollerMeshRef} args={[undefined, undefined, ROLLER_COUNT]} castShadow>
+        <cylinderGeometry args={[0.016, 0.016, BELT_WIDTH * 2, 8]} />
+        <meshPhysicalMaterial {...M.machinedSteel} />
+      </instancedMesh>
+
+      {/* ══════════ SUPPORT LEGS + CROSS MEMBERS ══════════ */}
+      {legXs.map((x, i) => (
         <group key={`leg${i}`}>
-          <mesh position={[x, -0.2, -0.4]} castShadow>
-            <boxGeometry args={[0.04, 0.35, 0.04]} />
-            <meshPhysicalMaterial color="#4a5060" metalness={0.6} roughness={0.35} />
-          </mesh>
-          <mesh position={[x, -0.2, 0.4]} castShadow>
-            <boxGeometry args={[0.04, 0.35, 0.04]} />
-            <meshPhysicalMaterial color="#4a5060" metalness={0.6} roughness={0.35} />
-          </mesh>
-          {/* Cross brace */}
-          <mesh position={[x, -0.3, 0]}>
-            <boxGeometry args={[0.025, 0.025, 0.75]} />
-            <meshStandardMaterial color="#4a5060" metalness={0.5} roughness={0.4} />
-          </mesh>
-          {/* Foot pads */}
-          {[-0.4, 0.4].map((z, zi) => (
-            <mesh key={zi} position={[x, -0.38, z]}>
-              <cylinderGeometry args={[0.025, 0.03, 0.01, 8]} />
-              <meshPhysicalMaterial color="#4a4a50" metalness={0.5} roughness={0.5} />
-            </mesh>
+          {/* Front + back legs */}
+          {[-BELT_WIDTH - 0.03, BELT_WIDTH + 0.03].map((z, zi) => (
+            <group key={`lp${zi}`}>
+              <mesh position={[x, -0.18, z]} castShadow>
+                <boxGeometry args={[0.03, 0.36, 0.03]} />
+                <meshPhysicalMaterial {...M.paintedSteel} />
+              </mesh>
+              {/* Adjustable foot pad */}
+              <mesh position={[x, -0.365, z]}>
+                <cylinderGeometry args={[0.022, 0.028, 0.008, 8]} />
+                <meshPhysicalMaterial {...M.castIron} />
+              </mesh>
+            </group>
           ))}
+          {/* Cross member */}
+          <mesh position={[x, -0.28, 0]}>
+            <boxGeometry args={[0.02, 0.02, BELT_WIDTH * 2 + 0.06]} />
+            <meshPhysicalMaterial {...M.paintedSteel} />
+          </mesh>
+          {/* Diagonal brace (every other leg) */}
+          {i % 2 === 0 && (
+            <mesh position={[x, -0.18, 0]} rotation={[0.35, 0, 0]}>
+              <boxGeometry args={[0.012, 0.3, 0.012]} />
+              <meshPhysicalMaterial {...M.paintedSteel} />
+            </mesh>
+          )}
         </group>
       ))}
 
-      {/* ── Roller segments ── */}
-      {Array.from({ length: segCount }).map((_, i) => (
-        <mesh
-          key={i}
-          ref={el => { if (el) segRef.current[i] = el; }}
-          position={[(i - segCount / 2) * segWidth, 0, 0]}
-          castShadow
-        >
-          <boxGeometry args={[segWidth - 0.02, 0.025, 0.82]} />
-          <meshPhysicalMaterial
-            color={jam ? '#8a4040' : running && !emergency ? '#5a6a58' : '#4a4a4a'}
-            roughness={0.55}
-            metalness={0.35}
-            clearcoat={0.05}
-            clearcoatRoughness={0.8}
-          />
+      {/* ══════════ END ROLLERS (larger) ══════════ */}
+      {[-BELT_LEN / 2 - 0.02, BELT_LEN / 2 + 0.02].map((x, i) => (
+        <mesh key={`end${i}`} position={[x, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.03, 0.03, BELT_WIDTH * 2, 12]} />
+          <meshPhysicalMaterial {...M.machinedSteel} />
         </mesh>
       ))}
 
-      {/* ── Side rails with top cap ── */}
-      {[-0.48, 0.48].map(z => (
-        <group key={`rail${z}`}>
-          <mesh position={[0, 0.06, z]} castShadow>
-            <boxGeometry args={[segCount * segWidth, 0.12, 0.035]} />
-            <meshPhysicalMaterial color="#4a5060" roughness={0.4} metalness={0.6} clearcoat={0.15} clearcoatRoughness={0.5} />
-          </mesh>
-          <mesh position={[0, 0.125, z]}>
-            <boxGeometry args={[segCount * segWidth, 0.015, 0.05]} />
-            <meshPhysicalMaterial color="#555d68" roughness={0.35} metalness={0.65} />
-          </mesh>
-        </group>
-      ))}
-
-      {/* ── Cable tray under belt ── */}
-      <mesh position={[0, -0.12, 0]}>
-        <boxGeometry args={[segCount * segWidth * 0.8, 0.02, 0.3]} />
-        <meshPhysicalMaterial color="#3a3f48" metalness={0.5} roughness={0.5} />
-      </mesh>
-      {/* Tray side walls */}
-      {[-0.15, 0.15].map((z, i) => (
-        <mesh key={i} position={[0, -0.1, z]}>
-          <boxGeometry args={[segCount * segWidth * 0.8, 0.04, 0.01]} />
-          <meshPhysicalMaterial color="#3a3f48" metalness={0.5} roughness={0.5} />
-        </mesh>
-      ))}
-
-      {/* ── Photoelectric sensors ── */}
-      {[-2, 0, 2].map((x, i) => (
-        <group key={`sensor${i}`}>
-          <mesh position={[x, 0.18, -0.5]}>
-            <boxGeometry args={[0.04, 0.04, 0.03]} />
-            <meshPhysicalMaterial color="#2a2a2a" roughness={0.3} metalness={0.6} />
-          </mesh>
-          <mesh position={[x, 0.18, -0.515]}>
-            <sphereGeometry args={[0.008, 6, 6]} />
-            <meshBasicMaterial color={running && !emergency ? '#40ff40' : '#604040'} />
-          </mesh>
-          {/* Mounting bracket */}
-          <mesh position={[x, 0.15, -0.49]}>
-            <boxGeometry args={[0.05, 0.01, 0.02]} />
-            <meshStandardMaterial color="#4a4a50" metalness={0.5} roughness={0.4} />
-          </mesh>
-          <mesh position={[x, 0.18, 0.5]}>
-            <boxGeometry args={[0.03, 0.03, 0.02]} />
-            <meshPhysicalMaterial color="#e0e0e0" roughness={0.1} metalness={0.8} />
-          </mesh>
-        </group>
-      ))}
-
-      {/* ── Proximity sensors (inductive, flush mount) ── */}
-      {[-1, 1].map((x, i) => (
-        <mesh key={`prox${i}`} position={[x, 0.015, 0.44]} rotation={[Math.PI * 0.5, 0, 0]}>
-          <cylinderGeometry args={[0.012, 0.012, 0.02, 8]} />
-          <meshPhysicalMaterial color="#2a2a3a" metalness={0.6} roughness={0.3} />
-        </mesh>
-      ))}
-
-      {/* ── Divert gate ── */}
-      <group position={[1, 0.1, divert ? 0.6 : 0]} rotation={[0, divert ? Math.PI * 0.15 : 0, 0]}>
+      {/* ══════════ DRIVE MOTOR (head end) ══════════ */}
+      <group position={[-BELT_LEN / 2 - 0.12, -0.06, 0]}>
+        {/* Motor body */}
         <mesh castShadow>
-          <boxGeometry args={[0.6, 0.2, 0.04]} />
-          <meshPhysicalMaterial
-            color={divert ? '#c8a96e' : '#5a6370'}
-            roughness={0.4}
-            metalness={0.5}
-            clearcoat={0.2}
-            clearcoatRoughness={0.4}
-          />
+          <boxGeometry args={[0.16, 0.14, 0.18]} />
+          <meshPhysicalMaterial {...M.paintedSteel} />
         </mesh>
-        <mesh position={[-0.32, -0.05, 0]}>
-          <cylinderGeometry args={[0.02, 0.02, 0.15, 6]} />
-          <meshPhysicalMaterial color="#5a6370" metalness={0.7} roughness={0.3} />
-        </mesh>
-      </group>
-
-      {/* ── End rollers ── */}
-      {[-segCount * segWidth * 0.5, segCount * segWidth * 0.5].map((x, i) => (
-        <mesh key={`end${i}`} position={[x, 0, 0]} rotation={[0, 0, Math.PI * 0.5]}>
-          <cylinderGeometry args={[0.04, 0.04, 0.82, 12]} />
-          <meshPhysicalMaterial color="#6a6e78" metalness={0.7} roughness={0.25} />
-        </mesh>
-      ))}
-
-      {/* ── Belt tension indicator ── */}
-      <group position={[segCount * segWidth * 0.5 - 0.15, -0.05, -0.49]}>
-        <mesh>
-          <boxGeometry args={[0.06, 0.04, 0.02]} />
-          <meshPhysicalMaterial color="#4a5060" metalness={0.5} roughness={0.4} />
-        </mesh>
-        <mesh position={[0, 0, -0.011]}>
-          <planeGeometry args={[0.04, 0.025]} />
-          <meshStandardMaterial color="#e0e0d0" roughness={0.3} metalness={0.5} />
-        </mesh>
-      </group>
-
-      {/* ── Warning label ── */}
-      <mesh position={[-3.2, 0.04, -0.5]} rotation={[0, Math.PI * 0.5, 0]}>
-        <planeGeometry args={[0.12, 0.06]} />
-        <meshStandardMaterial color="#c8a020" emissive="#c8a020" emissiveIntensity={0.04} roughness={0.5} />
-      </mesh>
-
-      {/* ── E-stop on frame ── */}
-      <group position={[3.3, 0.1, -0.5]}>
-        <mesh>
-          <cylinderGeometry args={[0.025, 0.025, 0.02, 8]} />
-          <meshPhysicalMaterial color="#c03030" roughness={0.3} metalness={0.3} clearcoat={0.6} clearcoatRoughness={0.2} />
-        </mesh>
-        <mesh>
-          <cylinderGeometry args={[0.03, 0.03, 0.015, 8]} />
-          <meshStandardMaterial color="#c8c020" roughness={0.4} metalness={0.3} />
-        </mesh>
-        {/* E-stop label */}
-        <mesh position={[0, -0.025, 0]}>
-          <planeGeometry args={[0.04, 0.02]} />
-          <meshStandardMaterial color="#c04040" roughness={0.5} />
-        </mesh>
-      </group>
-
-      {/* ── Cable runs ── */}
-      <Cable
-        points={[[-3.5, -0.38, -0.45], [-3.5, -0.15, -0.5], [-3.5, 0.05, -0.5]]}
-        radius={0.012}
-        color="#2a2a2a"
-      />
-      <Cable
-        points={[[3.2, -0.38, -0.45], [3.2, -0.15, -0.5], [3.2, 0.05, -0.5]]}
-        radius={0.01}
-        color="#2a3a40"
-      />
-      <Cable
-        points={[[-2, 0.18, -0.52], [-1, 0.16, -0.52], [0, 0.17, -0.52], [1, 0.16, -0.52], [2, 0.18, -0.52]]}
-        radius={0.005}
-        color="#3a3050"
-      />
-
-      {/* ── Motor housing ── */}
-      <group position={[-3.5, -0.1, 0]}>
-        <mesh castShadow>
-          <boxGeometry args={[0.18, 0.15, 0.2]} />
-          <meshPhysicalMaterial color="#4a5060" roughness={0.4} metalness={0.6} />
-        </mesh>
-        {/* Ventilation fins */}
-        {[-0.06, -0.03, 0, 0.03, 0.06].map((y, i) => (
-          <mesh key={`fin${i}`} position={[-0.091, y, 0]}>
-            <boxGeometry args={[0.003, 0.01, 0.18]} />
+        {/* Cooling fins */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <mesh key={`fin${i}`} position={[-0.081, -0.05 + i * 0.02, 0]}>
+            <boxGeometry args={[0.003, 0.008, 0.16]} />
             <meshStandardMaterial color="#3a4050" metalness={0.5} roughness={0.4} />
           </mesh>
         ))}
-        {/* Drive shaft */}
-        <mesh position={[0.1, 0, 0]} rotation={[0, 0, Math.PI * 0.5]}>
-          <cylinderGeometry args={[0.015, 0.015, 0.05, 8]} />
-          <meshPhysicalMaterial color="#8a8a8a" metalness={0.85} roughness={0.15} />
+        {/* Drive shaft coupling */}
+        <mesh position={[0.08, 0.03, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.018, 0.018, 0.04, 8]} />
+          <meshPhysicalMaterial {...M.machinedSteel} />
         </mesh>
-        <mesh position={[0.091, 0, 0]}>
-          <planeGeometry args={[0.08, 0.06]} />
-          <meshPhysicalMaterial color="#c8c8c0" roughness={0.3} metalness={0.7} />
+        {/* Shaft guard */}
+        <mesh position={[0.1, 0.03, 0]}>
+          <boxGeometry args={[0.04, 0.06, 0.06]} />
+          <meshPhysicalMaterial color="#c8a020" roughness={0.4} metalness={0.4} transparent opacity={0.5} />
         </mesh>
-        <mesh position={[0.091, 0.05, 0.05]}>
-          <sphereGeometry args={[0.006, 6, 6]} />
-          <meshBasicMaterial color={running && !emergency ? '#40c040' : '#604040'} />
+        {/* Motor nameplate */}
+        <Nameplate position={[0, 0.02, 0.091]} rotation={[0, 0, 0]} width={0.06} height={0.02} />
+        {/* Status LED */}
+        <StatusLED position={[0.081, 0.05, 0.06]} color="#00ff44" on={running && !emergency} />
+        <StatusLED position={[0.081, 0.05, -0.06]} color="#ff2020" on={jam} />
+      </group>
+
+      {/* ══════════ TAIL MOTOR/TENSIONER ══════════ */}
+      <group position={[BELT_LEN / 2 + 0.08, -0.04, 0]}>
+        <mesh>
+          <boxGeometry args={[0.08, 0.06, 0.12]} />
+          <meshPhysicalMaterial {...M.paintedSteel} />
+        </mesh>
+        {/* Tension adjustment screw */}
+        <mesh position={[0, 0, 0.065]}>
+          <cylinderGeometry args={[0.006, 0.006, 0.04, 6]} />
+          <meshPhysicalMaterial {...M.machinedSteel} />
         </mesh>
       </group>
 
-      {/* ── Packages on belt ── */}
-      {running && !emergency && !jam && [0, 1.5, 3, 4.5].map((offset, i) => (
-        <PackageBox key={i} offset={offset} index={i} />
+      {/* ══════════ PHOTOELECTRIC SENSORS ══════════ */}
+      {[-2, 0, 2, BELT_LEN / 2 - 0.5].map((x, i) => (
+        <group key={`pe${i}`}>
+          {/* Emitter */}
+          <mesh position={[x, 0.08, -BELT_WIDTH - 0.05]}>
+            <boxGeometry args={[0.035, 0.035, 0.025]} />
+            <meshPhysicalMaterial {...M.blackPlastic} />
+          </mesh>
+          <StatusLED position={[x, 0.08, -BELT_WIDTH - 0.065]} color="#ff4444" on={running && !emergency} size={0.004} />
+          {/* Bracket */}
+          <mesh position={[x, 0.06, -BELT_WIDTH - 0.035]}>
+            <boxGeometry args={[0.04, 0.008, 0.015]} />
+            <meshPhysicalMaterial {...M.machinedSteel} />
+          </mesh>
+          {/* Receiver (opposite side) */}
+          <mesh position={[x, 0.08, BELT_WIDTH + 0.05]}>
+            <boxGeometry args={[0.025, 0.025, 0.02]} />
+            <meshPhysicalMaterial {...M.blackPlastic} />
+          </mesh>
+        </group>
       ))}
 
-      {/* ── Guard rail along back side ── */}
-      <mesh position={[0, 0.18, 0.55]}>
-        <boxGeometry args={[segCount * segWidth * 0.9, 0.08, 0.015]} />
-        <meshPhysicalMaterial color="#c8a020" metalness={0.4} roughness={0.4} />
+      {/* ══════════ DIVERT MECHANISM ══════════ */}
+      <group position={[1.5, 0, 0]}>
+        {/* Pusher plate */}
+        <group rotation={[0, divert ? 0.2 : 0, 0]}>
+          <mesh position={[0, 0.06, divert ? 0.3 : -BELT_WIDTH - 0.04]} castShadow>
+            <boxGeometry args={[0.5, 0.12, 0.03]} />
+            <meshPhysicalMaterial color={divert ? '#e0a020' : '#5a6370'} roughness={0.4} metalness={0.5} />
+          </mesh>
+        </group>
+        {/* Pneumatic cylinder */}
+        <mesh position={[0, 0.03, -BELT_WIDTH - 0.1]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.015, 0.015, 0.12, 8]} />
+          <meshPhysicalMaterial {...M.machinedSteel} />
+        </mesh>
+        {/* Piston rod */}
+        <mesh position={[0, 0.03, -BELT_WIDTH - 0.04 + (divert ? 0.2 : 0)]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.006, 0.006, 0.08, 6]} />
+          <meshPhysicalMaterial {...M.chrome} />
+        </mesh>
+        {/* Divert chute */}
+        {divert && (
+          <mesh position={[0.15, -0.05, BELT_WIDTH + 0.2]} rotation={[0, -0.3, 0.1]}>
+            <boxGeometry args={[0.4, 0.06, 0.25]} />
+            <meshPhysicalMaterial {...M.paintedSteel} />
+          </mesh>
+        )}
+      </group>
+
+      {/* ══════════ E-STOP ON FRAME ══════════ */}
+      <group position={[BELT_LEN / 2 - 0.3, 0.1, -BELT_WIDTH - 0.06]}>
+        <mesh>
+          <boxGeometry args={[0.04, 0.04, 0.015]} />
+          <meshPhysicalMaterial {...M.safetyYellow} />
+        </mesh>
+        <mesh position={[0, 0, -0.01]}>
+          <cylinderGeometry args={[0.015, 0.015, 0.012, 10]} />
+          <meshPhysicalMaterial {...M.safetyRed} />
+        </mesh>
+      </group>
+
+      {/* ══════════ CABLE TRAY UNDER BELT ══════════ */}
+      <group position={[0, -0.12, 0]}>
+        <mesh>
+          <boxGeometry args={[BELT_LEN * 0.85, 0.015, 0.25]} />
+          <meshPhysicalMaterial {...M.paintedSteel} />
+        </mesh>
+        {[-0.125, 0.125].map((z, i) => (
+          <mesh key={`tw${i}`} position={[0, 0.015, z]}>
+            <boxGeometry args={[BELT_LEN * 0.85, 0.03, 0.008]} />
+            <meshPhysicalMaterial {...M.paintedSteel} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* ══════════ CABLE RUNS ══════════ */}
+      <Cable
+        points={[[-BELT_LEN / 2 - 0.1, -0.35, -BELT_WIDTH - 0.05], [-BELT_LEN / 2 - 0.1, -0.1, -BELT_WIDTH - 0.06], [-BELT_LEN / 2 - 0.1, 0.05, -BELT_WIDTH - 0.05]]}
+        radius={0.01}
+        color="#2a2a2a"
+      />
+      <Cable
+        points={[[-2, 0.06, -BELT_WIDTH - 0.06], [0, 0.065, -BELT_WIDTH - 0.06], [2, 0.06, -BELT_WIDTH - 0.06]]}
+        radius={0.004}
+        color="#3a3050"
+      />
+
+      {/* ══════════ GUARD RAIL (back side) ══════════ */}
+      <mesh position={[0, 0.1, BELT_WIDTH + 0.08]}>
+        <boxGeometry args={[BELT_LEN * 0.9, 0.06, 0.012]} />
+        <meshPhysicalMaterial {...M.safetyYellow} />
       </mesh>
+
+      {/* ══════════ LIGHT STACK ══════════ */}
+      <LightStack
+        position={[-BELT_LEN / 2 - 0.12, 0.12, BELT_WIDTH + 0.1]}
+        activeIndex={jam ? 0 : running && !emergency ? 2 : 1}
+      />
+
+      {/* ══════════ DECALS ══════════ */}
+      <WarningLabel position={[-BELT_LEN / 2 + 0.3, 0.04, -BELT_WIDTH - 0.04]} rotation={[0, Math.PI / 2 + Math.PI, 0]} />
+      <BarcodeTag position={[BELT_LEN / 2 - 0.2, -0.02, -BELT_WIDTH - 0.04]} rotation={[0, -Math.PI / 2, 0]} />
+
+      {/* ══════════ PACKAGES ON BELT ══════════ */}
+      {running && !emergency && !jam && [0, 1.8, 3.6, 5.2].map((offset, i) => (
+        <PackageBox key={i} offset={offset} index={i} beltLen={BELT_LEN} />
+      ))}
     </group>
   );
 }
 
-function PackageBox({ offset, index }: { offset: number; index: number }) {
+function PackageBox({ offset, index, beltLen }: { offset: number; index: number; beltLen: number }) {
   const ref = useRef<THREE.Mesh>(null!);
-  const colors = ['#8a7a60', '#7a6850', '#6a7a60', '#8a7060'];
 
   useFrame(() => {
     if (!ref.current) return;
     const time = performance.now() * 0.001;
-    ref.current.position.x = ((time * 1.5 + offset) % 7) - 3.5;
+    ref.current.position.x = ((time * 1.2 + offset) % beltLen) - beltLen / 2;
   });
 
+  const sizes: [number, number, number][] = [
+    [0.22, 0.16, 0.2],
+    [0.18, 0.18, 0.18],
+    [0.25, 0.14, 0.22],
+    [0.2, 0.2, 0.16],
+  ];
+  const sz = sizes[index % sizes.length];
+
   return (
-    <mesh ref={ref} position={[0, 0.13, 0]} castShadow>
-      <boxGeometry args={[0.25, 0.2, 0.25]} />
-      <meshPhysicalMaterial
-        color={colors[index % colors.length]}
-        roughness={0.75}
-        metalness={0.05}
-        clearcoat={0.05}
-        clearcoatRoughness={0.9}
-      />
+    <mesh ref={ref} position={[0, 0.02 + sz[1] / 2, 0]} castShadow>
+      <boxGeometry args={sz} />
+      <meshPhysicalMaterial {...M.cardboard} />
     </mesh>
   );
 }

@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../state/store';
 import { Cable } from './props/Cable';
+import * as M from './materials/materialPresets';
 
 /** Museum-grade control desk with PBR materials, glass screens, micro-detail */
 export function ControlDesk() {
@@ -27,24 +28,18 @@ export function ControlDesk() {
       {/* ── Main desk surface ── */}
       <mesh position={[0, 0.45, -0.3]} castShadow receiveShadow>
         <boxGeometry args={[2.8, 0.06, 1.0]} />
-        <meshPhysicalMaterial
-          color="#3a3530"
-          roughness={0.6}
-          metalness={0.1}
-          clearcoat={0.3}
-          clearcoatRoughness={0.5}
-        />
+        <meshPhysicalMaterial {...M.laminate} />
       </mesh>
       {/* Desk front edge — brushed aluminum strip */}
       <mesh position={[0, 0.455, 0.18]}>
         <boxGeometry args={[2.8, 0.015, 0.04]} />
-        <meshPhysicalMaterial color="#7a7a78" roughness={0.25} metalness={0.85} />
+        <meshPhysicalMaterial {...M.brushedAluminium} />
       </mesh>
       {/* Desk legs */}
       {[[-1.3, 0.22, -0.1], [1.3, 0.22, -0.1], [-1.3, 0.22, -0.65], [1.3, 0.22, -0.65]].map(([x, y, z], i) => (
         <mesh key={`leg${i}`} position={[x, y, z]}>
           <boxGeometry args={[0.04, 0.44, 0.04]} />
-          <meshPhysicalMaterial color="#4a4a48" metalness={0.7} roughness={0.3} />
+          <meshPhysicalMaterial {...M.machinedSteel} />
         </mesh>
       ))}
 
@@ -53,26 +48,15 @@ export function ControlDesk() {
         {/* Bezel */}
         <mesh castShadow>
           <boxGeometry args={[1.2, 0.7, 0.04]} />
-          <meshPhysicalMaterial
-            color="#1a1c20"
-            roughness={0.2}
-            metalness={0.6}
-            clearcoat={0.4}
-            clearcoatRoughness={0.3}
-          />
+          <meshPhysicalMaterial {...M.darkEnclosure} />
         </mesh>
         {/* Glass screen */}
         <mesh ref={screenRef} position={[0, 0, 0.025]}>
           <planeGeometry args={[1.1, 0.6]} />
           <meshPhysicalMaterial
-            color="#0a1520"
+            {...M.screenGlass}
             emissive="#2a5a3a"
             emissiveIntensity={0.5}
-            roughness={0.05}
-            metalness={0.1}
-            clearcoat={0.8}
-            clearcoatRoughness={0.1}
-            reflectivity={0.5}
           />
         </mesh>
         {/* Screen content scanlines (subtle detail) */}
@@ -88,12 +72,12 @@ export function ControlDesk() {
         {/* Monitor stand */}
         <mesh position={[0, -0.45, -0.02]} castShadow>
           <boxGeometry args={[0.15, 0.2, 0.08]} />
-          <meshPhysicalMaterial color="#2a2a2a" metalness={0.7} roughness={0.3} />
+          <meshPhysicalMaterial {...M.darkEnclosure} />
         </mesh>
         {/* Stand base */}
         <mesh position={[0, -0.55, -0.02]}>
           <boxGeometry args={[0.3, 0.015, 0.15]} />
-          <meshPhysicalMaterial color="#2a2a2a" metalness={0.7} roughness={0.3} />
+          <meshPhysicalMaterial {...M.darkEnclosure} />
         </mesh>
         {/* Power LED on bezel */}
         <mesh position={[0.5, -0.32, 0.025]}>
@@ -113,26 +97,15 @@ export function ControlDesk() {
           {/* Bezel */}
           <mesh castShadow>
             <boxGeometry args={[0.65, 0.45, 0.03]} />
-            <meshPhysicalMaterial
-              color="#1a1c20"
-              roughness={0.2}
-              metalness={0.6}
-              clearcoat={0.4}
-              clearcoatRoughness={0.3}
-            />
+            <meshPhysicalMaterial {...M.darkEnclosure} />
           </mesh>
           {/* Glass screen */}
           <mesh position={[0, 0, 0.02]}>
             <planeGeometry args={[0.58, 0.38]} />
             <meshPhysicalMaterial
-              color="#0a1520"
+              {...M.screenGlass}
               emissive={emergency ? '#501010' : '#1a4530'}
               emissiveIntensity={0.4}
-              roughness={0.05}
-              metalness={0.1}
-              clearcoat={0.7}
-              clearcoatRoughness={0.1}
-              reflectivity={0.4}
             />
           </mesh>
           {/* Power LED */}
@@ -146,7 +119,7 @@ export function ControlDesk() {
       {/* ── Keyboard with key rows ── */}
       <mesh position={[0, 0.48, 0.0]} castShadow>
         <boxGeometry args={[0.55, 0.018, 0.2]} />
-        <meshPhysicalMaterial color="#2a2a2a" roughness={0.6} metalness={0.3} clearcoat={0.2} clearcoatRoughness={0.5} />
+        <meshPhysicalMaterial {...M.blackPlastic} />
       </mesh>
       {/* Key rows (subtle texture) */}
       {[0.06, 0.02, -0.02, -0.06].map((z, row) => (
@@ -160,7 +133,7 @@ export function ControlDesk() {
       <group position={[0.45, 0.48, 0.0]}>
         <mesh castShadow>
           <boxGeometry args={[0.07, 0.025, 0.11]} />
-          <meshPhysicalMaterial color="#2a2a2a" roughness={0.5} metalness={0.3} clearcoat={0.4} clearcoatRoughness={0.3} />
+          <meshPhysicalMaterial {...M.blackPlastic} />
         </mesh>
         {/* Scroll wheel */}
         <mesh position={[0, 0.014, -0.02]}>
