@@ -171,6 +171,151 @@
     render(activeKey);
   }
 
+  function initOperisRoleAtlas(root) {
+    const atlas = root.querySelector('[data-operis-role-atlas]');
+    if (!atlas) return;
+
+    const clusterButtons = Array.from(atlas.querySelectorAll('.operis-role-cluster'));
+    const step = atlas.querySelector('#operis-role-step');
+    const title = atlas.querySelector('#operis-role-title');
+    const copy = atlas.querySelector('#operis-role-copy');
+    const orbit = atlas.querySelector('#operis-role-orbit');
+    const count = atlas.querySelector('#operis-role-count');
+    const shuffle = atlas.querySelector('#operis-role-shuffle');
+
+    if (!clusterButtons.length || !step || !title || !copy || !orbit || !count || !shuffle) return;
+
+    const clusterLabel = {
+      ops: 'Floor & Equipment',
+      control: 'Control & Systems',
+      planning: 'Planning & Leadership'
+    };
+
+    const roleData = {
+      ops: [
+        { name: 'Team Lead Warehouse', copy: 'Stuurt het team op dagritme, safety, kwaliteit en output, met directe vertaling van target naar vloeractie.' },
+        { name: 'Supervisor Warehouse', copy: 'Borgt procesdiscipline op de vloer en schakelt direct op afwijkingen in capaciteit of doorlooptijd.' },
+        { name: 'Shift Leader', copy: 'Houdt iedere shift strak op planning met focus op productiviteit, veiligheid en voorspelbaarheid.' },
+        { name: 'Operator', copy: 'Zorgt voor stabiele uitvoer op kritieke operationele activiteiten binnen het warehouseproces.' },
+        { name: 'VNA Driver', copy: 'Levert precisie in hoogbouw en versnelt interne verplaatsingen met veiligheid als standaard.' },
+        { name: 'Quality Control', copy: 'Waarborgt uitvoerkwaliteit en reduceert herstelwerk door gerichte kwaliteitscontrole.' },
+        { name: 'Training & Warehouse Onboard Specialist', copy: 'Verhoogt instroomsnelheid en performance via gestructureerde onboarding op de werkvloer.' }
+      ],
+      control: [
+        { name: 'Control Room Manager', copy: 'Stuurt realtime operatie vanuit de control room en maakt direct impact op flow en uptime.' },
+        { name: 'Control Room Operator', copy: 'Monitort kritieke signalen en initieert snelle acties om verstoringen te voorkomen.' },
+        { name: 'Process Controller', copy: 'Beheert processtabiliteit over zones heen en vertaalt data naar directe operationele beslissingen.' },
+        { name: 'WMS Controller', copy: 'Borgt WMS-procesintegriteit en bewaakt de digitale control laag van de operatie.' },
+        { name: 'WMS Specialist', copy: 'Optimaliseert systeeminrichting en haalt structurele efficiëntie uit het WMS-landschap.' },
+        { name: 'Function Analyst', copy: 'Verbindt operatie en systeemlogica in schaalbare functionele oplossingen.' },
+        { name: 'Inventory Controller', copy: 'Houdt voorraadnauwkeurigheid hoog en voorkomt operationele frictie in replenishment.' },
+        { name: 'Stock Controller', copy: 'Stuurt op voorraadbalans en beschikbaarheid met focus op service en betrouwbaarheid.' },
+        { name: 'Slotting Specialist', copy: 'Ontwerpt slotting logica die loopafstanden verlaagt en picksnelheid verhoogt.' },
+        { name: 'CI-Engineer', copy: 'Verankert continu verbeteren in dagelijkse operatie met meetbare verbetercycli.' }
+      ],
+      planning: [
+        { name: 'Transport Planner', copy: 'Orkestreert inbound en outbound planning voor maximale leverbetrouwbaarheid.' },
+        { name: 'Workforce Planner', copy: 'Verbindt capaciteitsvraag met bezettingsplan voor stabiele operationele prestaties.' },
+        { name: 'Capacity Planner', copy: 'Bouwt scenario\'s die pieken beheersbaar maken en bottlenecks voorspelbaar oplossen.' },
+        { name: 'Production Planner', copy: 'Synchroniseert productie-output met warehouse-capaciteit voor end-to-end flow.' },
+        { name: 'Warehouse Manager', copy: 'Leidt volledige warehouse-executie met verantwoordelijkheid op resultaat, team en proces.' },
+        { name: 'Manager Logistics', copy: 'Stuurt logistieke ketenprestatie op kosten, service en schaalbaarheid.' },
+        { name: 'Operations Manager', copy: 'Levert operationeel leiderschap over meerdere teams, processen en prestatiedoelen.' },
+        { name: 'Site Manager', copy: 'Draagt end-to-end verantwoordelijkheid voor performance, veiligheid en continuïteit op site-niveau.' },
+        { name: 'Fulfillment Manager', copy: 'Optimaliseert orderafhandeling over pieken en kanalen met consistente servicelevels.' },
+        { name: 'Manager Operational Excellence', copy: 'Borgt structurele prestatieverbetering met governance, standaarden en KPI-sturing.' }
+      ]
+    };
+
+    const orbitPoints = [
+      { x: '18%', y: '18%' },
+      { x: '50%', y: '14%' },
+      { x: '82%', y: '20%' },
+      { x: '24%', y: '44%' },
+      { x: '72%', y: '42%' },
+      { x: '14%', y: '72%' },
+      { x: '44%', y: '78%' },
+      { x: '78%', y: '74%' },
+      { x: '60%', y: '58%' }
+    ];
+
+    let activeCluster = 'ops';
+    let spotlightIndex = 0;
+    let orbitOffset = 0;
+    let autoTimer = null;
+
+    function renderOrbit(items) {
+      const visible = items.slice(0, Math.min(items.length, orbitPoints.length));
+      orbit.innerHTML = visible.map((item, index) => {
+        const point = orbitPoints[(index + orbitOffset) % orbitPoints.length];
+        const active = index === spotlightIndex ? ' is-active' : '';
+        return `<span class="operis-role-chip${active}" style="--x:${point.x};--y:${point.y};--delay:${(index * 0.18).toFixed(2)}s">${item.name}</span>`;
+      }).join('');
+    }
+
+    function renderCluster(clusterKey) {
+      const safeCluster = roleData[clusterKey] ? clusterKey : 'ops';
+      activeCluster = safeCluster;
+
+      const items = roleData[safeCluster];
+      if (!items.length) return;
+
+      if (spotlightIndex >= items.length) spotlightIndex = 0;
+
+      const current = items[spotlightIndex];
+      step.textContent = `Cluster · ${clusterLabel[safeCluster]}`;
+      title.textContent = current.name;
+      copy.textContent = current.copy;
+      count.textContent = `${Object.values(roleData).reduce((sum, list) => sum + list.length, 0)} specialistische profielen beschikbaar`;
+
+      clusterButtons.forEach((button) => {
+        const selected = button.getAttribute('data-role-cluster') === safeCluster;
+        button.classList.toggle('is-active', selected);
+        button.setAttribute('aria-selected', selected ? 'true' : 'false');
+        button.tabIndex = selected ? 0 : -1;
+      });
+
+      renderOrbit(items);
+    }
+
+    function nextSpotlight() {
+      const items = roleData[activeCluster] || [];
+      if (!items.length) return;
+      spotlightIndex = (spotlightIndex + 1) % items.length;
+      orbitOffset = (orbitOffset + 1) % orbitPoints.length;
+      renderCluster(activeCluster);
+    }
+
+    function restartAutoPlay() {
+      if (autoTimer) {
+        window.clearInterval(autoTimer);
+      }
+      autoTimer = window.setInterval(nextSpotlight, 4200);
+    }
+
+    clusterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const clusterKey = button.getAttribute('data-role-cluster');
+        spotlightIndex = 0;
+        orbitOffset = 0;
+        renderCluster(clusterKey || 'ops');
+        restartAutoPlay();
+      });
+    });
+
+    shuffle.addEventListener('click', () => {
+      const items = roleData[activeCluster] || [];
+      if (!items.length) return;
+      spotlightIndex = Math.floor(Math.random() * items.length);
+      orbitOffset = (orbitOffset + 2) % orbitPoints.length;
+      renderCluster(activeCluster);
+      restartAutoPlay();
+    });
+
+    renderCluster(activeCluster);
+    restartAutoPlay();
+  }
+
   function init() {
     const root = document.getElementById('platform-journey');
     if (!root) return;
@@ -192,6 +337,7 @@
       root.classList.add('pj-enhanced');
       setWorld(root, worlds, 'ascentra');
       initGuidanceConsole(root);
+      initOperisRoleAtlas(root);
       window.requestAnimationFrame(() => {
         root.classList.add('pj-cinematic-ready');
         setRuntimeState(root, 'cinematic');

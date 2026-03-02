@@ -943,6 +943,190 @@
   outline: none;
 }
 
+.operis-role-atlas {
+  border-radius: 16px;
+  padding: 0.82rem;
+  border-color: color-mix(in srgb, var(--blue) 20%, transparent);
+}
+
+.operis-role-intro {
+  margin: -0.06rem 0 0.58rem;
+  color: rgba(28, 42, 57, 0.8);
+  font-size: 0.82rem;
+  line-height: 1.42;
+}
+
+.operis-role-clusters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.44rem;
+}
+
+.operis-role-cluster {
+  min-height: 38px;
+  min-width: 0;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, transparent);
+  background: color-mix(in srgb, #fff 88%, var(--cream) 12%);
+  color: rgba(28, 42, 57, 0.86);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  white-space: normal;
+  line-height: 1.16;
+  cursor: pointer;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.operis-role-cluster:hover,
+.operis-role-cluster:focus-visible {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--blue) 48%);
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--shadow) 54%, transparent);
+  outline: none;
+}
+
+.operis-role-cluster.is-active {
+  border-color: color-mix(in srgb, var(--brown) 52%, var(--blue) 48%);
+  box-shadow: 0 10px 18px color-mix(in srgb, var(--shadow) 58%, transparent);
+  background: color-mix(in srgb, #fff 93%, var(--cream) 7%);
+}
+
+.operis-role-stage {
+  margin-top: 0.62rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.56rem;
+  min-height: 196px;
+}
+
+.operis-role-spotlight,
+.operis-role-orbit {
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--blue) 15%, transparent);
+  background: color-mix(in srgb, #fff 84%, var(--cream) 16%);
+  position: relative;
+  overflow: hidden;
+}
+
+.operis-role-spotlight {
+  padding: 0.66rem 0.72rem;
+  display: grid;
+  align-content: start;
+  gap: 0.44rem;
+}
+
+.operis-role-step {
+  margin: 0;
+  font-size: 0.63rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(28, 42, 57, 0.66);
+}
+
+.operis-role-title {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.2;
+  color: var(--blue);
+}
+
+.operis-role-copy {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.42;
+  color: rgba(28, 42, 57, 0.82);
+  overflow-wrap: anywhere;
+}
+
+.operis-role-orbit {
+  padding: 0.58rem;
+  isolation: isolate;
+}
+
+.operis-role-orbit::before {
+  content: "";
+  position: absolute;
+  inset: -20% -8% auto;
+  height: 54%;
+  background: linear-gradient(118deg, transparent 18%, color-mix(in srgb, var(--accent) 16%, transparent) 48%, transparent 78%);
+  opacity: 0.42;
+  animation: operisOrbitSweep 11.2s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes operisOrbitSweep {
+  0% { transform: translate3d(-16%, -6%, 0); }
+  50% { transform: translate3d(12%, 4%, 0); }
+  100% { transform: translate3d(-16%, -6%, 0); }
+}
+
+.operis-role-chip {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, transparent);
+  background: color-mix(in srgb, #fff 88%, var(--cream) 12%);
+  color: rgba(28, 42, 57, 0.86);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  padding: 0.24rem 0.5rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(12, 26, 44, 0.1);
+  animation: operisChipFloat 4.4s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+.operis-role-chip.is-active {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--blue) 48%);
+  box-shadow: 0 8px 16px rgba(12, 26, 44, 0.16);
+  background: color-mix(in srgb, #fff 94%, var(--cream) 6%);
+}
+
+@keyframes operisChipFloat {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(-4px); }
+}
+
+.operis-role-foot {
+  margin-top: 0.56rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.54rem;
+}
+
+.operis-role-count {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(28, 42, 57, 0.72);
+}
+
+.operis-role-shuffle {
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--blue) 62%, var(--brown) 38%);
+  background: color-mix(in srgb, #fff 90%, var(--cream) 10%);
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.32rem 0.78rem;
+  cursor: pointer;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.operis-role-shuffle:hover,
+.operis-role-shuffle:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--brown);
+  box-shadow: 0 8px 16px color-mix(in srgb, var(--shadow) 56%, transparent);
+  outline: none;
+}
+
 .astra-map {
   margin-top: 0.6rem;
   height: 142px;
@@ -1351,6 +1535,24 @@ body.pj-lane-open .platform-journey-noise {
     min-height: 40px;
   }
 
+  .operis-role-clusters,
+  .operis-role-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .operis-role-orbit {
+    min-height: 178px;
+  }
+
+  .operis-role-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .operis-role-shuffle {
+    width: 100%;
+  }
+
   .astra-map {
     height: 126px;
   }
@@ -1403,6 +1605,10 @@ body.pj-lane-open .platform-journey-noise {
     letter-spacing: 0.09em;
   }
 
+  .operis-role-clusters {
+    grid-template-columns: 1fr;
+  }
+
   .pj-guidance-tabs {
     grid-template-columns: 1fr;
   }
@@ -1431,7 +1637,9 @@ body.pj-lane-open .platform-journey-noise {
 
   .pj-preview-shell::before,
   .pj-preview-shell::after,
-  .node {
+  .node,
+  .operis-role-orbit::before,
+  .operis-role-chip {
     animation: none;
   }
 
