@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { ControlRoomDiorama } from './scene/ControlRoomDiorama';
 import { SystemsPanel } from './components/ui/SystemsPanel';
 import { OperationsPanel } from './components/ui/OperationsPanel';
@@ -47,7 +47,54 @@ function LoadingScreen() {
 
 export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [heroInView, setHeroInView] = useState(true);
+  const [pageVisible, setPageVisible] = useState(true);
+  const heroRef = useRef<HTMLDivElement | null>(null);
   const { setCameraTarget, toggleConveyor, acknowledgeAlarm, cameraTarget } = useStore();
+
+  useEffect(() => {
+    const handleVisibility = () => setPageVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', handleVisibility);
+    handleVisibility();
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
+  useEffect(() => {
+    const heroEl = heroRef.current;
+    if (!heroEl) return;
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        entries => {
+          const entry = entries[0];
+          setHeroInView(entry.isIntersecting && entry.intersectionRatio > 0.12);
+        },
+        { threshold: [0, 0.12, 0.25, 0.5, 1] }
+      );
+
+      observer.observe(heroEl);
+      return () => observer.disconnect();
+    }
+
+    const update = () => {
+      const rect = heroEl.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const visiblePx = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+      const ratio = Math.max(0, visiblePx) / Math.max(1, rect.height);
+      setHeroInView(ratio > 0.12);
+    };
+
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  const sceneActive = heroInView && pageVisible;
 
   /* ── Keyboard shortcuts ── */
   useEffect(() => {
@@ -127,9 +174,9 @@ export default function App() {
       </a>
 
       {/* ── Hero Viewport: 3D scene + overlays ── */}
-      <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}>
+      <div ref={heroRef} style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}>
         <Suspense fallback={<LoadingScreen />}>
-          <ControlRoomDiorama />
+          <ControlRoomDiorama active={sceneActive} />
         </Suspense>
 
         <HeroOverlay />

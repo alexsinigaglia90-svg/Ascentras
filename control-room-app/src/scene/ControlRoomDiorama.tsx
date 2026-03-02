@@ -183,12 +183,14 @@ function SceneLoadingFallback() {
  *  ControlRoomDiorama – main Canvas with cinematic
  *  renderer, pushed-back fog, clean scene composition.
  *  ══════════════════════════════════════════════════════ */
-export function ControlRoomDiorama() {
+export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
   const performanceMode = useStore(s => s.performanceMode);
   const ultraVisualMode = useStore(s => s.ultraVisualMode);
   const shift = useStore(s => s.shiftMode);
   const [adaptivePerf, setAdaptivePerf] = useState(false);
   const [ultraAutoFallback, setUltraAutoFallback] = useState(false);
+  const glRef = useRef<THREE.WebGLRenderer | null>(null);
+  const invalidateRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const nav = navigator as Navigator & { deviceMemory?: number };
@@ -203,6 +205,25 @@ export function ControlRoomDiorama() {
       setUltraAutoFallback(false);
     }
   }, [ultraVisualMode, performanceMode, adaptivePerf]);
+
+  useEffect(() => {
+    const gl = glRef.current;
+    const invalidate = invalidateRef.current;
+    if (!gl || !invalidate) return;
+
+    if (!active) {
+      gl.setAnimationLoop(null);
+      return;
+    }
+
+    gl.setAnimationLoop(() => {
+      invalidate();
+    });
+
+    return () => {
+      gl.setAnimationLoop(null);
+    };
+  }, [active]);
 
   const quality = useMemo<'safe' | 'balanced' | 'cinematic' | 'ultra'>(() => {
     if (performanceMode || adaptivePerf) return 'safe';
@@ -237,17 +258,22 @@ export function ControlRoomDiorama() {
       style={{ position: 'absolute', inset: 0 }}
       frameloop="demand"
       onCreated={({ gl, invalidate }) => {
-        /* Switch to continuous rendering after first frame */
-        gl.setAnimationLoop(() => { invalidate(); });
+        glRef.current = gl;
+        invalidateRef.current = invalidate;
+        if (active) {
+          gl.setAnimationLoop(() => {
+            invalidate();
+          });
+        }
       }}
     >
       <color attach="background" args={[shift === 'night' ? '#131824' : '#dbe2ea']} />
       <fog attach="fog" args={[shift === 'night' ? '#171f31' : '#cfd6df', quality === 'ultra' ? 22 : quality === 'cinematic' ? 20 : 22, quality === 'ultra' ? 70 : quality === 'cinematic' ? 62 : 50]} />
 
       <CameraController />
-      <SimTicker />
+      {active && <SimTicker />}
       <FrameRateGuard
-        enabled={ultraVisualMode && !performanceMode && !adaptivePerf}
+        enabled={active && ultraVisualMode && !performanceMode && !adaptivePerf}
         onLowFps={() => setUltraAutoFallback(true)}
         onRecovered={() => setUltraAutoFallback(false)}
       />
@@ -274,7 +300,7 @@ export function ControlRoomDiorama() {
       </Suspense>
 
       {/* Postprocessing – NO DOF, NO ChromaticAberration */}
-      <CinematicPost quality={quality} />
+      {active && <CinematicPost quality={quality} />}
     </Canvas>
   );
 }
