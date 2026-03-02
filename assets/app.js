@@ -158,7 +158,19 @@ const i18n = {
     usecases_energy: 'Energy Optimization',
     usecases_energy_desc: 'Reduce waste, maximize uptime, sustainable operations.',
     usecases_infra: 'Critical Infrastructure',
-    usecases_infra_desc: 'Secure, resilient, and scalable for mission-critical needs.'
+    usecases_infra_desc: 'Secure, resilient, and scalable for mission-critical needs.',
+    pj_ascentra_subtitle: 'Three activities, one execution model: Ascentra (consultancy), Operis (operations), and Astra (development).',
+    pj_ascentra_b1: 'Ascentra: supply chain consultancy and operating model alignment',
+    pj_ascentra_b2: 'Operis: warehousing & logistics operations on the floor',
+    pj_ascentra_b3: 'Astra: hardware and software development for smart warehousing',
+    pj_operis_subtitle: 'Operis manages daily warehouse and logistics operations with direct steering intelligence.',
+    pj_operis_b1: 'Shift orchestration with floor-level accountability',
+    pj_operis_b2: 'Live control panels for throughput, labor, and flow',
+    pj_operis_b3: 'Standardized execution based on the Ascentra method',
+    pj_astra_subtitle: 'Astra develops hardware and software that makes warehouse automation scalable and measurable.',
+    pj_astra_b1: 'Industrial hardware and embedded control solutions',
+    pj_astra_b2: 'Warehouse software, data flows, and integrations',
+    pj_astra_b3: 'Implementations focused on ROI, continuity, and scalability'
   },
   nl: {
     nav_platform: 'Platform',
@@ -266,7 +278,19 @@ const i18n = {
     usecases_energy: 'Energie optimalisatie',
     usecases_energy_desc: 'Verminder verspilling, maximaliseer uptime, duurzame operatie.',
     usecases_infra: 'Kritieke infrastructuur',
-    usecases_infra_desc: 'Veilig, veerkrachtig en schaalbaar voor missiekritische behoeften.'
+    usecases_infra_desc: 'Veilig, veerkrachtig en schaalbaar voor missiekritische behoeften.',
+    pj_ascentra_subtitle: 'Drie activiteiten, één executiemodel: Ascentra (consultancy), Operis (operations) en Astra (development).',
+    pj_ascentra_b1: 'Ascentra: supply chain consultancy en operating model alignment',
+    pj_ascentra_b2: 'Operis: warehousing & logistics operations op de werkvloer',
+    pj_ascentra_b3: 'Astra: hard- en software development voor slimme warehousing',
+    pj_operis_subtitle: 'Operis verzorgt dagelijkse warehouse- en logistieke operatie met directe stuurinformatie.',
+    pj_operis_b1: 'Shift orchestration met floor-level accountability',
+    pj_operis_b2: 'Live control panels voor throughput, labor en flow',
+    pj_operis_b3: 'Gestandaardiseerde operatie volgens Ascentra-methodiek',
+    pj_astra_subtitle: 'Astra ontwikkelt hardware en software die warehouse-automatisering schaalbaar en meetbaar maakt.',
+    pj_astra_b1: 'Industrial hardware en embedded control-oplossingen',
+    pj_astra_b2: 'Warehouse software, dataflows en integraties',
+    pj_astra_b3: 'Implementaties met focus op ROI, continuïteit en schaalbaarheid'
   }
 };
 
