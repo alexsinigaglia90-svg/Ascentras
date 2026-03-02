@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Shield, Users, Activity, BarChart3,
   Clock, Headphones, Zap, ArrowRight,
-  CheckCircle2, Building2, Cpu, TrendingUp
+  CheckCircle2, Building2, Cpu, TrendingUp,
+  User, MapPin, Globe, Star, X
 } from 'lucide-react';
+import { profiles, domainFilters, type DomainFilter, type StaffProfile } from '../../data/profiles';
 import styles from './ScrollContent.module.css';
 
 interface FeatureCardProps {
@@ -54,9 +56,124 @@ function ProcessStep({ step, title, description }: ProcessStepProps) {
   );
 }
 
+/* ── Profiles Showcase (inline) ── */
+function ProfilesShowcase({ onRequestProfiles }: { onRequestProfiles: () => void }) {
+  const [filter, setFilter] = useState<DomainFilter>('All');
+  const [selected, setSelected] = useState<StaffProfile | null>(null);
+
+  const filtered = filter === 'All'
+    ? profiles
+    : profiles.filter(p => p.specialty.some(s => s.toLowerCase().includes(filter.toLowerCase())));
+
+  return (
+    <section className={styles.profilesSection} id="profiles-section">
+      <div className={styles.sectionInner}>
+        <span className={styles.sectionTag}>Available Profiles</span>
+        <h2 className={styles.sectionTitle}>
+          Meet our control room<br />
+          <span className={styles.titleAccent}>specialists.</span>
+        </h2>
+        <p className={styles.sectionSubtitle}>
+          Senior operators with deep expertise in mechanised warehouse environments.
+          Filter by domain, select a profile, and request directly.
+        </p>
+      </div>
+
+      {/* Filters */}
+      <div className={styles.profileFilters}>
+        {domainFilters.map(f => (
+          <button
+            key={f}
+            className={`${styles.profileFilterBtn} ${filter === f ? styles.profileFilterActive : ''}`}
+            onClick={() => setFilter(f)}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {/* Cards grid */}
+      <div className={styles.profileCards}>
+        {filtered.map(p => (
+          <button
+            key={p.id}
+            className={`${styles.profileCard} ${selected?.id === p.id ? styles.profileCardActive : ''}`}
+            onClick={() => setSelected(selected?.id === p.id ? null : p)}
+          >
+            <div className={styles.profileAvatar}>
+              <User size={28} />
+            </div>
+            <div className={styles.profileName}>{p.name}</div>
+            <div className={styles.profileRole}>{p.role}</div>
+            <div className={styles.profileTags}>
+              {p.specialty.map(s => (
+                <span key={s} className={styles.profileTag}>{s}</span>
+              ))}
+            </div>
+            <div className={styles.profileMeta}>
+              <span className={`${styles.profileDot} ${styles['dot_' + p.availability.replace(/\s+/g, '')]}`}>
+                {p.availability === 'Available' ? '●' : p.availability === 'On Assignment' ? '○' : '◐'}
+              </span>
+              <span className={styles.profileAvail}>{p.availability}</span>
+            </div>
+            <div className={styles.profileExp}>
+              <Star size={13} />
+              <span>{p.seniority} · {p.yearsExperience}y exp</span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Detail drawer */}
+      {selected && (
+        <div className={styles.profileDetail}>
+          <div className={styles.profileDetailInner}>
+            <button className={styles.profileDetailClose} onClick={() => setSelected(null)}>
+              <X size={16} />
+            </button>
+            <div className={styles.profileDetailHeader}>
+              <div className={styles.profileDetailAvatar}><User size={28} /></div>
+              <div>
+                <div className={styles.profileDetailName}>{selected.name}</div>
+                <div className={styles.profileDetailRole}>{selected.role}</div>
+              </div>
+            </div>
+            <div className={styles.profileDetailBody}>
+              <div className={styles.profileDetailRow}>
+                <Star size={14} />
+                <span>{selected.seniority} · {selected.yearsExperience} years experience</span>
+              </div>
+              <div className={styles.profileDetailRow}>
+                <Globe size={14} />
+                <span>{selected.languages.join(', ')}</span>
+              </div>
+              <div className={styles.profileDetailRow}>
+                <MapPin size={14} />
+                <span>{selected.availability}</span>
+              </div>
+              <p className={styles.profileDetailSummary}>{selected.summary}</p>
+              <div className={styles.profileDetailTags}>
+                {selected.specialty.map(s => (
+                  <span key={s} className={styles.profileTag}>{s}</span>
+                ))}
+              </div>
+              <button className={styles.profileDetailCta} onClick={onRequestProfiles}>
+                Request This Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function ScrollContent({ onRequestProfiles }: { onRequestProfiles: () => void }) {
   return (
     <div className={styles.content}>
+
+      {/* ── Section 0: Profiles Showcase ── */}
+      <ProfilesShowcase onRequestProfiles={onRequestProfiles} />
 
       {/* ── Section 1: Value Proposition ── */}
       <section className={styles.section}>

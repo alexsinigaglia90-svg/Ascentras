@@ -1,7 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { ControlRoomDiorama } from './scene/ControlRoomDiorama';
 import { SystemsPanel } from './components/ui/SystemsPanel';
-import { ProfilesDock } from './components/ui/ProfilesDock';
 import { HeroOverlay } from './components/ui/HeroOverlay';
 import { ScrollContent } from './components/ui/ScrollContent';
 import { RequestModal } from './components/ui/RequestModal';
@@ -85,36 +84,63 @@ export default function App() {
 
         <HeroOverlay />
         <SystemsPanel />
-        <ProfilesDock />
 
-        {/* Scroll indicator */}
-        <div style={{
-          position: 'absolute',
-          bottom: 14,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 15,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 6,
-          opacity: 0.5,
-          animation: 'fade-in 1s ease-out 1.5s both',
-          cursor: 'pointer',
-        }}
-          onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+        {/* Immersive CTA — smooth scroll to profiles */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 32,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 10,
+            animation: 'fade-in 1s ease-out 1s both',
+          }}
         >
-          <span style={{
-            fontSize: '0.55rem',
-            fontWeight: 500,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'var(--text-muted)',
-          }}>Scroll to explore</span>
-          <svg width="16" height="10" viewBox="0 0 16 10" fill="none" style={{ animation: 'bounce 2s infinite' }}>
-            <path d="M1 1L8 8L15 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <style>{`@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }`}</style>
+          <button
+            onClick={() => {
+              const el = document.getElementById('profiles-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{
+              padding: '14px 32px',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              fontFamily: 'var(--font-sans)',
+              background: 'rgba(255,255,255,0.88)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              color: 'var(--text)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: '100px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+              transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+              letterSpacing: '0.01em',
+              lineHeight: 1.4,
+              textAlign: 'center',
+            }}
+            onMouseEnter={e => {
+              const btn = e.currentTarget;
+              btn.style.background = 'var(--accent)';
+              btn.style.color = '#fff';
+              btn.style.boxShadow = '0 8px 32px rgba(45,106,79,0.25)';
+              btn.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={e => {
+              const btn = e.currentTarget;
+              btn.style.background = 'rgba(255,255,255,0.88)';
+              btn.style.color = 'var(--text)';
+              btn.style.boxShadow = '0 4px 24px rgba(0,0,0,0.08)';
+              btn.style.transform = 'translateY(0)';
+            }}
+          >
+            We know how to control room.<br />
+            <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Discover our available profiles &darr;</span>
+          </button>
         </div>
       </div>
 

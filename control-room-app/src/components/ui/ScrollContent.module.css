@@ -354,4 +354,313 @@
   .capGrid {
     grid-template-columns: 1fr;
   }
+
+  .profileCards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profileDetail {
+    padding: 0 16px;
+  }
+
+  .profileDetailInner {
+    padding: 24px 20px 28px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+ *  PROFILES SHOWCASE
+ *  ══════════════════════════════════════════════════════ */
+
+.profilesSection {
+  padding: 100px 24px 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Filters ── */
+.profileFilters {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.profileFilterBtn {
+  padding: 8px 20px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profileFilterBtn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.profileFilterActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(45, 106, 79, 0.25);
+}
+
+/* ── Profile Cards Grid ── */
+.profileCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.profileCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 24px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.profileCard:hover {
+  border-color: var(--accent);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+}
+
+.profileCardActive {
+  border-color: var(--accent);
+  box-shadow: 0 8px 32px rgba(45, 106, 79, 0.12);
+  transform: translateY(-4px);
+  background: var(--accent-light);
+}
+
+/* ── Profile Avatar ── */
+.profileAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-light), rgba(45, 106, 79, 0.15));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  transition: all 0.3s;
+  margin-bottom: 4px;
+}
+
+.profileCard:hover .profileAvatar {
+  background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.profileName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.profileRole {
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.profileTags {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.profileTag {
+  padding: 3px 10px;
+  font-size: 0.6rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--text-muted);
+  background: var(--bg);
+}
+
+.profileMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.profileDot {
+  font-size: 0.65rem;
+}
+
+.dot_Available { color: var(--green); }
+.dot_OnAssignment { color: var(--orange); }
+.dot_AvailablefromQ2 { color: var(--blue); }
+
+.profileAvail {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.profileExp {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.profileExp svg {
+  color: var(--gold);
+}
+
+/* ── Detail Drawer ── */
+.profileDetail {
+  padding: 0 24px;
+  animation: profile-detail-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes profile-detail-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.profileDetailInner {
+  position: relative;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 32px 32px 36px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+
+.profileDetailClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border);
+}
+
+.profileDetailClose:hover {
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.profileDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.profileDetailAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.profileDetailName {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.profileDetailRole {
+  font-size: 0.82rem;
+  color: var(--accent);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.profileDetailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profileDetailRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.profileDetailRow svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.profileDetailSummary {
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.7;
+  margin: 8px 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+
+.profileDetailTags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.profileDetailCta {
+  margin-top: 16px;
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(45, 106, 79, 0.2);
+}
+
+.profileDetailCta:hover {
+  background: var(--accent-bright);
+  box-shadow: 0 6px 24px rgba(45, 106, 79, 0.3);
+  transform: translateY(-1px);
 }
