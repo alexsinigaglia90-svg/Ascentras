@@ -27,23 +27,23 @@ export function CinematicPost() {
 
   return (
     <EffectComposer multisampling={4}>
-      {/* Ambient Occlusion — soft, NOT oppressive */}
+      {/* Ambient Occlusion — tighter radius for detailed machine geometry */}
       <N8AO
-        aoRadius={0.5}
-        intensity={1.0}
-        distanceFalloff={0.8}
+        aoRadius={0.35}
+        intensity={1.1}
+        distanceFalloff={0.7}
         quality="medium"
         halfRes={false}
         color={new THREE.Color('#1a1820')}
       />
 
-      {/* Bloom — only on emissive elements (screens, LEDs, beacons) */}
+      {/* Bloom — slightly stronger for LEDs, beacons, screen emissives */}
       <Bloom
-        intensity={0.25}
-        luminanceThreshold={0.7}
-        luminanceSmoothing={0.3}
+        intensity={0.3}
+        luminanceThreshold={0.65}
+        luminanceSmoothing={0.25}
         mipmapBlur
-        radius={0.5}
+        radius={0.6}
       />
 
       {/* Vignette — subtle frame, not overpowering */}
