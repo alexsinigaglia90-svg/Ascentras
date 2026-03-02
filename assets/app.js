@@ -158,18 +158,7 @@ const i18n = {
     usecases_energy: 'Energy Optimization',
     usecases_energy_desc: 'Reduce waste, maximize uptime, sustainable operations.',
     usecases_infra: 'Critical Infrastructure',
-    usecases_infra_desc: 'Secure, resilient, and scalable for mission-critical needs.',
-    ecosystem_kicker: 'Platform Journey',
-    ecosystem_title: 'Ascentra',
-    ecosystem_intro: 'Three specialized units, one orchestration layer for measurable results in supply chain and warehousing.',
-    ecosystem_highlight_1: 'Ascentra leads strategy and supply-chain consultancy.',
-    ecosystem_highlight_2: 'Operis executes warehousing and logistics operations.',
-    ecosystem_highlight_3: 'Astra builds hardware and software for smart warehousing.',
-    ecosystem_console_kicker: 'Ascentra Orchestration',
-    ecosystem_tab_ascentra: 'Ascentra',
-    ecosystem_tab_operis: 'Operis',
-    ecosystem_tab_astra: 'Astra',
-    ecosystem_cta_default: 'Explore Ascentra'
+    usecases_infra_desc: 'Secure, resilient, and scalable for mission-critical needs.'
   },
   nl: {
     nav_platform: 'Platform',
@@ -277,18 +266,7 @@ const i18n = {
     usecases_energy: 'Energie optimalisatie',
     usecases_energy_desc: 'Verminder verspilling, maximaliseer uptime, duurzame operatie.',
     usecases_infra: 'Kritieke infrastructuur',
-    usecases_infra_desc: 'Veilig, veerkrachtig en schaalbaar voor missiekritische behoeften.',
-    ecosystem_kicker: 'Platform Journey',
-    ecosystem_title: 'Ascentra',
-    ecosystem_intro: 'Drie gespecialiseerde onderdelen, één orchestratie-laag voor tastbare resultaten in supply chain en warehousing.',
-    ecosystem_highlight_1: 'Ascentra stuurt strategie en supply-chain consultancy.',
-    ecosystem_highlight_2: 'Operis runt warehousing en logistieke operatie.',
-    ecosystem_highlight_3: 'Astra levert hard- en software voor slimme warehouses.',
-    ecosystem_console_kicker: 'Ascentra Orchestration',
-    ecosystem_tab_ascentra: 'Ascentra',
-    ecosystem_tab_operis: 'Operis',
-    ecosystem_tab_astra: 'Astra',
-    ecosystem_cta_default: 'Explore Ascentra'
+    usecases_infra_desc: 'Veilig, veerkrachtig en schaalbaar voor missiekritische behoeften.'
   }
 };
 
@@ -386,140 +364,6 @@ function initPlatformExplorer() {
 
   const initial = explorerNav.querySelector('button[data-platform].active') || explorerNav.querySelector('button[data-platform]');
   if (initial) renderPlatform(initial.dataset.platform);
-}
-
-function initEcosystemShowcase() {
-  const module = document.querySelector('[data-ecosystem-module]');
-  if (!module) return;
-
-  const tabs = Array.from(module.querySelectorAll('.ecosystem-tab'));
-  const panel = module.querySelector('#ecosystem-panel');
-  const title = module.querySelector('#ecosystem-panel-title');
-  const description = module.querySelector('#ecosystem-panel-desc');
-  const points = module.querySelector('#ecosystem-panel-points');
-  const metrics = module.querySelector('#ecosystem-panel-metrics');
-  const cta = document.getElementById('ecosystem-link');
-
-  if (!tabs.length || !panel || !title || !description || !points || !metrics || !cta) return;
-
-  const model = {
-    en: {
-      ascentra: {
-        title: 'Supply Chain Consultancy',
-        desc: 'Ascentra translates business goals into a scalable operating model with governance and measurable execution.',
-        points: ['Operating model alignment', 'Network and process redesign', 'Execution governance'],
-        metrics: ['Strategy Alignment', 'Execution Velocity', 'ROI Control'],
-        cta: 'Explore Ascentra',
-        href: '/ascentra'
-      },
-      operis: {
-        title: 'Warehousing & Logistics Operations',
-        desc: 'Operis runs daily warehouse execution with tight control on throughput, labor, and service performance.',
-        points: ['Shift control and floor orchestration', 'Throughput and bottleneck management', 'Performance dashboards and interventions'],
-        metrics: ['Throughput Control', 'Labor Precision', 'SLA Reliability'],
-        cta: 'Explore Operis',
-        href: '/operis'
-      },
-      astra: {
-        title: 'Warehouse Hardware & Software Development',
-        desc: 'Astra engineers integrated hardware and software to automate, connect, and optimize warehouse environments.',
-        points: ['Industrial device development', 'Warehouse software architecture', 'Systems integration and deployment'],
-        metrics: ['Automation Readiness', 'System Stability', 'Scalable Delivery'],
-        cta: 'Explore Astra',
-        href: '/astra'
-      }
-    },
-    nl: {
-      ascentra: {
-        title: 'Supply Chain Consultancy',
-        desc: 'Ascentra vertaalt bedrijfsdoelen naar een schaalbaar operating model met governance en meetbare executie.',
-        points: ['Operating model alignment', 'Network- en procesherontwerp', 'Execution governance'],
-        metrics: ['Strategie Alignment', 'Executie Snelheid', 'ROI Controle'],
-        cta: 'Explore Ascentra',
-        href: '/ascentra'
-      },
-      operis: {
-        title: 'Warehousing & Logistics Operations',
-        desc: 'Operis runt de dagelijkse warehouse-executie met strakke sturing op throughput, capaciteit en service.',
-        points: ['Shift control en vloerorkestratie', 'Throughput- en bottleneck management', 'Performance dashboards en interventies'],
-        metrics: ['Throughput Control', 'Capaciteit Precisie', 'SLA Betrouwbaarheid'],
-        cta: 'Explore Operis',
-        href: '/operis'
-      },
-      astra: {
-        title: 'Hard- en Software Development',
-        desc: 'Astra bouwt geïntegreerde hard- en software om warehouses slim te automatiseren, verbinden en optimaliseren.',
-        points: ['Industrial hardware engineering', 'Warehouse software architectuur', 'Integratie en uitrol in operatie'],
-        metrics: ['Automation Readiness', 'Systeem Stabiliteit', 'Schaalbare Delivery'],
-        cta: 'Explore Astra',
-        href: '/astra'
-      }
-    }
-  };
-
-  let activeKey = 'ascentra';
-
-  function currentLang() {
-    const lang = document.documentElement.getAttribute('data-lang');
-    return lang === 'nl' ? 'nl' : 'en';
-  }
-
-  function render(nextKey) {
-    const lang = currentLang();
-    const dictionary = model[lang] || model.en;
-    const safeKey = dictionary[nextKey] ? nextKey : 'ascentra';
-    const item = dictionary[safeKey];
-
-    activeKey = safeKey;
-
-    tabs.forEach((tab) => {
-      const selected = tab.getAttribute('data-ecosystem-key') === safeKey;
-      tab.classList.toggle('is-active', selected);
-      tab.setAttribute('aria-selected', selected ? 'true' : 'false');
-      tab.tabIndex = selected ? 0 : -1;
-      if (selected) {
-        panel.setAttribute('aria-labelledby', tab.id);
-      }
-    });
-
-    title.textContent = item.title;
-    description.textContent = item.desc;
-
-    points.innerHTML = item.points.map((entry) => `<li>${entry}</li>`).join('');
-    metrics.innerHTML = item.metrics.map((entry) => `<span class="ecosystem-metric">${entry}</span>`).join('');
-
-    cta.textContent = item.cta;
-    cta.setAttribute('href', item.href);
-  }
-
-  tabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const key = tab.getAttribute('data-ecosystem-key');
-      if (!key) return;
-      render(key);
-    });
-
-    tab.addEventListener('keydown', (event) => {
-      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-      event.preventDefault();
-
-      const currentIndex = tabs.findIndex((node) => node.getAttribute('data-ecosystem-key') === activeKey);
-      const step = event.key === 'ArrowRight' ? 1 : -1;
-      const nextIndex = (currentIndex + step + tabs.length) % tabs.length;
-      const next = tabs[nextIndex];
-      const nextKey = next.getAttribute('data-ecosystem-key');
-      if (!nextKey) return;
-
-      render(nextKey);
-      next.focus({ preventScroll: true });
-    });
-  });
-
-  document.addEventListener('app:langchange', () => {
-    render(activeKey);
-  });
-
-  render(activeKey);
 }
 
 function initOperisDashboard() {
@@ -958,5 +802,4 @@ window.addEventListener('DOMContentLoaded', () => {
   initPageTransitions();
   initOperisDashboard();
   initPlatformExplorer();
-  initEcosystemShowcase();
 });
