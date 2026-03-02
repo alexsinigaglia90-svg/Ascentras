@@ -96,15 +96,32 @@
               <a class="pj-cta" href="/ascentra/" aria-label="Explore Ascentra" data-i18n="pj_cta_ascentra" data-i18n-aria="pj_cta_ascentra_aria">Explore Ascentra</a>
             </div>
             <div class="pj-preview">
-              <div class="app-window glass">
-                <header class="app-head">Ascentra Orchestration</header>
-                <div class="panel-grid">
-                  <div class="panel-card">Strategy</div>
-                  <button class="panel-card pj-branch-chip" type="button" data-lane-target="operis" aria-label="Open Operis lane">Operis</button>
-                  <button class="panel-card pj-branch-chip" type="button" data-lane-target="astra" aria-label="Open Astra lane">Astra</button>
+              <div class="app-window glass pj-guidance-window" data-pj-guidance>
+                <header class="app-head">Ascentra Orchestration Atelier</header>
+                <p class="pj-guidance-intro">Een premium route door onze drie disciplines. Selecteer een onderdeel en ontdek direct waar de impact ontstaat.</p>
+
+                <div class="pj-guidance-tabs" role="tablist" aria-label="Ascentra onderdelen">
+                  <button class="pj-guidance-tab is-active" type="button" role="tab" aria-selected="true" data-guidance-key="ascentra">Ascentra</button>
+                  <button class="pj-guidance-tab" type="button" role="tab" aria-selected="false" data-guidance-key="operis">Operis</button>
+                  <button class="pj-guidance-tab" type="button" role="tab" aria-selected="false" data-guidance-key="astra">Astra</button>
                 </div>
-                <div class="kpi-strip">
-                  <span>ROI +18%</span><span>Lead Time -23%</span><span>Uptime 99.4%</span>
+
+                <article class="pj-guidance-panel" id="pj-guidance-panel" aria-live="polite">
+                  <p class="pj-guidance-step" id="pj-guidance-step">01 · Consultancy Layer</p>
+                  <h3 class="pj-guidance-title" id="pj-guidance-title">Supply Chain Consultancy</h3>
+                  <p class="pj-guidance-copy" id="pj-guidance-copy">Van strategie naar uitvoerbaar operating model met heldere governance en tastbare resultaten.</p>
+                  <ul class="pj-guidance-list" id="pj-guidance-list">
+                    <li>Boardroom-to-floor alignment op targets en verantwoordelijkheden</li>
+                    <li>Proces- en netwerkontwerp met uitvoerbaarheid als uitgangspunt</li>
+                    <li>Programmasturing met meetbare executiekwaliteit</li>
+                  </ul>
+                  <a class="pj-guidance-link" id="pj-guidance-link" href="/ascentra/">Ontdek Ascentra</a>
+                </article>
+
+                <div class="pj-guidance-metrics" id="pj-guidance-metrics">
+                  <span class="pj-guidance-metric">Model Clarity 94<i style="--metric-value:94%"></i></span>
+                  <span class="pj-guidance-metric">Lead Time -27%<i style="--metric-value:73%"></i></span>
+                  <span class="pj-guidance-metric">Program Confidence 9.4/10<i style="--metric-value:94%"></i></span>
                 </div>
               </div>
             </div>

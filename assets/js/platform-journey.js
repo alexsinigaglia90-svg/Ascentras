@@ -45,6 +45,132 @@
     return style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0.05 && rect.width > 8 && rect.height > 8;
   }
 
+  function initGuidanceConsole(root) {
+    const consoleRoot = root.querySelector('[data-pj-guidance]');
+    if (!consoleRoot) return;
+
+    const tabs = Array.from(consoleRoot.querySelectorAll('.pj-guidance-tab'));
+    const panel = consoleRoot.querySelector('#pj-guidance-panel');
+    const step = consoleRoot.querySelector('#pj-guidance-step');
+    const title = consoleRoot.querySelector('#pj-guidance-title');
+    const copy = consoleRoot.querySelector('#pj-guidance-copy');
+    const list = consoleRoot.querySelector('#pj-guidance-list');
+    const link = consoleRoot.querySelector('#pj-guidance-link');
+    const metrics = consoleRoot.querySelector('#pj-guidance-metrics');
+
+    if (!tabs.length || !panel || !step || !title || !copy || !list || !link || !metrics) return;
+
+    const content = {
+      ascentra: {
+        step: '01 · Consultancy Layer',
+        title: 'Supply Chain Consultancy',
+        copy: 'Van strategie naar uitvoerbaar operating model met heldere governance en tastbare resultaten.',
+        points: [
+          'Boardroom-to-floor alignment op targets en verantwoordelijkheden',
+          'Proces- en netwerkontwerp met uitvoerbaarheid als uitgangspunt',
+          'Programmasturing met meetbare executiekwaliteit'
+        ],
+        cta: 'Ontdek Ascentra',
+        href: '/ascentra/',
+        metricSet: [
+          { label: 'Model Clarity 94', value: '94%' },
+          { label: 'Lead Time -27%', value: '73%' },
+          { label: 'Program Confidence 9.4/10', value: '94%' }
+        ]
+      },
+      operis: {
+        step: '02 · Operations Layer',
+        title: 'Warehousing & Logistics Operations',
+        copy: 'Operis levert operationele rust op de vloer met directe sturing op capaciteit, flow en betrouwbaarheid.',
+        points: [
+          'Realtime ritme op shifts, zones en stationbezetting',
+          'Snelle interventies op bottlenecks en SLA-risico\'s',
+          'Transparante performance voor management en teams'
+        ],
+        cta: 'Ontdek Operis',
+        href: '/operis/',
+        metricSet: [
+          { label: 'Throughput Stability 96.8%', value: '97%' },
+          { label: 'Flow Variance -19%', value: '81%' },
+          { label: 'SLA Reliability 99.1%', value: '99%' }
+        ]
+      },
+      astra: {
+        step: '03 · Engineering Layer',
+        title: 'Hard- & Software Development',
+        copy: 'Astra bouwt de technische ruggengraat voor slimme warehouses: van industrial devices tot integrale softwarelagen.',
+        points: [
+          'Industrial hardware en embedded control in productieomgevingen',
+          'Software architectuur voor data, besturing en integratie',
+          'Schaalbare implementatie met focus op continuïteit en ROI'
+        ],
+        cta: 'Ontdek Astra',
+        href: '/astra/',
+        metricSet: [
+          { label: 'Deployment Confidence 93%', value: '93%' },
+          { label: 'Integration Speed +31%', value: '82%' },
+          { label: 'Automation Readiness 9.2/10', value: '92%' }
+        ]
+      }
+    };
+
+    let activeKey = 'ascentra';
+
+    function render(nextKey) {
+      const safeKey = content[nextKey] ? nextKey : 'ascentra';
+      const item = content[safeKey];
+      activeKey = safeKey;
+
+      panel.classList.add('is-updating');
+
+      tabs.forEach((tab) => {
+        const selected = tab.getAttribute('data-guidance-key') === safeKey;
+        tab.classList.toggle('is-active', selected);
+        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+        tab.tabIndex = selected ? 0 : -1;
+      });
+
+      step.textContent = item.step;
+      title.textContent = item.title;
+      copy.textContent = item.copy;
+      list.innerHTML = item.points.map((entry) => `<li>${entry}</li>`).join('');
+      link.textContent = item.cta;
+      link.setAttribute('href', item.href);
+      metrics.innerHTML = item.metricSet.map((entry) => `
+        <span class="pj-guidance-metric">${entry.label}<i style="--metric-value:${entry.value}"></i></span>
+      `).join('');
+
+      window.setTimeout(() => {
+        panel.classList.remove('is-updating');
+      }, 180);
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const key = tab.getAttribute('data-guidance-key');
+        if (!key) return;
+        render(key);
+      });
+
+      tab.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        event.preventDefault();
+
+        const currentIndex = tabs.findIndex((node) => node.getAttribute('data-guidance-key') === activeKey);
+        const stepDir = event.key === 'ArrowRight' ? 1 : -1;
+        const nextIndex = (currentIndex + stepDir + tabs.length) % tabs.length;
+        const nextTab = tabs[nextIndex];
+        const nextKey = nextTab.getAttribute('data-guidance-key');
+        if (!nextKey) return;
+
+        render(nextKey);
+        nextTab.focus({ preventScroll: true });
+      });
+    });
+
+    render(activeKey);
+  }
+
   function init() {
     const root = document.getElementById('platform-journey');
     if (!root) return;
@@ -65,6 +191,7 @@
     try {
       root.classList.add('pj-enhanced');
       setWorld(root, worlds, 'ascentra');
+      initGuidanceConsole(root);
       window.requestAnimationFrame(() => {
         root.classList.add('pj-cinematic-ready');
         setRuntimeState(root, 'cinematic');
