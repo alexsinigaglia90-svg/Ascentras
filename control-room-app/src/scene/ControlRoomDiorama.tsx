@@ -7,6 +7,7 @@ import { StylizedWarehouse } from './StylizedWarehouse';
 import { StylizedMachines } from './StylizedMachines';
 import { LightingSetup } from './LightingSetup';
 import { AMRFleet } from './machines/AMRFleet';
+import { CinematicPost } from './post/CinematicPost';
 
 const cameraPositions: Record<string, { pos: [number, number, number]; target: [number, number, number] }> = {
   overview: { pos: [0, 6.8, 11], target: [0, 0.9, 0] },
@@ -123,8 +124,7 @@ export function ControlRoomDiorama() {
 
       <AMRFleet />
 
-      {/* fail-safe: keep scene visible even if post FX causes a blank frame on some GPUs */}
-      {false && <CinematicPost />}
+      <CinematicPost />
     </Canvas>
   );
 }

@@ -1,58 +1,25 @@
-import { useMemo } from 'react';
-import * as THREE from 'three';
-import {
-  EffectComposer,
-  Bloom,
-  Vignette,
-  N8AO,
-  ToneMapping,
-} from '@react-three/postprocessing';
-import { BlendFunction, ToneMappingMode } from 'postprocessing';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { useStore } from '../../state/store';
 
 /**
- * Stylized post-processing.
+ * Safe post-processing.
  *
- * - Subtle AO only for soft grounding
- * - Bloom only on bright emissive accents
- * - Gentle vignette
+ * - Bloom only (no AO/vignette/tone mapping) to minimize GPU compatibility issues.
  */
 export function CinematicPost() {
   const performanceMode = useStore(s => s.performanceMode);
-  const aoColor = useMemo(() => new THREE.Color('#98a8bf'), []);
 
   if (performanceMode) return null;
 
   return (
-    <EffectComposer multisampling={2}>
-      {/* Ambient Occlusion — light and clean */}
-      <N8AO
-        aoRadius={0.28}
-        intensity={0.45}
-        distanceFalloff={0.7}
-        quality="medium"
-        halfRes
-        color={aoColor}
-      />
-
-      {/* Bloom — only emissive elements should cross this threshold */}
+    <EffectComposer multisampling={0}>
       <Bloom
-        intensity={0.32}
-        luminanceThreshold={0.82}
-        luminanceSmoothing={0.2}
+        intensity={0.22}
+        luminanceThreshold={0.88}
+        luminanceSmoothing={0.18}
         mipmapBlur
-        radius={0.55}
+        radius={0.45}
       />
-
-      {/* Vignette — very soft */}
-      <Vignette
-        offset={0.26}
-        darkness={0.15}
-        blendFunction={BlendFunction.NORMAL}
-      />
-
-      {/* Tone mapping — ACES filmic for rich, cinematic colour response */}
-      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
   );
 }
