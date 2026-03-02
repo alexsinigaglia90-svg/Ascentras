@@ -1,0 +1,53 @@
+.overlay {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  text-align: center;
+  pointer-events: none;
+  animation: fade-in 1s ease-out 0.4s both;
+  width: min(600px, 90vw);
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 12px;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--brass);
+  border: 1px solid rgba(181, 154, 94, 0.3);
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  background: rgba(26, 28, 32, 0.6);
+  margin-bottom: 10px;
+}
+
+.headline {
+  font-family: var(--font-serif);
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--text);
+  margin: 0;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.subline {
+  margin: 8px 0 0;
+  font-size: clamp(0.65rem, 1.2vw, 0.78rem);
+  color: var(--text-muted);
+  line-height: 1.5;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .overlay {
+    top: 12px;
+  }
+}
