@@ -11,10 +11,19 @@ const HDRI_PATH = `${import.meta.env.BASE_URL}hdri/empty_warehouse_01_1k.hdr`;
  * Multiple bounce-simulating fills, breathing volumetric beams,
  * accent highlights for every machine zone, and floor glow.
  */
-export function CinematicLighting() {
+export function CinematicLighting({
+  performanceOverride,
+  quality = 'cinematic',
+}: {
+  performanceOverride?: boolean;
+  quality?: 'safe' | 'balanced' | 'cinematic';
+}) {
   const shift = useStore(s => s.shiftMode);
   const emergency = useStore(s => s.emergencyStop);
   const performanceMode = useStore(s => s.performanceMode);
+  const effectivePerformance = performanceOverride ?? performanceMode;
+  const balanced = quality === 'balanced';
+  const cinematic = quality === 'cinematic';
 
   const mainRef = useRef<THREE.DirectionalLight>(null!);
   const fillRef = useRef<THREE.DirectionalLight>(null!);
@@ -66,7 +75,7 @@ export function CinematicLighting() {
   });
 
   const isNight = shift === 'night';
-  const shadowSize = performanceMode ? 512 : 2048;
+  const shadowSize = effectivePerformance ? 512 : balanced ? 1024 : 2048;
 
   /* Machine zone accent colours & positions */
   const accents: { pos: [number, number, number]; color: string; dist: number }[] = [
@@ -86,7 +95,7 @@ export function CinematicLighting() {
       <Environment
         files={HDRI_PATH}
         background={false}
-        environmentIntensity={isNight ? 0.1 : 0.35}
+        environmentIntensity={isNight ? 0.1 : cinematic ? 0.35 : 0.24}
       />
 
       {/* ── Ambient base — lowered to let directional lights sculpt deeper ── */}
@@ -96,9 +105,9 @@ export function CinematicLighting() {
       <directionalLight
         ref={mainRef}
         position={[5, 14, 7]}
-        intensity={2.8}
+        intensity={cinematic ? 2.8 : 2.0}
         color="#fff4e0"
-        castShadow={!performanceMode}
+        castShadow={!effectivePerformance}
         shadow-mapSize-width={shadowSize}
         shadow-mapSize-height={shadowSize}
         shadow-camera-far={40}
@@ -108,18 +117,18 @@ export function CinematicLighting() {
         shadow-camera-bottom={-12}
         shadow-bias={-0.0002}
         shadow-normalBias={0.015}
-        shadow-radius={performanceMode ? 1 : 5}
+        shadow-radius={effectivePerformance ? 1 : balanced ? 3 : 5}
       />
 
       {/* ── Fill light — cool blue, opposite side ── */}
       <directionalLight
         ref={fillRef}
         position={[-7, 9, 5]}
-        intensity={1.3}
+        intensity={cinematic ? 1.3 : 0.95}
         color="#c0d0e8"
-        castShadow={!performanceMode}
-        shadow-mapSize-width={performanceMode ? 256 : 1024}
-        shadow-mapSize-height={performanceMode ? 256 : 1024}
+        castShadow={!effectivePerformance}
+        shadow-mapSize-width={effectivePerformance ? 256 : balanced ? 512 : 1024}
+        shadow-mapSize-height={effectivePerformance ? 256 : balanced ? 512 : 1024}
         shadow-camera-far={28}
         shadow-camera-left={-10}
         shadow-camera-right={10}
@@ -162,7 +171,7 @@ export function CinematicLighting() {
       />
 
       {/* ── Volumetric light beams — breathing opacity ── */}
-      {!performanceMode && (
+      {!effectivePerformance && cinematic && (
         <>
           <VolumetricBeam position={[-4.5, 5.5, -1]} color="#f0e8d0" intensity={0.14} width={1.0} />
           <VolumetricBeam position={[-1, 5.5, 0.5]} color="#f0e8d0" intensity={0.12} width={0.9} />
@@ -217,13 +226,13 @@ export function CinematicLighting() {
       ))}
 
       {/* ── Contact floor shadows — wider, deeper ── */}
-      {!performanceMode && (
+      {!effectivePerformance && (
         <ContactShadows
           position={[0, 0.001, 0]}
-          scale={22}
-          blur={2.5}
+          scale={balanced ? 18 : 22}
+          blur={balanced ? 2 : 2.5}
           far={5}
-          opacity={0.55}
+          opacity={balanced ? 0.44 : 0.55}
           color="#0a0810"
         />
       )}

@@ -1,4 +1,4 @@
-import { useRef, useEffect, lazy, Suspense } from 'react';
+import { useRef, useEffect, lazy, Suspense, useMemo, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -105,6 +105,24 @@ function SimTicker() {
   return null;
 }
 
+function SceneLoadingFallback() {
+  return (
+    <group>
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[14, 10]} />
+        <meshStandardMaterial color="#5f646d" roughness={0.9} metalness={0.05} />
+      </mesh>
+
+      {[[-2.2, 0.4, -1], [0, 0.4, 0], [2.2, 0.4, 1]].map((p, i) => (
+        <mesh key={i} position={p as [number, number, number]} castShadow>
+          <boxGeometry args={[1.2, 0.8, 0.8]} />
+          <meshStandardMaterial color="#7b8595" roughness={0.7} metalness={0.15} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 /* ══════════════════════════════════════════════════════
  *  ControlRoomDiorama – main Canvas with cinematic
  *  renderer, pushed-back fog, clean scene composition.
@@ -112,17 +130,37 @@ function SimTicker() {
 export function ControlRoomDiorama() {
   const performanceMode = useStore(s => s.performanceMode);
   const shift = useStore(s => s.shiftMode);
+  const [adaptivePerf, setAdaptivePerf] = useState(false);
+
+  useEffect(() => {
+    const nav = navigator as Navigator & { deviceMemory?: number };
+    const lowCore = typeof nav.hardwareConcurrency === 'number' && nav.hardwareConcurrency <= 4;
+    const lowMemory = typeof nav.deviceMemory === 'number' && nav.deviceMemory <= 4;
+    const preferReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+    setAdaptivePerf(lowCore || lowMemory || preferReducedMotion);
+  }, []);
+
+  const quality = useMemo<'safe' | 'balanced' | 'cinematic'>(() => {
+    if (performanceMode || adaptivePerf) return 'safe';
+    return shift === 'night' ? 'balanced' : 'cinematic';
+  }, [performanceMode, adaptivePerf, shift]);
+
+  const effectivePerformance = quality === 'safe';
+  const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.25] : [1, 1.5];
+  const shadowEnabled = !effectivePerformance;
+  const antialiasEnabled = !effectivePerformance;
+  const exposure = shift === 'night' ? (quality === 'safe' ? 0.8 : 0.9) : quality === 'cinematic' ? 1.55 : 1.35;
 
   return (
     <Canvas
       camera={{ position: [0, 6, 10], fov: 45, near: 0.1, far: 100 }}
-      shadows={!performanceMode}
-      dpr={performanceMode ? 1 : [1, 1.5]}
+      shadows={shadowEnabled}
+      dpr={dprSetting}
       gl={{
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: shift === 'night' ? 0.85 : 1.6,
+        toneMappingExposure: exposure,
         outputColorSpace: THREE.SRGBColorSpace,
-        antialias: !performanceMode,
+        antialias: antialiasEnabled,
         powerPreference: 'high-performance',
         stencil: false,
         depth: true,
@@ -141,7 +179,7 @@ export function ControlRoomDiorama() {
       <SimTicker />
 
       {/* Lighting */}
-      <CinematicLighting />
+      <CinematicLighting performanceOverride={effectivePerformance} quality={quality} />
 
       {/* Environment shell */}
       <WarehouseEnvironment />
@@ -150,7 +188,7 @@ export function ControlRoomDiorama() {
       <ControlDesk />
 
       {/* Machines — lazy-loaded for faster initial paint */}
-      <Suspense fallback={null}>
+      <Suspense fallback={<SceneLoadingFallback />}>
         <DepalletizerRig />
         <ConveyorRig />
         <DecantingStations />
@@ -158,11 +196,11 @@ export function ControlRoomDiorama() {
         <PalletizerRig />
         <AMRFleet />
         <IndustrialDetails />
-        {!performanceMode && <DustParticles />}
+        {!effectivePerformance && <DustParticles />}
       </Suspense>
 
       {/* Postprocessing – NO DOF, NO ChromaticAberration */}
-      <CinematicPost />
+      <CinematicPost quality={quality} />
     </Canvas>
   );
 }

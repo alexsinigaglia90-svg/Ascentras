@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { ControlRoomDiorama } from './scene/ControlRoomDiorama';
 import { SystemsPanel } from './components/ui/SystemsPanel';
+import { OperationsPanel } from './components/ui/OperationsPanel';
 import { HeroOverlay } from './components/ui/HeroOverlay';
 import { RequestModal } from './components/ui/RequestModal';
 import { useStore } from './state/store';
@@ -133,6 +134,7 @@ export default function App() {
 
         <HeroOverlay />
         <SystemsPanel />
+        <OperationsPanel />
 
         {/* Immersive CTA — smooth scroll to profiles */}
         <div
