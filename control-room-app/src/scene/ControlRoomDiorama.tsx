@@ -76,14 +76,16 @@ function CameraController() {
   return (
     <OrbitControls
       ref={controlsRef}
-      enablePan={false}
+      enablePan={true}
       enableZoom={true}
-      minDistance={3}
-      maxDistance={16}
-      minPolarAngle={0.3}
-      maxPolarAngle={Math.PI * 0.45}
-      dampingFactor={0.05}
+      minDistance={2}
+      maxDistance={24}
+      minPolarAngle={0.1}
+      maxPolarAngle={Math.PI * 0.55}
+      dampingFactor={0.04}
       enableDamping
+      panSpeed={0.5}
+      rotateSpeed={0.6}
     />
   );
 }
@@ -113,7 +115,7 @@ export function ControlRoomDiorama() {
     <Canvas
       camera={{ position: [0, 6, 10], fov: 45, near: 0.1, far: 100 }}
       shadows={!performanceMode}
-      dpr={performanceMode ? 1 : [1, 1.5]}
+      dpr={performanceMode ? 1 : [1, 2]}
       gl={{
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: shift === 'night' ? 0.85 : 1.6,
@@ -124,7 +126,7 @@ export function ControlRoomDiorama() {
       style={{ position: 'absolute', inset: 0 }}
     >
       {/* Fog pushed back from 14→22 to eliminate haze on the scene  */}
-      <fog attach="fog" args={[shift === 'night' ? '#1a1e28' : '#3a3e48', 22, 45]} />
+      <fog attach="fog" args={[shift === 'night' ? '#1a1e28' : '#c8ccd4', 22, 50]} />
 
       {!performanceMode && <SoftShadows size={25} samples={16} focus={0.5} />}
 

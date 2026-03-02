@@ -36,19 +36,19 @@ export function CinematicPost() {
         color={aoColor}
       />
 
-      {/* Bloom — stronger for LEDs, beacons, emissive elements */}
+      {/* Bloom — luminous glow for LEDs, status lights, emissive elements */}
       <Bloom
-        intensity={0.45}
-        luminanceThreshold={0.55}
-        luminanceSmoothing={0.2}
+        intensity={0.55}
+        luminanceThreshold={0.45}
+        luminanceSmoothing={0.15}
         mipmapBlur
-        radius={0.7}
+        radius={0.8}
       />
 
-      {/* Vignette — deeper framing for cinematic feel */}
+      {/* Vignette — subtle framing, lighter for premium feel */}
       <Vignette
-        offset={0.25}
-        darkness={0.4}
+        offset={0.3}
+        darkness={0.25}
         blendFunction={BlendFunction.NORMAL}
       />
 

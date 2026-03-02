@@ -1,0 +1,357 @@
+/* ── Scroll Content — Apple/Tesla Premium Sections ── */
+
+.content {
+  position: relative;
+  background: var(--bg);
+}
+
+/* ── Section Base ── */
+.section {
+  padding: 100px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.sectionInner {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.sectionTag {
+  display: inline-block;
+  padding: 6px 18px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 100px;
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text);
+  margin: 0 0 16px;
+}
+
+.titleAccent {
+  color: var(--accent);
+}
+
+.sectionSubtitle {
+  font-size: clamp(0.88rem, 1.6vw, 1.05rem);
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── Feature Cards ── */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.featureCard {
+  padding: 32px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.featureCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-active);
+}
+
+.featureIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.featureTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+
+.featureDesc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Stats Section ── */
+.statsSection {
+  padding: 80px 24px;
+  background: var(--text);
+}
+
+.statsInner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.stat {
+  padding: 16px;
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--bg);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Capabilities Grid ── */
+.capGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.capItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.capItem:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.capIcon {
+  color: var(--accent);
+  flex-shrink: 0;
+  display: flex;
+}
+
+.capLabel {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.capCheck {
+  color: var(--accent);
+  flex-shrink: 0;
+  opacity: 0.4;
+}
+
+.capItem:hover .capCheck {
+  opacity: 1;
+}
+
+/* ── Process Steps ── */
+.processGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.processStep {
+  text-align: center;
+  padding: 32px 24px;
+}
+
+.processNum {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0.3;
+  line-height: 1;
+  margin-bottom: 16px;
+  letter-spacing: -0.03em;
+}
+
+.processTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.processDesc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── CTA Section ── */
+.ctaSection {
+  padding: 100px 24px;
+  text-align: center;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--accent-light) 100%);
+}
+
+.ctaInner {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.ctaTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin: 0 0 16px;
+}
+
+.ctaSubtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0 0 32px;
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 36px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(45, 106, 79, 0.25);
+  letter-spacing: 0.02em;
+}
+
+.ctaButton:hover {
+  background: var(--accent-bright);
+  box-shadow: 0 8px 32px rgba(45, 106, 79, 0.35);
+  transform: translateY(-2px);
+}
+
+/* ── Footer ── */
+.footer {
+  padding: 48px 24px 32px;
+  background: var(--text);
+  text-align: center;
+}
+
+.footerInner {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.footerBrand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.footerLogo {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--bg);
+  letter-spacing: -0.02em;
+}
+
+.footerDivider {
+  color: var(--graphite);
+  font-size: 1.2rem;
+}
+
+.footerUnit {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--graphite);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.footerCopy {
+  font-size: 0.78rem;
+  color: var(--graphite);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.footerLegal {
+  font-size: 0.65rem;
+  color: var(--graphite);
+  opacity: 0.6;
+  margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .section {
+    padding: 64px 20px;
+  }
+
+  .statsInner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .processGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .processStep {
+    padding: 20px 16px;
+  }
+
+  .capGrid {
+    grid-template-columns: 1fr;
+  }
+}

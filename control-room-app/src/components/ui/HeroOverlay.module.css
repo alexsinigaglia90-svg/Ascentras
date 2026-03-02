@@ -1,37 +1,40 @@
 .overlay {
   position: fixed;
-  top: 24px;
+  top: 28px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
   text-align: center;
   pointer-events: none;
   animation: fade-in 1s ease-out 0.4s both;
-  width: min(600px, 90vw);
+  width: min(680px, 90vw);
 }
 
 .badge {
   display: inline-block;
-  padding: 3px 12px;
-  font-size: 0.55rem;
+  padding: 5px 16px;
+  font-size: 0.6rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--brass);
-  border: 1px solid rgba(181, 154, 94, 0.3);
-  border-radius: 20px;
-  backdrop-filter: blur(8px);
-  background: rgba(26, 28, 32, 0.6);
-  margin-bottom: 10px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  border: 1px solid rgba(45, 106, 79, 0.2);
+  border-radius: 100px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.7);
+  margin-bottom: 14px;
 }
 
 .headline {
-  font-family: var(--font-serif);
-  font-size: clamp(1.3rem, 3vw, 2rem);
-  font-weight: 400;
-  line-height: 1.15;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.5vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
   color: var(--text);
   margin: 0;
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 20px rgba(255,255,255,0.3);
 }
 
 .accent {
@@ -39,15 +42,15 @@
 }
 
 .subline {
-  margin: 8px 0 0;
-  font-size: clamp(0.65rem, 1.2vw, 0.78rem);
+  margin: 10px 0 0;
+  font-size: clamp(0.72rem, 1.3vw, 0.88rem);
   color: var(--text-muted);
-  line-height: 1.5;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
+  line-height: 1.55;
+  font-weight: 400;
 }
 
 @media (max-width: 768px) {
   .overlay {
-    top: 12px;
+    top: 16px;
   }
 }

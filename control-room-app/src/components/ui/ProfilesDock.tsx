@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../../state/store';
 import { profiles, domainFilters, type DomainFilter, type StaffProfile } from '../../data/profiles';
-import { User, MapPin, Globe, Star, ChevronRight, X } from 'lucide-react';
+import { User, MapPin, Globe, Star, ChevronRight, X, Briefcase } from 'lucide-react';
 import styles from './ProfilesDock.module.css';
 
 export function ProfilesDock() {
@@ -27,6 +27,11 @@ export function ProfilesDock() {
 
   return (
     <div className={styles.dock}>
+      {/* Section label */}
+      <div className={styles.sectionLabel}>
+        <span className={styles.sectionTag}>Available Profiles</span>
+      </div>
+
       {/* Filters */}
       <div className={styles.filters}>
         {domainFilters.map(f => (
@@ -49,13 +54,13 @@ export function ProfilesDock() {
             onClick={() => handleSelect(p)}
           >
             <div className={styles.cardAvatar}>
-              <User size={18} />
+              <User size={22} />
             </div>
             <div className={styles.cardInfo}>
               <div className={styles.cardName}>{p.name}</div>
               <div className={styles.cardRole}>{p.role}</div>
               <div className={styles.cardTags}>
-                {p.specialty.slice(0, 2).map(s => (
+                {p.specialty.slice(0, 3).map(s => (
                   <span key={s} className={styles.tag}>{s}</span>
                 ))}
               </div>
@@ -64,7 +69,9 @@ export function ProfilesDock() {
               <span className={`${styles.availability} ${styles[p.availability.replace(/\s+/g, '')]}`}>
                 {p.availability === 'Available' ? '●' : p.availability === 'On Assignment' ? '○' : '◐'}
               </span>
-              <ChevronRight size={14} className={styles.cardArrow} />
+              <span className={styles.availabilityLabel}>
+                {p.availability}
+              </span>
             </div>
           </button>
         ))}
