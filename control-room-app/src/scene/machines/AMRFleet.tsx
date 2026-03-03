@@ -39,8 +39,6 @@ interface VehicleRuntime {
   y: number;
   z: number;
   rotY: number;
-  speed: number;
-  suspension: number;
   waiting: boolean;
   moving: boolean;
 }
@@ -64,21 +62,14 @@ function buildPath(path: [number, number, number][]) {
   return path.map(([x, y, z]) => new THREE.Vector3(snapToGrid(x, GRID), y, snapToGrid(z, GRID)));
 }
 
-function lerpAngle(from: number, to: number, alpha: number) {
-  const diff = ((((to - from) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-  return from + diff * alpha;
-}
-
 function AMRVisual({
   id,
   runtime,
   carryingPallet,
-  detailLevel,
 }: {
   id: number;
   runtime: VehicleRuntime;
   carryingPallet: boolean;
-  detailLevel: number;
 }) {
   const rootRef = useRef<THREE.Group>(null!);
   const wheelRefs = useRef<THREE.Mesh[]>([]);
@@ -91,16 +82,15 @@ function AMRVisual({
     if (!rootRef.current) return;
 
     const t = clock.getElapsedTime() + id * 0.5;
-    const speedFactor = THREE.MathUtils.clamp(runtime.speed / BASE_SPEED, 0, 1.3);
-    const bob = Math.sin(t * (7 + speedFactor * 4)) * (0.0015 + speedFactor * 0.0025);
-    rootRef.current.position.set(runtime.x, 0.01 + bob + runtime.suspension, runtime.z);
+    const bob = runtime.moving ? Math.sin(t * 8) * 0.003 : 0;
+    rootRef.current.position.set(runtime.x, 0.01 + bob, runtime.z);
     rootRef.current.rotation.y = runtime.rotY;
 
-    if (scannerRef.current) scannerRef.current.rotation.y += delta * (2 + speedFactor * 5.6);
+    if (scannerRef.current) scannerRef.current.rotation.y += delta * (runtime.moving ? 5.6 : 2.1);
 
     for (let i = 0; i < wheelRefs.current.length; i++) {
       const wheel = wheelRefs.current[i];
-      if (wheel) wheel.rotation.x += delta * (0.8 + speedFactor * 9.2);
+      if (wheel) wheel.rotation.x += delta * (runtime.moving ? 8.2 : 0.8);
     }
 
     if (stripRef.current) {
@@ -179,9 +169,9 @@ function AMRVisual({
 
       <pointLight
         position={[0, 0.03, 0]}
-        intensity={detailLevel >= 2 ? (runtime.waiting ? 0.1 : 0.16) : 0.06}
+        intensity={runtime.waiting ? 0.1 : 0.16}
         color={runtime.waiting ? '#ff9a6e' : carryingPallet ? '#7bc6ff' : theme.led}
-        distance={detailLevel >= 2 ? 1.5 : 1.0}
+        distance={1.5}
         decay={2}
       />
 
@@ -191,10 +181,10 @@ function AMRVisual({
             <boxGeometry args={[0.58, 0.014, 0.44]} />
             <meshPhysicalMaterial color="#be9d5a" roughness={0.72} metalness={0.05} />
           </mesh>
-          {[0.08, 0.19].slice(0, detailLevel >= 2 ? 2 : 1).map((y, li) => (
+          {[0.08, 0.19].map((y, li) => (
             <group key={`cargo-${id}-${li}`}>
-              {[-0.14, 0, 0.14].slice(0, detailLevel >= 2 ? 3 : 2).map((x, xi) =>
-                [-0.08, 0.08].slice(0, detailLevel >= 2 ? 2 : 1).map((z, zi) => (
+              {[-0.14, 0, 0.14].map((x, xi) =>
+                [-0.08, 0.08].map((z, zi) => (
                   <mesh key={`box-${id}-${li}-${xi}-${zi}`} position={[x, y, z]}>
                     <boxGeometry args={[0.13, 0.1, 0.13]} />
                     <meshStandardMaterial color={li === 0 ? '#c89b71' : '#b9875e'} roughness={0.66} metalness={0.02} />
@@ -209,7 +199,7 @@ function AMRVisual({
   );
 }
 
-export function AMRFleet({ detailLevel = 2 }: { detailLevel?: number }) {
+export function AMRFleet() {
   const emergencyStop = useStore(s => s.emergencyStop);
   const amrDelivering = useStore(s => s.amrDelivering);
   const amrWaiting = useStore(s => s.amrWaiting);
@@ -228,8 +218,6 @@ export function AMRFleet({ detailLevel = 2 }: { detailLevel?: number }) {
           y: parsed[0].y,
           z: parsed[0].z,
           rotY: 0,
-          speed: 0,
-          suspension: 0,
           waiting: false,
           moving: true,
         },
@@ -254,8 +242,6 @@ export function AMRFleet({ detailLevel = 2 }: { detailLevel?: number }) {
       const isDeliveryAmr = state.id === 0;
       const scenarioWaiting = isDeliveryAmr && deliveryState.waiting;
       if (emergencyStop || scenarioWaiting) {
-        runtime.speed += (0 - runtime.speed) * Math.min(1, delta * 8);
-        runtime.suspension += (0 - runtime.suspension) * Math.min(1, delta * 8);
         runtime.waiting = true;
         runtime.moving = false;
         state.waitClock = 0;
@@ -285,12 +271,7 @@ export function AMRFleet({ detailLevel = 2 }: { detailLevel?: number }) {
 
       moveDir.normalize();
       const loadPenalty = isDeliveryAmr && deliveryState.carrying ? 0.88 : 1;
-      const desiredSpeed = BASE_SPEED * loadPenalty * (state.detour ? 0.92 : 1);
-      const prevSpeed = runtime.speed;
-      runtime.speed += (desiredSpeed - runtime.speed) * Math.min(1, delta * 4.8);
-      const accel = runtime.speed - prevSpeed;
-      runtime.suspension += (-accel * 0.018 - runtime.suspension) * Math.min(1, delta * 6.5);
-      const step = Math.min(runtime.speed * delta, dist);
+      const step = Math.min(BASE_SPEED * loadPenalty * delta, dist);
 
       const nextX = runtime.x + moveDir.x * step;
       const nextZ = runtime.z + moveDir.z * step;
@@ -300,8 +281,6 @@ export function AMRFleet({ detailLevel = 2 }: { detailLevel?: number }) {
       const hitAgent = blockedByAgents(nextAabb, state.id, agents);
 
       if (hitStatic || hitAgent) {
-        runtime.speed += (0 - runtime.speed) * Math.min(1, delta * 7.5);
-        runtime.suspension += (0 - runtime.suspension) * Math.min(1, delta * 7.2);
         runtime.waiting = true;
         runtime.moving = false;
         state.waitClock += delta;
@@ -322,8 +301,7 @@ export function AMRFleet({ detailLevel = 2 }: { detailLevel?: number }) {
       runtime.moving = true;
       runtime.x = nextX;
       runtime.z = nextZ;
-      const targetRot = Math.atan2(moveDir.x, moveDir.z);
-      runtime.rotY = lerpAngle(runtime.rotY, targetRot, Math.min(1, delta * 7.2));
+      runtime.rotY = Math.atan2(moveDir.x, moveDir.z);
       agents[i].position.set(runtime.x, 0, runtime.z);
     }
   });
@@ -336,7 +314,6 @@ export function AMRFleet({ detailLevel = 2 }: { detailLevel?: number }) {
           id={state.id}
           runtime={state.runtime}
           carryingPallet={state.id === 0 && deliveryState.carrying}
-          detailLevel={detailLevel}
         />
       ))}
     </group>

@@ -11,23 +11,17 @@ import { Cable, Conduit } from '../props/Cable';
  *  cable trays between machines, floor markings,
  *  fire extinguisher, first-aid station.
  *  ──────────────────────────────────────────────────── */
-export function IndustrialDetails({ detailLevel = 2 }: { detailLevel?: number }) {
+export function IndustrialDetails() {
   const performanceMode = useStore(s => s.performanceMode);
   const emergency = useStore(s => s.emergencyStop);
-  const highDetail = detailLevel >= 2;
-  const mediumDetail = detailLevel >= 1;
 
   return (
     <group>
       {/* ── Instanced floor anchor bolts ── */}
-      {mediumDetail && <FloorBolts />}
+      <FloorBolts />
 
       {/* ── Floor safety markings (yellow pedestrian zone) ── */}
       <FloorMarkings />
-
-      {/* ── World liveliness: status rack + maintenance droid ── */}
-      {mediumDetail && <StatusPulseRack emergency={emergency} />}
-      {highDetail && !performanceMode && <MaintenanceDroid emergency={emergency} />}
 
       {/* ── Main cable tray run (back wall → machines) ── */}
       <Conduit
@@ -42,7 +36,7 @@ export function IndustrialDetails({ detailLevel = 2 }: { detailLevel?: number })
       />
 
       {/* ── Overhead cable tray ── */}
-      {!performanceMode && highDetail && (
+      {!performanceMode && (
         <group position={[0, 3.8, 0]}>
           {/* Tray base */}
           <mesh>
@@ -117,7 +111,7 @@ export function IndustrialDetails({ detailLevel = 2 }: { detailLevel?: number })
       </group>
 
       {/* ── Light curtain indicators (between depalletizer zone) ── */}
-      {!performanceMode && highDetail && (
+      {!performanceMode && (
         <>
           <LightCurtain position={[-2.2, 0.4, -2.3]} height={0.8} />
           <LightCurtain position={[-2.2, 0.4, -0.7]} height={0.8} />
@@ -136,82 +130,6 @@ export function IndustrialDetails({ detailLevel = 2 }: { detailLevel?: number })
           <meshStandardMaterial color="#2a2a2a" metalness={0.7} roughness={0.4} />
         </mesh>
       ))}
-    </group>
-  );
-}
-
-function StatusPulseRack({ emergency }: { emergency: boolean }) {
-  const refs = useRef<THREE.MeshBasicMaterial[]>([]);
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
-    refs.current.forEach((mat, idx) => {
-      if (!mat) return;
-      if (emergency) {
-        const on = Math.sin(t * 9 + idx * 0.8) > 0;
-        mat.color.set(on ? '#ff3a2f' : '#3a0909');
-      } else {
-        const g = 0.45 + Math.sin(t * (1.2 + idx * 0.15)) * 0.25;
-        mat.color.setRGB(0.12, THREE.MathUtils.clamp(g, 0.2, 0.85), 0.2);
-      }
-    });
-  });
-
-  return (
-    <group position={[6.55, 1.2, 4.9]} rotation={[0, -Math.PI * 0.5, 0]}>
-      <mesh>
-        <boxGeometry args={[0.5, 0.26, 0.08]} />
-        <meshPhysicalMaterial color="#2e3642" roughness={0.42} metalness={0.55} />
-      </mesh>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <mesh key={i} position={[-0.18 + i * 0.09, 0, 0.045]}>
-          <sphereGeometry args={[0.016, 8, 8]} />
-          <meshBasicMaterial
-            ref={(el: THREE.MeshBasicMaterial | null) => {
-              if (el) refs.current[i] = el;
-            }}
-            color="#2c8c52"
-            toneMapped={false}
-          />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-function MaintenanceDroid({ emergency }: { emergency: boolean }) {
-  const root = useRef<THREE.Group>(null!);
-  const lightRef = useRef<THREE.PointLight>(null!);
-
-  useFrame(({ clock }) => {
-    if (!root.current) return;
-    const t = clock.getElapsedTime();
-    const x = Math.sin(t * 0.35) * 2.2 + 0.5;
-    const z = Math.cos(t * 0.27) * 1.2 - 4.2;
-    root.current.position.set(x, 0.06 + Math.sin(t * 3.5) * 0.005, z);
-    root.current.rotation.y = Math.atan2(Math.cos(t * 0.35), -Math.sin(t * 0.27));
-
-    if (lightRef.current) {
-      lightRef.current.intensity = emergency ? 0.2 : 0.08 + Math.sin(t * 5) * 0.03;
-      lightRef.current.color.set(emergency ? '#ff4a38' : '#6dd4ff');
-    }
-  });
-
-  return (
-    <group ref={root}>
-      <mesh castShadow>
-        <cylinderGeometry args={[0.14, 0.16, 0.08, 16]} />
-        <meshPhysicalMaterial color="#384353" metalness={0.7} roughness={0.28} />
-      </mesh>
-      <mesh position={[0, 0.07, 0]} castShadow>
-        <boxGeometry args={[0.2, 0.05, 0.16]} />
-        <meshPhysicalMaterial color="#4f617a" metalness={0.52} roughness={0.34} />
-      </mesh>
-      <mesh position={[0, 0.1, 0]}>
-        <sphereGeometry args={[0.03, 10, 10]} />
-        <meshStandardMaterial color="#8bdcff" emissive="#8bdcff" emissiveIntensity={0.5} toneMapped={false} />
-      </mesh>
-      <pointLight ref={lightRef} position={[0, 0.08, 0]} intensity={0.12} distance={1.5} decay={2} color="#6dd4ff" />
     </group>
   );
 }
