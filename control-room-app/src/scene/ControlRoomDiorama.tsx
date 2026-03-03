@@ -10,38 +10,15 @@ import { CinematicPost } from './post/CinematicPost';
 
 type QualityTier = 'safe' | 'balanced' | 'cinematic' | 'ultra';
 
-const wait = (ms: number) => new Promise<void>(resolve => window.setTimeout(resolve, ms));
-
 /* Lazy-load heavy machine rigs — they are complex geometry builders */
-const loadAutoStoreRig = () => import('./machines/AutoStoreRig');
-const loadConveyorRig = () => import('./machines/ConveyorRig');
-const loadDepalletizerRig = () => import('./machines/DepalletizerRig');
-const loadPalletizerRig = () => import('./machines/PalletizerRig');
-const loadDecantingStations = () => import('./machines/DecantingStations');
-const loadAMRFleet = () => import('./machines/AMRFleet');
-const loadIndustrialDetails = () => import('./props/IndustrialDetails');
-const loadDustParticles = () => import('./DustParticles');
-
-const preloadSceneAssets = () =>
-  Promise.all([
-    loadAutoStoreRig(),
-    loadConveyorRig(),
-    loadDepalletizerRig(),
-    loadPalletizerRig(),
-    loadDecantingStations(),
-    loadAMRFleet(),
-    loadIndustrialDetails(),
-    loadDustParticles(),
-  ]);
-
-const AutoStoreRig = lazy(() => loadAutoStoreRig().then(m => ({ default: m.AutoStoreRig })));
-const ConveyorRig = lazy(() => loadConveyorRig().then(m => ({ default: m.ConveyorRig })));
-const DepalletizerRig = lazy(() => loadDepalletizerRig().then(m => ({ default: m.DepalletizerRig })));
-const PalletizerRig = lazy(() => loadPalletizerRig().then(m => ({ default: m.PalletizerRig })));
-const DecantingStations = lazy(() => loadDecantingStations().then(m => ({ default: m.DecantingStations })));
-const AMRFleet = lazy(() => loadAMRFleet().then(m => ({ default: m.AMRFleet })));
-const IndustrialDetails = lazy(() => loadIndustrialDetails().then(m => ({ default: m.IndustrialDetails })));
-const DustParticles = lazy(() => loadDustParticles().then(m => ({ default: m.DustParticles })));
+const AutoStoreRig = lazy(() => import('./machines/AutoStoreRig').then(m => ({ default: m.AutoStoreRig })));
+const ConveyorRig = lazy(() => import('./machines/ConveyorRig').then(m => ({ default: m.ConveyorRig })));
+const DepalletizerRig = lazy(() => import('./machines/DepalletizerRig').then(m => ({ default: m.DepalletizerRig })));
+const PalletizerRig = lazy(() => import('./machines/PalletizerRig').then(m => ({ default: m.PalletizerRig })));
+const DecantingStations = lazy(() => import('./machines/DecantingStations').then(m => ({ default: m.DecantingStations })));
+const AMRFleet = lazy(() => import('./machines/AMRFleet').then(m => ({ default: m.AMRFleet })));
+const IndustrialDetails = lazy(() => import('./props/IndustrialDetails').then(m => ({ default: m.IndustrialDetails })));
+const DustParticles = lazy(() => import('./DustParticles').then(m => ({ default: m.DustParticles })));
 
 /* ── Camera positions (updated for flowing layout) ── */
 const cameraPositions: Record<string, { pos: [number, number, number]; target: [number, number, number] }> = {
@@ -220,69 +197,6 @@ function SceneLoadingFallback() {
   );
 }
 
-function SceneBootOverlay({ stage }: { stage: 'initial' | 'ultra' }) {
-  const label = stage === 'ultra' ? 'Ultra mode initialising' : 'Initialising control room';
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        pointerEvents: 'none',
-        zIndex: 40,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'radial-gradient(circle at center, rgba(16,22,34,0.76), rgba(9,13,22,0.9))',
-        backdropFilter: 'blur(4px)',
-      }}
-    >
-      <div style={{ width: 260, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
-        <div style={{ fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(216,227,242,0.9)' }}>
-          {label}
-        </div>
-        <div style={{ width: '100%', height: 6, background: 'rgba(255,255,255,0.14)', borderRadius: 999, overflow: 'hidden' }}>
-          <div
-            style={{
-              width: '42%',
-              height: '100%',
-              borderRadius: 999,
-              background: 'linear-gradient(90deg, rgba(107,173,107,0.4), rgba(151,217,255,0.9), rgba(107,173,107,0.4))',
-              animation: 'sceneBootSweep 1.25s ease-in-out infinite',
-            }}
-          />
-        </div>
-        <div style={{ width: '100%', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <div
-              key={idx}
-              style={{
-                height: 4,
-                borderRadius: 999,
-                background: 'rgba(138,180,220,0.6)',
-                transformOrigin: 'left',
-                animation: `sceneBootPulse 0.9s ease-in-out ${idx * 0.08}s infinite`,
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes sceneBootSweep {
-          0% { transform: translateX(-120%); opacity: 0.3; }
-          45% { opacity: 1; }
-          100% { transform: translateX(270%); opacity: 0.3; }
-        }
-        @keyframes sceneBootPulse {
-          0%, 100% { transform: scaleX(0.45); opacity: 0.35; }
-          50% { transform: scaleX(1); opacity: 1; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
 /* ══════════════════════════════════════════════════════
  *  ControlRoomDiorama – main Canvas with cinematic
  *  renderer, pushed-back fog, clean scene composition.
@@ -293,13 +207,8 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
   const shift = useStore(s => s.shiftMode);
   const [adaptivePerf, setAdaptivePerf] = useState(false);
   const [dynamicPenalty, setDynamicPenalty] = useState<0 | 1 | 2>(0);
-  const [sceneReady, setSceneReady] = useState(false);
-  const [ultraWarmup, setUltraWarmup] = useState(false);
-  const [ultraGrace, setUltraGrace] = useState(false);
   const glRef = useRef<THREE.WebGLRenderer | null>(null);
   const invalidateRef = useRef<(() => void) | null>(null);
-  const warmupTimerRef = useRef<number | null>(null);
-  const graceTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const nav = navigator as Navigator & { deviceMemory?: number };
@@ -310,59 +219,10 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      await Promise.all([preloadSceneAssets(), wait(2200)]);
-      if (!cancelled) setSceneReady(true);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
     if (!active || performanceMode || adaptivePerf) {
       setDynamicPenalty(0);
     }
   }, [active, performanceMode, adaptivePerf]);
-
-  useEffect(() => {
-    if (warmupTimerRef.current !== null) {
-      window.clearTimeout(warmupTimerRef.current);
-      warmupTimerRef.current = null;
-    }
-    if (graceTimerRef.current !== null) {
-      window.clearTimeout(graceTimerRef.current);
-      graceTimerRef.current = null;
-    }
-
-    if (!ultraVisualMode) {
-      setUltraWarmup(false);
-      setUltraGrace(false);
-      return;
-    }
-
-    setDynamicPenalty(0);
-    setUltraWarmup(true);
-    setUltraGrace(true);
-
-    void preloadSceneAssets();
-
-    warmupTimerRef.current = window.setTimeout(() => {
-      setUltraWarmup(false);
-    }, 3200);
-
-    graceTimerRef.current = window.setTimeout(() => {
-      setUltraGrace(false);
-    }, 18000);
-
-    return () => {
-      if (warmupTimerRef.current !== null) window.clearTimeout(warmupTimerRef.current);
-      if (graceTimerRef.current !== null) window.clearTimeout(graceTimerRef.current);
-    };
-  }, [ultraVisualMode]);
 
   useEffect(() => {
     const gl = glRef.current;
@@ -397,7 +257,6 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
   const effectivePerformance = quality === 'safe';
   const detailLevel = quality === 'safe' ? 0 : quality === 'balanced' ? 1 : quality === 'cinematic' ? 2 : 3;
   const targetFrameMs = quality === 'ultra' ? 16.8 : quality === 'cinematic' ? 20 : quality === 'balanced' ? 24 : 28;
-  const lockAdaptiveDowngrade = ultraVisualMode && (ultraWarmup || ultraGrace);
   const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.25] : quality === 'ultra' ? [1.25, 2] : [1, 1.5];
   const shadowEnabled = !effectivePerformance;
   const antialiasEnabled = !effectivePerformance;
@@ -406,8 +265,7 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
     : quality === 'ultra' ? 1.7 : quality === 'cinematic' ? 1.62 : 1.4;
 
   return (
-    <div style={{ position: 'absolute', inset: 0 }}>
-      <Canvas
+    <Canvas
       camera={{ position: [0, 6, 10], fov: quality === 'cinematic' || quality === 'ultra' ? 42 : 45, near: 0.1, far: 140 }}
       shadows={shadowEnabled}
       dpr={dprSetting}
@@ -440,7 +298,7 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
       <CameraController />
       {active && <SimTicker />}
       <PerformanceBudgetGuard
-        enabled={active && !performanceMode && !adaptivePerf && !lockAdaptiveDowngrade}
+        enabled={active && !performanceMode && !adaptivePerf}
         targetFrameMs={targetFrameMs}
         onPenaltyIncrease={() => setDynamicPenalty(p => (p < 2 ? ((p + 1) as 0 | 1 | 2) : p))}
         onPenaltyDecrease={() => setDynamicPenalty(p => (p > 0 ? ((p - 1) as 0 | 1 | 2) : p))}
@@ -456,27 +314,19 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
       <ControlDesk />
 
       {/* Machines — lazy-loaded for faster initial paint */}
-      {sceneReady ? (
-        <Suspense fallback={<SceneLoadingFallback />}>
-          <DepalletizerRig />
-          <ConveyorRig />
-          <DecantingStations />
-          <AutoStoreRig />
-          <PalletizerRig />
-          <AMRFleet detailLevel={detailLevel} />
-          <IndustrialDetails detailLevel={detailLevel} />
-          {detailLevel >= 2 && <DustParticles />}
-        </Suspense>
-      ) : (
-        <SceneLoadingFallback />
-      )}
+      <Suspense fallback={<SceneLoadingFallback />}>
+        <DepalletizerRig />
+        <ConveyorRig />
+        <DecantingStations />
+        <AutoStoreRig />
+        <PalletizerRig />
+        <AMRFleet detailLevel={detailLevel} />
+        <IndustrialDetails detailLevel={detailLevel} />
+        {detailLevel >= 2 && <DustParticles />}
+      </Suspense>
 
       {/* Postprocessing – NO DOF, NO ChromaticAberration */}
       {active && <CinematicPost quality={quality} />}
-      </Canvas>
-
-      {!sceneReady && <SceneBootOverlay stage="initial" />}
-      {sceneReady && ultraWarmup && <SceneBootOverlay stage="ultra" />}
-    </div>
+    </Canvas>
   );
 }
