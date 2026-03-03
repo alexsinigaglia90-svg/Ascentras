@@ -8,6 +8,8 @@ import { ControlDesk } from './ControlDesk';
 import { CinematicLighting } from './lighting/CinematicLighting';
 import { CinematicPost } from './post/CinematicPost';
 
+const STABILITY_PRESET = true;
+
 /* Lazy-load heavy machine rigs — they are complex geometry builders */
 const AutoStoreRig = lazy(() => import('./machines/AutoStoreRig').then(m => ({ default: m.AutoStoreRig })));
 const ConveyorRig = lazy(() => import('./machines/ConveyorRig').then(m => ({ default: m.ConveyorRig })));
@@ -227,12 +229,13 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
 
   const quality = useMemo<'safe' | 'balanced' | 'cinematic' | 'ultra'>(() => {
     if (performanceMode || adaptivePerf) return 'safe';
+    if (STABILITY_PRESET) return 'balanced';
     if (ultraVisualMode) return ultraAutoFallback ? 'cinematic' : 'ultra';
     return shift === 'night' ? 'balanced' : 'cinematic';
   }, [performanceMode, adaptivePerf, ultraVisualMode, ultraAutoFallback, shift]);
 
   const effectivePerformance = quality === 'safe';
-  const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.25] : quality === 'ultra' ? [1.25, 2] : [1, 1.5];
+  const dprSetting: 1 | [number, number] = quality === 'safe' ? 1 : quality === 'balanced' ? [1, 1.2] : quality === 'ultra' ? [1.25, 2] : [1, 1.5];
   const shadowEnabled = !effectivePerformance;
   const antialiasEnabled = !effectivePerformance;
   const exposure = shift === 'night'
@@ -241,7 +244,7 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
 
   return (
     <Canvas
-      camera={{ position: [0, 6, 10], fov: quality === 'cinematic' || quality === 'ultra' ? 42 : 45, near: 0.1, far: 140 }}
+      camera={{ position: [0, 6, 10], fov: quality === 'cinematic' || quality === 'ultra' ? 42 : 45, near: 0.1, far: STABILITY_PRESET ? 120 : 140 }}
       shadows={shadowEnabled}
       dpr={dprSetting}
       gl={{
@@ -273,7 +276,7 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
       <CameraController />
       {active && <SimTicker />}
       <FrameRateGuard
-        enabled={active && ultraVisualMode && !performanceMode && !adaptivePerf}
+        enabled={!STABILITY_PRESET && active && ultraVisualMode && !performanceMode && !adaptivePerf}
         onLowFps={() => setUltraAutoFallback(true)}
         onRecovered={() => setUltraAutoFallback(false)}
       />
@@ -296,7 +299,7 @@ export function ControlRoomDiorama({ active = true }: { active?: boolean }) {
         <PalletizerRig />
         <AMRFleet />
         <IndustrialDetails />
-        {!effectivePerformance && <DustParticles />}
+        {(quality === 'cinematic' || quality === 'ultra') && <DustParticles />}
       </Suspense>
 
       {/* Postprocessing – NO DOF, NO ChromaticAberration */}
